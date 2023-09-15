@@ -4,7 +4,6 @@
 #include "ImageEditor.h"
 #include "ui_BatchItImage.h"
 #include "ui_MessageWindow.h"
-//#include "stdafx.h"
 
 
 class FileMetadataWorker : public QObject
@@ -100,6 +99,9 @@ private:
     UIData resampling_selections[3];
     UIData file_name_creation[4];
     UIData image_formats[22];
+    UIData format_subsamplings[5];
+
+    QString supported_image_extensions_dialog_str = ""; // Built from image_formats
 
     const enum SaveOptionSelections { OVERWRITE, RENAME_ORG, NEW_NAME };
     const enum FileColumns { FILE_SELECTED, FILE_NAME, IMAGE_DIMENSIONS, FILE_SIZE, DATE_CREATED, DATE_MODIFIED, FILE_COLUMN_COUNT };
@@ -109,22 +111,6 @@ private:
     const std::string ADD_COUNTER = "<COUNTER>";
     const std::string ADD_WIDTH = "<WIDTH>";
     const std::string ADD_HEIGHT = "<HEIGHT>";
-
-    const std::vector <std::string> supported_images = {
-        ".bmp", ".dib",
-        ".jpeg", ".jpg", ".jpe",
-        ".jp2",
-        ".png",
-        ".webp",
-        ".avif",
-        ".pbm", ".pgm", ".ppm", ".pxm", ".pnm",
-        ".pfm",
-        ".sr", ".ras",
-        ".tiff", ".tif",
-        ".exr",
-        ".hdr", ".pic"
-    };
-    QString supported_image_extensions_dialog_str = "";
 
     const QFont* font_serif = new QFont("Times", 10, QFont::Bold);
     const QFont* font_default = new QFont("Segoe UI", 9);
@@ -179,7 +165,7 @@ private:
     void InitiateProgressBar(int max_ticks);
 
     //FileMetadataWorker* new_fm_worker;
-    std::mutex tasks_mutex;
+    //std::mutex tasks_mutex;
     void DebugListPrint(int list);
 
 protected:
