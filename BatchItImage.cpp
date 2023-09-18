@@ -147,7 +147,7 @@ BatchItImage::BatchItImage(QWidget* parent) : QMainWindow(parent)
     width_selections[0].desc = "Image widths may still be modified if 'keep aspect ratio' is checked.";
     width_selections[1].data = ImageEditor::CHANGE_TO;
     width_selections[1].name = "Change Width To:";
-    width_selections[1].desc = "All images widths will be modified to a specfic number.";
+    width_selections[1].desc = "All image widths will be modified to a specfic number.";
     width_selections[2].data = ImageEditor::MODIFY_BY;
     width_selections[2].name = "Modify Width By:";
     width_selections[2].desc = "This adds to or subtracts from an image's current width. Ex. 1080 + '220' = 1300";
@@ -156,10 +156,12 @@ BatchItImage::BatchItImage(QWidget* parent) : QMainWindow(parent)
     width_selections[3].desc = "This modifies an image's current width by percetage. Ex. 720 x '200%' = 1440";
     width_selections[4].data = ImageEditor::DOWNSCALE;
     width_selections[4].name = "Downscale Width To:";
-    width_selections[4].desc = "All images above entered width will be modified to that specfic number. All images already at or below that number will not be modified.";
+    width_selections[4].desc = "All images above entered width will be modified to that specfic number.\n" \
+                               "All images already at or below that number will not be modified.";
     width_selections[5].data = ImageEditor::UPSCALE;
     width_selections[5].name = "Upscale Width To:";
-    width_selections[5].desc = "All images below entered width will be modified to that specfic number. All images already at or above that number will not be modified.";
+    width_selections[5].desc = "All images below entered width will be modified to that specfic number.\n" \
+                               "All images already at or above that number will not be modified.";
     PopulateComboBoxes(ui.comboBox_WidthMod, width_selections, 6);
 
     // comboBox_HeightMod Item Selections
@@ -177,10 +179,12 @@ BatchItImage::BatchItImage(QWidget* parent) : QMainWindow(parent)
     height_selections[3].desc = "This modifies an image's current height by percetage. Ex. 720 x '200%' = 1440";
     height_selections[4].data = ImageEditor::DOWNSCALE;
     height_selections[4].name = "Downscale Height To:";
-    height_selections[4].desc = "All images above entered height will be modified to that specfic number. All images already at or below that number will not be modified.";
+    height_selections[4].desc = "All images above entered height will be modified to that specfic number.\n" \
+                                "All images already at or below that number will not be modified.";
     height_selections[5].data = ImageEditor::UPSCALE;
     height_selections[5].name = "Upscale Height To:";
-    height_selections[5].desc = "All images below entered height will be modified to that specfic number. All images already at or above that number will not be modified.";
+    height_selections[5].desc = "All images below entered height will be modified to that specfic number.\n" \
+                                "All images already at or above that number will not be modified.";
     PopulateComboBoxes(ui.comboBox_HeightMod, height_selections, 6);
 
     ui.checkBox_KeepAspectRatio->setText("Keep Aspect Ratio");
@@ -214,106 +218,288 @@ BatchItImage::BatchItImage(QWidget* parent) : QMainWindow(parent)
     PopulateComboBoxes(ui.comboBox_AddText, file_name_creation, 4);
 
     // comboBox_ImageFormat
-    image_formats[0].data = ".jpeg";
-    image_formats[0].name = "JPEG Files - *.jpeg";
-    image_formats[0].desc = "JPEG (Joint Photographic Experts Group) is a commonly used method of lossy compression for digital images, particularly for those images produced by digital photography. The degree of compression can be adjusted, allowing a selectable tradeoff between storage size and image quality. JPEG typically achieves 10:1 compression with little perceptible loss in image quality.";
-    image_formats[1].data = ".jpg";
-    image_formats[1].name = "JPEG Files - *.jpg";
-    image_formats[1].desc = image_formats[2].desc;
-    image_formats[2].data = ".jpe";
-    image_formats[2].name = "JPEG Files - *.jpe";
-    image_formats[2].desc = image_formats[2].desc;
-
-    image_formats[3].data = ".jp2";
-    image_formats[3].name = "JPEG 2000 Files - *.jp2";
-    image_formats[3].desc = "JPEG 2000 (Joint Photographic Experts Group) is an image compression standard based on a discrete wavelet transform (DWT).  Note that it is still not widely supported in web browsers (other than Safari) and hence is not generally used on the World Wide Web.";
-
-    image_formats[4].data = ".png";
-    image_formats[4].name = "Portable Network Graphics - *.png";
-    image_formats[4].desc = "Portable Network Graphics (PNG) is a raster-graphics file format that supports lossless data compression. PNG supports palette-based images (with palettes of 24-bit RGB or 32-bit RGBA colors), grayscale images (with or without an alpha channel for transparency), and full-color non-palette-based RGB or RGBA images.";
-
-    image_formats[5].data = ".webp";
-    image_formats[5].name = "WebP - *.webp";
-    image_formats[5].desc = "WebP is a raster graphics file format developed by Google intended as a replacement for JPEG, PNG, and GIF file formats. It supports both lossy and lossless compression, as well as animation and alpha transparency.";
-
-    image_formats[6].data = ".bmp";
-    image_formats[6].name = "Windows Bitmaps - *.bmp";
-    image_formats[6].desc = "The BMP file format or bitmap, is a raster graphics image file format used to store bitmap digital images, independently of the display device (such as a graphics adapter), especially on Microsoft Windows and OS/2 operating systems.";
-    image_formats[7].data = ".dib";
-    image_formats[7].name = "Windows Bitmaps - *.dib";
-    image_formats[7].desc = image_formats[0].desc;
-
-    image_formats[8].data = ".avif";
-    image_formats[8].name = "AVIF - *.avif";
-    image_formats[8].desc = "AV1 Image File Format (AVIF) is an open, royalty-free image file format specification for storing images or image sequences compressed with AV1 in the HEIF container format.  AV1 Supports: * Multiple color spaces (HDR, SDR, color space signaling via CICP or ICC) * Lossless and lossy compression * 8-, 10-, and 12-bit color depths * Monochrome (alpha/depth) or multi-components * 4:2:0, 4:2:2, 4:4:4 chroma subsampling and RGB * Film grain synthesis * Image sequences/animation";
-
-    image_formats[9].data = ".pbm";
-    image_formats[9].name = "Netpbm Formats - *.pbm";
-    image_formats[9].desc = "Netpbm (formerly Pbmplus) is an open-source package of graphics programs and a programming library. It is used mainly in the Unix world, but also works on Microsoft Windows, macOS, and other operating systems.  Graphics formats used and defined by the Netpbm project: portable pixmap format (PPM), portable graymap format (PGM), and portable bitmap format (PBM). They are also sometimes referred to collectively as the portable anymap format (PNM).";
-    image_formats[10].data = ".pgm";
-    image_formats[10].name = "Netpbm Formats - *.pgm";
-    image_formats[10].desc = image_formats[9].desc;
-    image_formats[11].data = ".ppm";
-    image_formats[11].name = "Netpbm Formats - *.ppm";
-    image_formats[11].desc = image_formats[9].desc;
-    image_formats[12].data = ".pxm";
-    image_formats[12].name = "Netpbm Formats - *.pxm";
-    image_formats[12].desc = image_formats[9].desc;
-    image_formats[13].data = ".pnm";
-    image_formats[13].name = "Netpbm Formats - *.pnm";
-    image_formats[13].desc = image_formats[9].desc;
-
-    image_formats[14].data = ".pfm";
-    image_formats[14].name = "Netpbm Formats - *.pfm";
-    image_formats[14].desc = "The PFM (Portable Floatmap) is supported by the de facto reference implementation Netpbm and is the unofficial four byte IEEE 754 single precision floating point extension. PFM is supported by the programs Photoshop, GIMP, and ImageMagick.";
-
-    image_formats[15].data = ".sr";
-    image_formats[15].name = "Sun Rasters - *.sr";
-    image_formats[15].desc = "Sun Raster was a raster graphics file format used on SunOS by Sun Microsystems. ACDSee, FFmpeg, GIMP, ImageMagick, IrfanView, LibreOffice, Netpbm, PaintShop Pro, PMView, and XnView among others support Sun Raster image files. The format does not support transparency.";
-    image_formats[16].data = ".ras";
-    image_formats[16].name = "Sun Rasters - *.ras";
-    image_formats[16].desc = image_formats[15].desc;
-
-    image_formats[17].data = ".tiff";
-    image_formats[17].name = "TIFF Files - *.tiff";
-    image_formats[17].desc = "Tag Image File Format (TIFF or TIF), is an image file format for storing raster graphics images, popular among graphic artists, the publishing industry, and photographers. TIFF is widely supported by scanning, faxing, word processing, optical character recognition, image manipulation, desktop publishing, and page-layout applications.";
-    image_formats[18].data = ".tif";
-    image_formats[18].name = "TIFF Files - *.tif";
-    image_formats[18].desc = image_formats[17].desc;
-
-    image_formats[19].data = ".exr";
-    image_formats[19].name = "OpenEXR Image Files - *.exr";
-    image_formats[19].desc = "OpenEXR is a high-dynamic range, multi-channel raster file format, created under a free software license similar to the BSD license.  It supports multiple channels of potentially different pixel sizes, including 32-bit unsigned integer, 32-bit and 16-bit floating point values, as well as various compression techniques which include lossless and lossy compression algorithms. It also has arbitrary channels and encodes multiple points of view such as left- and right-camera images.";
-
-    image_formats[20].data = ".hdr";
-    image_formats[20].name = "Radiance HDR - *.hdr";
-    image_formats[20].desc = "RGBE or Radiance HDR is an image format that stores pixels as one byte each for RGB (red, green, and blue) values with a one byte shared exponent. Thus it stores four bytes per pixel. RGBE allows pixels to have the dynamic range and precision of floating-point values in a relatively compact data structure (32 bits per pixel).";
-    image_formats[21].data = ".pic";
-    image_formats[21].name = "Radiance HDR - *.pic";
-    image_formats[21].desc = image_formats[20].desc;
-
-    PopulateComboBoxes(ui.comboBox_ImageFormat, image_formats, 22);
+    uint i = 0;
+    image_formats[i].data = ".jpeg";
+    image_formats[i].name = "JPEG Files - *.jpeg";
+    image_formats[i].desc = "JPEG (Joint Photographic Experts Group) is a commonly used method of lossy compression\n" \
+                            "for digital images, particularly for those images produced by digital photography.\n" \
+                            "The degree of compression can be adjusted, allowing a selectable tradeoff between\n" \
+                            "storage size and image quality.JPEG typically achieves 10:1 compression with little\n" \
+                            "perceptible loss in image quality.";
+    image_formats[++i].data = ".jpg";
+    image_formats[i].name = "JPEG Files - *.jpg";
+    image_formats[i].desc = image_formats[i-1].desc;
+    image_formats[++i].data = ".jpe";
+    image_formats[i].name = "JPEG Files - *.jpe";
+    image_formats[i].desc = image_formats[i-2].desc;
+    image_formats[++i].data = ".jp2";
+    image_formats[i].name = "JPEG 2000 Files - *.jp2";
+    image_formats[i].desc = "JPEG 2000 (Joint Photographic Experts Group) is an image compression standard based on a\n" \
+                            "discrete wavelet transform (DWT). Note that it is still not widely supported in web\n" \
+                            "browsers (other than Safari) and hence is not generally used on the World Wide Web.";
+    image_formats[++i].data = ".png";
+    image_formats[i].name = "Portable Network Graphics - *.png";
+    image_formats[i].desc = "Portable Network Graphics (PNG) is a raster-graphics file format that supports lossless\n" \
+                            "data compression. PNG supports palette-based images (with palettes of 24-bit RGB or\n" \
+                            "32-bit RGBA colors), grayscale images (with or without an alpha channel for transparency),\n" \
+                            "and full-color non-palette-based RGB or RGBA images.";
+    image_formats[++i].data = ".webp";
+    image_formats[i].name = "WebP - *.webp";
+    image_formats[i].desc = "WebP is a raster graphics file format developed by Google intended as a replacement for\n" \
+                            "JPEG, PNG, and GIF file formats. It supports both lossy and lossless compression, as well\n" \
+                            "as animation and alpha transparency.";
+    image_formats[++i].data = ".bmp";
+    image_formats[i].name = "Windows Bitmaps - *.bmp";
+    image_formats[i].desc = "The BMP file format or bitmap, is a raster graphics image file format used to store\n" \
+                            "bitmap digital images, independently of the display device (such as a graphics adapter),\n" \
+                            "especially on Microsoft Windows and OS/2 operating systems.";
+    image_formats[++i].data = ".dib";
+    image_formats[i].name = "Windows Bitmaps - *.dib";
+    image_formats[i].desc = image_formats[i-1].desc;
+    image_formats[++i].data = ".avif";
+    image_formats[i].name = "AVIF - *.avif";
+    image_formats[i].desc = "AV1 Image File Format (AVIF) is an open, royalty-free image file format specification\n" \
+                            "for storing images or image sequences compressed with AV1 in the HEIF container format.\n" \
+                            "AV1 Supports:\n" \
+                            "* Multiple color spaces (HDR, SDR, color space signaling via CICP or ICC)\n" \
+                            "* Lossless and lossy compression\n" \
+                            "* 8-, 10-, and 12-bit color depths\n" \
+                            "* Monochrome (alpha/depth) or multi-components\n" \
+                            "* 4:2:0, 4:2:2, 4:4:4 chroma subsampling and RGB\n" \
+                            "* Film grain synthesis\n" \
+                            "* Image sequences/animation";
+    image_formats[++i].data = ".pbm";
+    image_formats[i].name = "Netpbm Formats - *.pbm";
+    image_formats[i].desc = "Netpbm (formerly Pbmplus) is an open-source package of graphics programs and a programming\n" \
+                            "library. It is used mainly in the Unix world, but also works on Microsoft Windows, macOS,\n" \
+                            "and other operating systems.  Graphics formats used and defined by the Netpbm project:\n" \
+                            "portable pixmap format (PPM), portable graymap format (PGM), and portable bitmap format (PBM).\n" \
+                            "They are also sometimes referred to collectively as the portable anymap format (PNM).";
+    image_formats[++i].data = ".pgm";
+    image_formats[i].name = "Netpbm Formats - *.pgm";
+    image_formats[i].desc = image_formats[i-1].desc;
+    image_formats[++i].data = ".ppm";
+    image_formats[i].name = "Netpbm Formats - *.ppm";
+    image_formats[i].desc = image_formats[i-2].desc;
+    image_formats[++i].data = ".pxm";
+    image_formats[i].name = "Netpbm Formats - *.pxm";
+    image_formats[i].desc = image_formats[i-3].desc;
+    image_formats[++i].data = ".pnm";
+    image_formats[i].name = "Netpbm Formats - *.pnm";
+    image_formats[i].desc = image_formats[i-4].desc;
+    image_formats[++i].data = ".pfm";
+    image_formats[i].name = "Netpbm Formats - *.pfm";
+    image_formats[i].desc = "The PFM (Portable Floatmap) is supported by the de facto reference implementation Netpbm\n" \
+                            "and is the unofficial four byte IEEE 754 single precision floating point extension.\n" \
+                            "PFM is supported by the programs Photoshop, GIMP, and ImageMagick.";
+    // TODO: Test support for this format
+    image_formats[++i].data = ".pam";
+    image_formats[i].name = "Netpbm Formats - *.pam";
+    image_formats[i].desc = "Portable Arbitrary Map (PAM) is an extension of the older binary P4...P6 graphics formats,\n" \
+                            "introduced with Netpbm version 9.7. PAM generalizes all features of PBM, PGM and PPM, and\n" \
+                            "provides for extensions. PAM is supported by XnView and FFmpeg; and defines two new\n" \
+                            "attributes: depth and tuple type.";
+    image_formats[++i].data = ".sr";
+    image_formats[i].name = "Sun Rasters - *.sr";
+    image_formats[i].desc = "Sun Raster was a raster graphics file format used on SunOS by Sun Microsystems. ACDSee,\n" \
+                            "FFmpeg, GIMP, ImageMagick, IrfanView, LibreOffice, Netpbm, PaintShop Pro, PMView, and\n" \
+                            "XnView among others support Sun Raster image files. The format does not support transparency.";
+    image_formats[++i].data = ".ras";
+    image_formats[i].name = "Sun Rasters - *.ras";
+    image_formats[i].desc = image_formats[i-1].desc;
+    image_formats[++i].data = ".tiff";
+    image_formats[i].name = "TIFF Files - *.tiff";
+    image_formats[i].desc = "Tag Image File Format (TIFF or TIF), is an image file format for storing raster graphics\n" \
+                            "images, popular among graphic artists, the publishing industry, and photographers. TIFF is\n" \
+                            "widely supported by scanning, faxing, word processing, optical character recognition,\n" \
+                            "image manipulation, desktop publishing, and page-layout applications.";
+    image_formats[++i].data = ".tif";
+    image_formats[i].name = "TIFF Files - *.tif";
+    image_formats[i].desc = image_formats[i-1].desc;
+    image_formats[++i].data = ".exr";
+    image_formats[i].name = "OpenEXR Image Files - *.exr";
+    image_formats[i].desc = "OpenEXR is a high-dynamic range, multi-channel raster file format, created under a free\n" \
+                            "software license similar to the BSD license.  It supports multiple channels of potentially\n" \
+                            "different pixel sizes, including 32-bit unsigned integer, 32-bit and 16-bit floating point\n" \
+                            "values, as well as various compression techniques which include lossless and lossy\n" \
+                            "compression algorithms. It also has arbitrary channels and encodes multiple points of view\n" \
+                            "such as left- and right-camera images.";
+    image_formats[++i].data = ".hdr";
+    image_formats[i].name = "Radiance HDR - *.hdr";
+    image_formats[i].desc = "RGBE or Radiance HDR is an image format that stores pixels as one byte each for RGB (red,\n" \
+                            "green, and blue) values with a one byte shared exponent. Thus it stores four bytes per pixel.\n" \
+                            "RGBE allows pixels to have the dynamic range and precision of floating-point values in a\n" \
+                            "relatively compact data structure (32 bits per pixel).";
+    image_formats[++i].data = ".pic";
+    image_formats[i].name = "Radiance HDR - *.pic";
+    image_formats[i].desc = image_formats[i-1].desc;
+    PopulateComboBoxes(ui.comboBox_ImageFormat, image_formats, ++i);
 
     /* https://docs.opencv.org/4.x/d4/da8/group__imgcodecs.html#ga288b8b3da0892bd651fce07b3bbd3a56
     *.bmp, *.dib, *.jpeg, *.jpg, *.jpe, *.jp2, *.png, *.webp, *.avif, *.pbm, *.pgm, *.ppm, *.pxm, *.pnm, *.pfm, *.sr, *.ras, *.tiff, *.tif, *.exr, *.hdr, *.pic"; */
 
-    // comboBox_Subsampling
-    format_subsamplings[0].data = cv::IMWRITE_JPEG_SAMPLING_FACTOR_411;
-    format_subsamplings[0].name = "4x1, 1x1, 1x1";
-    format_subsamplings[0].desc = "JPEG Sampling 4:1:1.";
-    format_subsamplings[1].data = cv::IMWRITE_JPEG_SAMPLING_FACTOR_420;
-    format_subsamplings[1].name = "2x2, 1x1, 1x1 (Default)";
-    format_subsamplings[1].desc = "JPEG Sampling 4:2:0. In most cases this is the best option.";
-    format_subsamplings[2].data = cv::IMWRITE_JPEG_SAMPLING_FACTOR_422;
-    format_subsamplings[2].name = "2x1, 1x1, 1x1";
-    format_subsamplings[2].desc = "JPEG Sampling 4:2:2.";
-    format_subsamplings[3].data = cv::IMWRITE_JPEG_SAMPLING_FACTOR_440;
-    format_subsamplings[3].name = "1x2, 1x1, 1x1";
-    format_subsamplings[3].desc = "JPEG Sampling 4:4:0.";
-    format_subsamplings[4].data = cv::IMWRITE_JPEG_SAMPLING_FACTOR_444;
-    format_subsamplings[4].name = "1x1, 1x1, 1x1 (No Subsampling)";
-    format_subsamplings[4].desc = "JPEG Sampling 4:4:4. It can help to turn off subsampling when using more than one quality setting (Luma/Chroma).";
-    PopulateComboBoxes(ui.comboBox_Subsampling, format_subsamplings, 5);
+    // Specific Format Options Text (multiple sets)
+    format_jpeg_options[0].data = 1;
+    format_jpeg_options[0].name = "Subsampling:";
+    format_jpeg_options[0].desc = "Chroma subsampling is the practice of encoding images by implementing less resolution\n" \
+                                  "for chroma information than for luma information, taking advantage of the human visual\n" \
+                                  "system's lower acuity for color differences than for luminance.";
+    format_jpeg_options[1].data = 95;
+    format_jpeg_options[1].name = "Quality:";
+    format_jpeg_options[1].desc = "The JPEG format can set quality from 0 to 100 (the higher is the better). Default value is 95.";
+    format_jpeg_options[2].data = 0;
+    format_jpeg_options[2].name = "Optimize";
+    format_jpeg_options[2].desc = "JPEG optimize can lower file sizes by striping unnecessary metadata, but only noticeable\n" \
+                                  "at higher quality ranges (95+). Default is unchecked.";
+    format_jpeg_options[3].data = 0;
+    format_jpeg_options[3].name = "Progressive";
+    format_jpeg_options[3].desc = "Using the JPEG interlaced progressive format data is compressed in multiple passes of\n" \
+                                  "progressively higher detail.This is ideal for large images that will be displayed while\n" \
+                                  "downloading over a slow connection, allowing a reasonable preview after receiving only a\n" \
+                                  "portion of the data. Default is unchecked.";
+    format_jpeg_options[4].data = 0;
+    format_jpeg_options[4].name = "Restart Interval:";
+    format_jpeg_options[4].desc = "Restart interval specifies the interval between restart markers, in Minimum Coded Units\n" \
+                                  "(MCUs).They were designed to allow resynchronization after an error, but also now serve a\n" \
+                                  "new purpose, to allow for multi - threaded JPEG encoders and decoders. Default value is 95.";
+    format_jpeg_options[5].data = -1;
+    format_jpeg_options[5].name = "Luma:";
+    format_jpeg_options[5].desc = "Separate and adjust the luma quality between to 0 and 100 (-1 don’t use, default). When an\n" \
+                                  "image is converted from RGB to Y'CBCR, the luma component is the (Y'), representing brightness.";
+    format_jpeg_options[6].data = -1;
+    format_jpeg_options[6].name = "Chroma:";
+    format_jpeg_options[6].desc = "Separate and adjust the chroma quality between to 0 and 100 (-1 don’t use, default). When an\n" \
+                                  "image is converted from RGB to Y'CBCR, the chroma component is the (CB and CR), representing color.";
+
+    format_jp2_options[0].data = 1000;
+    format_jp2_options[0].name = "Compression Level:";
+    format_jp2_options[0].desc = "Use to specify the JPEG 2000 target compression rate with values from 0 to 1000. Default value is 1000.";
+
+    format_png_options[0].data = 0;
+    format_png_options[0].name = "Compression Strategy:";
+    format_png_options[0].desc = "PNG compression strategies are passed to the underlying zlib processing stage, and only affect the\n" \
+                                 "compression ratio, but not the correctness of the compressed output even if it is not set appropriately\n" \
+                                 "The effect of the [Filter] strategy is to force more Huffman coding and less string matching; it is\n" \
+                                 "somewhat intermediate between [Default] and [Huffman Only]. [Run-Length Encoding] is designed to be\n" \
+                                 "almost as fast as [Huffman Only], but gives better compression for PNG image data. [Fixed (No Huffman)]\n" \
+                                 "prevents the use of dynamic Huffman codes, allowing for a simpler decoder for special applications.";
+    format_png_options[1].data = 0;
+    format_png_options[1].name = "Binary Level";
+    format_png_options[1].desc = "If binary level (bi-level) is checked a grayscale PNG image will be created.";
+    format_png_options[2].data = 1;
+    format_png_options[2].name = "Compression Level";
+    format_png_options[2].desc = "PNG compression levels are from 0 to 9 with higher values meaning a smaller file size and longer\n" \
+                                 "compression time. If specified, the strategy is changed to [Default].\n" \
+                                 "Default value is 1 (best speed setting).";
+
+    format_exr_options[0].data = 3;
+    format_exr_options[0].name = "Compression Type:";
+    format_exr_options[0].desc = "Override EXR compression type (ZLib is default)";
+    format_exr_options[1].data = 0;
+    format_exr_options[1].name = "Store as FP16 (HALF)";
+    format_exr_options[1].desc = "Override EXR Storage Type";
+    format_exr_options[2].data = 1;
+    format_exr_options[2].name = "Store as FP32 (Default)";
+    format_exr_options[2].desc = "Override EXR Storage Type";
+    format_exr_options[3].data = 45;
+    format_exr_options[3].name = "Compression Level:";
+    format_exr_options[3].desc = "Override EXR DWA Compression Level. Default value is 45.";
+
+    // comboBox_FormatFlags (multiple sets)
+    format_jpeg_subsamplings[0].data = cv::IMWRITE_JPEG_SAMPLING_FACTOR_411;
+    format_jpeg_subsamplings[0].name = "4x1, 1x1, 1x1";
+    format_jpeg_subsamplings[0].desc = "JPEG Sampling 4:1:1.";
+    format_jpeg_subsamplings[1].data = cv::IMWRITE_JPEG_SAMPLING_FACTOR_420;
+    format_jpeg_subsamplings[1].name = "2x2, 1x1, 1x1 (Default)";
+    format_jpeg_subsamplings[1].desc = "JPEG Sampling 4:2:0. In most cases this is the best option.";
+    format_jpeg_subsamplings[2].data = cv::IMWRITE_JPEG_SAMPLING_FACTOR_422;
+    format_jpeg_subsamplings[2].name = "2x1, 1x1, 1x1";
+    format_jpeg_subsamplings[2].desc = "JPEG Sampling 4:2:2.";
+    format_jpeg_subsamplings[3].data = cv::IMWRITE_JPEG_SAMPLING_FACTOR_440;
+    format_jpeg_subsamplings[3].name = "1x2, 1x1, 1x1";
+    format_jpeg_subsamplings[3].desc = "JPEG Sampling 4:4:0.";
+    format_jpeg_subsamplings[4].data = cv::IMWRITE_JPEG_SAMPLING_FACTOR_444;
+    format_jpeg_subsamplings[4].name = "1x1, 1x1, 1x1 (No Subsampling)";
+    format_jpeg_subsamplings[4].desc = "JPEG Sampling 4:4:4. It can help to turn off subsampling when using more than one quality\n" \
+                                       "setting (Luma/Chroma).";
+    PopulateComboBoxes(ui.comboBox_FormatFlags, format_jpeg_subsamplings, 5);
+
+    format_png_compression[0].data = cv::IMWRITE_PNG_STRATEGY_DEFAULT;
+    format_png_compression[0].name = "Default";
+    format_png_compression[0].desc = "Use this value for normal data.";
+    format_png_compression[1].data = cv::IMWRITE_PNG_STRATEGY_FILTERED;
+    format_png_compression[1].name = "Filtered";
+    format_png_compression[1].desc = "Use this value for data produced by a filter (or predictor). Filtered data consists mostly of small\n" \
+                                     "values with a somewhat random distribution.In this case, the compression algorithm is tuned to\n" \
+                                     "compress them better.";
+    format_png_compression[2].data = cv::IMWRITE_PNG_STRATEGY_HUFFMAN_ONLY;
+    format_png_compression[2].name = "Huffman Only";
+    format_png_compression[2].desc = "Use this value to force Huffman encoding only (no string match).";
+    format_png_compression[3].data = cv::IMWRITE_PNG_STRATEGY_RLE;
+    format_png_compression[3].name = "Run-Length Encoding";
+    format_png_compression[3].desc = "Use this value to limit match distances to one (run-length encoding).";
+    format_png_compression[4].data = cv::IMWRITE_PNG_STRATEGY_FIXED;
+    format_png_compression[4].name = "Fixed (No Huffman)";
+    format_png_compression[4].desc = "Using this value prevents the use of dynamic Huffman codes, allowing for a simpler decoder for\n" \
+                                     "special applications.";
+
+    format_pam_tupletype[0].data = cv::IMWRITE_PAM_FORMAT_NULL;
+    format_pam_tupletype[0].name = "Format Null";
+    format_pam_tupletype[0].desc = "";
+    format_pam_tupletype[1].data = cv::IMWRITE_PAM_FORMAT_BLACKANDWHITE;
+    format_pam_tupletype[1].name = "Format Black and White";
+    format_pam_tupletype[1].desc = "";
+    format_pam_tupletype[2].data = cv::IMWRITE_PAM_FORMAT_GRAYSCALE;
+    format_pam_tupletype[2].name = "Format Grayscale";
+    format_pam_tupletype[2].desc = "";
+    format_pam_tupletype[3].data = cv::IMWRITE_PAM_FORMAT_GRAYSCALE_ALPHA;
+    format_pam_tupletype[3].name = "Format Grayscale Alpha";
+    format_pam_tupletype[3].desc = "";
+    format_pam_tupletype[4].data = cv::IMWRITE_PAM_FORMAT_RGB;
+    format_pam_tupletype[4].name = "Format RGB";
+    format_pam_tupletype[4].desc = "";
+    format_pam_tupletype[5].data = cv::IMWRITE_PAM_FORMAT_RGB_ALPHA;
+    format_pam_tupletype[5].name = "Format RGB Alpha";
+    format_pam_tupletype[5].desc = "";
+
+    format_exr_compression[0].data = cv::IMWRITE_EXR_COMPRESSION_NO;
+    format_exr_compression[0].name = "None";
+    format_exr_compression[0].desc = "No Compression.";
+    format_exr_compression[1].data = cv::IMWRITE_EXR_COMPRESSION_RLE;
+    format_exr_compression[1].name = "Run-Length Encoding";
+    format_exr_compression[1].desc = "Run-length encoding compression.";
+    format_exr_compression[2].data = cv::IMWRITE_EXR_COMPRESSION_ZIPS;
+    format_exr_compression[2].name = "ZLib 1 SL";
+    format_exr_compression[2].desc = "ZLib compression, one scan line at a time.";
+    format_exr_compression[3].data = cv::IMWRITE_EXR_COMPRESSION_ZIP;
+    format_exr_compression[3].name = "ZLib 16 SL (Default)";
+    format_exr_compression[3].desc = "ZLib compression in blocks of 16 scan lines (default).";
+    format_exr_compression[4].data = cv::IMWRITE_EXR_COMPRESSION_PIZ;
+    format_exr_compression[4].name = "Piz Wavelet";
+    format_exr_compression[4].desc = "Piz-based wavelet compression.";
+    format_exr_compression[5].data = cv::IMWRITE_EXR_COMPRESSION_PXR24;
+    format_exr_compression[5].name = "PXR24 (Lossy)";
+    format_exr_compression[5].desc = "Lossy 24-bit float compression.";
+    format_exr_compression[6].data = cv::IMWRITE_EXR_COMPRESSION_B44;
+    format_exr_compression[6].name = "4-by-4 Fixed (Lossy)";
+    format_exr_compression[6].desc = "B44 lossy 4-by-4 pixel block compression, fixed compression rate.";
+    format_exr_compression[7].data = cv::IMWRITE_EXR_COMPRESSION_B44A;
+    format_exr_compression[7].name = "4-by-4 Flat (Lossy)";
+    format_exr_compression[7].desc = "B44A lossy 4-by-4 pixel block compression, flat fields are compressed more.";
+    format_exr_compression[8].data = cv::IMWRITE_EXR_COMPRESSION_DWAA;
+    format_exr_compression[8].name = "DWAA 32 SL (Lossy)";
+    format_exr_compression[8].desc = "DWAA Lossy DCT based compression, in blocks of 32 scanlines. More efficient for partial buffer access.";
+    format_exr_compression[9].data = cv::IMWRITE_EXR_COMPRESSION_DWAB;
+    format_exr_compression[9].name = "DWAB 256 SL (Lossy)";
+    format_exr_compression[9].desc = "DWAB Lossy DCT based compression, in blocks of 256 scanlines. More efficient space wise and faster\n" \
+                                     "to decode full frames than DWAA.";
+
+    format_hdr_compression[0].data = cv::IMWRITE_HDR_COMPRESSION_NONE;
+    format_hdr_compression[0].name = "None (Default)";
+    format_hdr_compression[0].desc = "No compression.";
+    format_hdr_compression[1].data = cv::IMWRITE_HDR_COMPRESSION_RLE;
+    format_hdr_compression[1].name = "Run-Length Encoding";
+    format_hdr_compression[1].desc = "The only compression option.";
 
 
 
@@ -352,7 +538,6 @@ BatchItImage::BatchItImage(QWidget* parent) : QMainWindow(parent)
 
     // Create image extension string for "file open dialog"
     supported_image_extensions_dialog_str.append("Images: (");
-    //for (const auto& ext : supported_images) {
     for (const auto& ext : image_formats) {
         supported_image_extensions_dialog_str.append("*" + std::get<std::string>(ext.data) + " ");
     }
@@ -393,6 +578,30 @@ BatchItImage::BatchItImage(QWidget* parent) : QMainWindow(parent)
     connect(ui.lineEdit_AbsolutePath, SIGNAL(editingFinished()), this, SLOT(CheckAbsolutePath()));
     connect(ui.pushButton_FindAbsolutePath, &QAbstractButton::pressed,
         [this] { ui.lineEdit_AbsolutePath->setText(GetSaveDirectoryPath()); });
+    //connect(ui.comboBox_ImageFormat, SIGNAL(currentIndexChanged(int)), this, SLOT(EnableSpecificFormatOptions(int)));
+    connect(ui.comboBox_ImageFormat, &QComboBox::currentIndexChanged,
+        [this] {
+            ui.comboBox_ImageFormat->setToolTip(ui.comboBox_ImageFormat->currentData(Qt::ToolTipRole).toString());
+            EnableSpecificFormatOptions();
+        });
+    connect(ui.comboBox_FormatFlags, &QComboBox::currentIndexChanged,
+        [this] {
+            ui.comboBox_FormatFlags->setToolTip(ui.comboBox_FormatFlags->currentData(Qt::ToolTipRole).toString());
+
+            if (ui.comboBox_ImageFormat->currentData() == ".exr") {
+                if (ui.comboBox_FormatFlags->currentData() == cv::IMWRITE_EXR_COMPRESSION_DWAA or
+                    ui.comboBox_FormatFlags->currentData() == cv::IMWRITE_EXR_COMPRESSION_DWAB) {
+                    DEBUG("IMWRITE_EXR_COMPRESSION_DWA");
+                    ui.label_Compression->setFont(*font_default);
+                    ui.spinBox_Compression->setEnabled(true);
+                    ui.spinBox_ExtraSetting1->setSingleStep(1);
+                }
+                else {
+                    ui.label_Compression->setFont(*font_default_light);
+                    ui.spinBox_Compression->setEnabled(false);
+                }
+            }
+        });
 
 
 
@@ -400,7 +609,6 @@ BatchItImage::BatchItImage(QWidget* parent) : QMainWindow(parent)
         Testing
     ****************************/
     
-
     // TODO: Combine Tree
     ui.treeWidget_Combine->clear();
 
@@ -476,6 +684,276 @@ void BatchItImage::PopulateComboBoxes(QComboBox* cb, UIData items[], int items_s
             Qt::ToolTipRole
         );
     }
+    cb->setToolTip(cb->currentData(Qt::ToolTipRole).toString());
+}
+
+
+void BatchItImage::EnableSpecificFormatOptions(bool loading_preset)
+{
+    //DEBUG2("EnableSpecificFormatOptions: ", loading_presets);
+    const std::string format = ui.comboBox_ImageFormat->currentData().toString().toStdString();
+
+    int NONE = 0;
+    int FORMATFLAGS = 1;
+    int QUALITY = 2;
+    int OPTIMIZE = 4;
+    int PROGRESSIVE = 8;
+    int COMPRESSION = 16;
+    int EXTRASETTING1 = 32;
+    int EXTRASETTING2 = 64;
+    auto enableOptions = [&](int options)
+        {
+            if (options & FORMATFLAGS) {
+                ui.label_FormatFlags->setFont(*font_default);
+                ui.comboBox_FormatFlags->setEnabled(true);
+            }
+            else {
+                ui.label_FormatFlags->setFont(*font_default_light);
+                ui.comboBox_FormatFlags->setEnabled(false);
+            }
+            if (options & QUALITY) {
+                ui.label_Quality->setFont(*font_default);
+                ui.horizontalSlider_Quality->setEnabled(true);
+            }
+            else {
+                ui.label_Quality->setFont(*font_default_light);
+                ui.horizontalSlider_Quality->setEnabled(false);
+            }
+            if (options & OPTIMIZE) {
+                ui.checkBox_Optimize->setAutoExclusive(false);
+                ui.checkBox_Optimize->setFont(*font_default);
+                ui.checkBox_Optimize->setEnabled(true);
+            }
+            else {
+                ui.checkBox_Optimize->setFont(*font_default_light);
+                ui.checkBox_Optimize->setEnabled(false);
+            }
+            if (options & PROGRESSIVE) {
+                ui.checkBox_Progressive->setAutoExclusive(false);
+                ui.checkBox_Progressive->setFont(*font_default);
+                ui.checkBox_Progressive->setEnabled(true);
+            }
+            else {
+                ui.checkBox_Progressive->setFont(*font_default_light);
+                ui.checkBox_Progressive->setEnabled(false);
+            }
+            if (options & COMPRESSION) {
+                ui.label_Compression->setFont(*font_default);
+                ui.spinBox_Compression->setEnabled(true);
+                ui.spinBox_ExtraSetting1->setSingleStep(1);
+            }
+            else {
+                ui.label_Compression->setFont(*font_default_light);
+                ui.spinBox_Compression->setEnabled(false);
+            }
+            if (options & EXTRASETTING1) {
+                ui.label_ExtraSetting1->setFont(*font_default);
+                ui.spinBox_ExtraSetting1->setEnabled(true);
+                ui.spinBox_ExtraSetting1->setSingleStep(1);
+            }
+            else {
+                ui.label_ExtraSetting1->setFont(*font_default_light);
+                ui.spinBox_ExtraSetting1->setEnabled(false);
+            }
+            if (options & EXTRASETTING2) {
+                ui.label_ExtraSetting2->setFont(*font_default);
+                ui.spinBox_ExtraSetting2->setEnabled(true);
+                ui.spinBox_ExtraSetting2->setSingleStep(1);
+            }
+            else {
+                ui.label_ExtraSetting2->setFont(*font_default_light);
+                ui.spinBox_ExtraSetting2->setEnabled(false);
+            }
+            
+            
+        };
+
+    // IMWRITE_JPEG_QUALITY  IMWRITE_JPEG_PROGRESSIVE  IMWRITE_JPEG_OPTIMIZE  IMWRITE_JPEG_RST_INTERVAL  IMWRITE_JPEG_LUMA_QUALITY  IMWRITE_JPEG_CHROMA_QUALITY  IMWRITE_JPEG_SAMPLING_FACTOR
+    if (format == ".jpeg" or format == ".jpg" or format == ".jpe") { 
+        
+        enableOptions(FORMATFLAGS + QUALITY + OPTIMIZE + PROGRESSIVE + COMPRESSION + EXTRASETTING1 + EXTRASETTING2);
+        
+        ui.label_FormatFlags->setText(format_jpeg_options[FormatJpegOptions::label_FormatFlags].name.c_str());
+        ui.label_FormatFlags->setToolTip(format_jpeg_options[FormatJpegOptions::label_FormatFlags].desc.c_str());
+        ui.label_Quality->setText(format_jpeg_options[FormatJpegOptions::label_Quality].name.c_str());
+        ui.label_Quality->setToolTip(format_jpeg_options[FormatJpegOptions::label_Quality].desc.c_str());
+        ui.checkBox_Optimize->setText(format_jpeg_options[FormatJpegOptions::checkBox_Optimize].name.c_str());
+        ui.checkBox_Optimize->setToolTip(format_jpeg_options[FormatJpegOptions::checkBox_Optimize].desc.c_str());
+        ui.checkBox_Progressive->setText(format_jpeg_options[FormatJpegOptions::checkBox_Progressive].name.c_str());
+        ui.checkBox_Progressive->setToolTip(format_jpeg_options[FormatJpegOptions::checkBox_Progressive].desc.c_str());
+        ui.label_Compression->setText(format_jpeg_options[FormatJpegOptions::label_Compression].name.c_str());
+        ui.label_Compression->setToolTip(format_jpeg_options[FormatJpegOptions::label_Compression].desc.c_str());
+        ui.label_ExtraSetting1->setText(format_jpeg_options[FormatJpegOptions::label_ExtraSetting1].name.c_str());
+        ui.label_ExtraSetting1->setToolTip(format_jpeg_options[FormatJpegOptions::label_ExtraSetting1].desc.c_str());
+        ui.label_ExtraSetting2->setText(format_jpeg_options[FormatJpegOptions::label_ExtraSetting2].name.c_str());
+        ui.label_ExtraSetting2->setToolTip(format_jpeg_options[FormatJpegOptions::label_ExtraSetting2].desc.c_str());
+
+        PopulateComboBoxes(ui.comboBox_FormatFlags, format_jpeg_subsamplings, sizeof(format_jpeg_subsamplings) / sizeof(UIData));
+        ui.horizontalSlider_Quality->setRange(0, 100);
+        ui.spinBox_Compression->setRange(0, 65535);
+        ui.spinBox_ExtraSetting1->setRange(-1, 100);
+        ui.spinBox_ExtraSetting2->setRange(-1, 100);
+
+        if (not loading_preset and last_selected_format != ".jpeg" and last_selected_format != ".jpg" and last_selected_format != ".jpe") {
+            ui.comboBox_FormatFlags->setCurrentIndex(std::get<int>(format_jpeg_options[FormatJpegOptions::label_FormatFlags].data));
+            ui.horizontalSlider_Quality->setValue(std::get<int>(format_jpeg_options[FormatJpegOptions::label_Quality].data));
+            ui.checkBox_Optimize->setChecked(std::get<int>(format_jpeg_options[FormatJpegOptions::checkBox_Optimize].data));
+            ui.checkBox_Progressive->setChecked(std::get<int>(format_jpeg_options[FormatJpegOptions::checkBox_Progressive].data));
+            ui.spinBox_Compression->setValue(std::get<int>(format_jpeg_options[FormatJpegOptions::label_Compression].data));
+            ui.spinBox_ExtraSetting1->setValue(std::get<int>(format_jpeg_options[FormatJpegOptions::label_ExtraSetting1].data));
+            ui.spinBox_ExtraSetting2->setValue(std::get<int>(format_jpeg_options[FormatJpegOptions::label_ExtraSetting2].data));
+        }
+    }
+    else if (format == ".jp2") { // cv::IMWRITE_JPEG2000_COMPRESSION_X1000
+        
+        enableOptions(COMPRESSION);
+
+        ui.label_Compression->setText(format_jp2_options[FormatJp2Options::label_Compression].name.c_str());
+        ui.label_Compression->setToolTip(format_jp2_options[FormatJp2Options::label_Compression].desc.c_str());
+
+        ui.spinBox_Compression->setRange(0, 1000);
+
+        if (not loading_preset and last_selected_format != ".jp2") {
+            ui.spinBox_Compression->setValue(std::get<int>(format_jp2_options[FormatJp2Options::label_Compression].data));
+        }
+    }
+    else if (format == ".png") { // cv::IMWRITE_PNG_COMPRESSION  cv::IMWRITE_PNG_STRATEGY  cv::IMWRITE_PNG_BILEVEL
+        
+        enableOptions(FORMATFLAGS + OPTIMIZE + COMPRESSION);
+
+        ui.label_FormatFlags->setText(format_png_options[FormatPngOptions::label_FormatFlags].name.c_str());
+        ui.label_FormatFlags->setToolTip(format_png_options[FormatPngOptions::label_FormatFlags].desc.c_str());
+        ui.checkBox_Optimize->setText(format_png_options[FormatPngOptions::checkBox_Optimize].name.c_str());
+        ui.checkBox_Optimize->setToolTip(format_png_options[FormatPngOptions::checkBox_Optimize].desc.c_str());
+        ui.label_Compression->setText(format_png_options[FormatPngOptions::label_Compression].name.c_str());
+        ui.label_Compression->setToolTip(format_png_options[FormatPngOptions::label_Compression].desc.c_str());
+
+        PopulateComboBoxes(ui.comboBox_FormatFlags, format_png_compression, sizeof(format_png_compression) / sizeof(UIData));
+        ui.spinBox_Compression->setRange(0, 9);
+
+        if (not loading_preset and last_selected_format != ".png") {
+            ui.comboBox_FormatFlags->setCurrentIndex(std::get<int>(format_png_options[FormatPngOptions::label_FormatFlags].data));
+            ui.checkBox_Optimize->setChecked(std::get<int>(format_png_options[FormatPngOptions::checkBox_Optimize].data));
+            ui.spinBox_Compression->setValue(std::get<int>(format_png_options[FormatPngOptions::label_Compression].data));
+        }
+    }
+    else if (format == ".webp") { // cv::IMWRITE_WEBP_QUALITY 
+
+        enableOptions(QUALITY);
+
+        ui.label_Quality->setText("Quality:");
+
+        ui.horizontalSlider_Quality->setRange(0, 100);
+
+        if (not loading_preset and last_selected_format != ".webp") {
+            ui.horizontalSlider_Quality->setValue(95);
+        }
+    }
+    else if (format == ".avif") { // cv::IMWRITE_AVIF_QUALITY  cv::IMWRITE_AVIF_DEPTH  cv::IMWRITE_AVIF_SPEED    IMWRITE_JPEG_SAMPLING_FACTOR??? test?
+
+        enableOptions(QUALITY + COMPRESSION + EXTRASETTING2);
+
+        //ui.label_FormatFlags->setText(":");
+        ui.label_Quality->setText("Quality:");
+        ui.label_Compression->setText("Speed:");
+        ui.label_ExtraSetting2->setText("Color Depth:");
+
+        ui.horizontalSlider_Quality->setRange(0, 100);
+        ui.spinBox_Compression->setRange(0, 9);
+        ui.spinBox_ExtraSetting2->setRange(8, 12); // TODO: validate to only type 8,10,12?
+        ui.spinBox_ExtraSetting2->setSingleStep(2);
+
+        if (not loading_preset and last_selected_format != ".avif") {
+            //ui.comboBox_FormatFlags->setCurrentIndex(0);
+            ui.horizontalSlider_Quality->setValue(95);
+            ui.spinBox_Compression->setValue(9);
+            ui.spinBox_ExtraSetting2->setValue(8);
+        }
+    }
+    else if (format == ".pbm" or format == ".pgm" or format == ".ppm") { // IMWRITE_PXM_BINARY
+
+        enableOptions(OPTIMIZE);
+
+        ui.checkBox_Optimize->setText("Binary Format");
+
+        if (not loading_preset and last_selected_format != ".pbm" and last_selected_format != ".pgm" and last_selected_format != ".ppm") {
+            ui.checkBox_Optimize->setChecked(true);
+        }
+    }
+    else if (format == ".pam") { // IMWRITE_PAM_TUPLETYPE
+
+        enableOptions(FORMATFLAGS);
+
+        ui.label_FormatFlags->setText("Tuple Type:");
+        //ui.label_FormatFlags->setToolTip("PAM specific Tuple Type flags used in PAM files.");
+
+        PopulateComboBoxes(ui.comboBox_FormatFlags, format_pam_tupletype, 6);
+
+        if (not loading_preset and last_selected_format != ".pam") {
+            ui.comboBox_FormatFlags->setCurrentIndex(0);
+        }
+    }
+    else if (format == ".tiff" or format == ".tif") {
+        /* TODO: http://www.simplesystems.org/libtiff/
+        IMWRITE_TIFF_RESUNIT 
+        For TIFF, use to specify which DPI resolution unit to set; see libtiff documentation for valid values.
+
+        IMWRITE_TIFF_XDPI
+        For TIFF, use to specify the X direction DPI.
+
+        IMWRITE_TIFF_YDPI
+        For TIFF, use to specify the Y direction DPI.
+
+        IMWRITE_TIFF_COMPRESSION
+        For TIFF, use to specify the image compression scheme. 
+        See libtiff for integer constants corresponding to compression formats.
+        Note, for images whose depth is CV_32F, only libtiff's SGILOG compression scheme is used. 
+        For other supported depths, the compression scheme can be specified by this flag;
+        LZW compression is the default.
+        */
+    }
+    else if (format == ".exr") { // IMWRITE_EXR_TYPE  IMWRITE_EXR_COMPRESSION  IMWRITE_EXR_DWA_COMPRESSION_LEVEL
+
+        enableOptions(FORMATFLAGS + OPTIMIZE + PROGRESSIVE + COMPRESSION);
+
+        ui.label_FormatFlags->setText(format_exr_options[FormatExrOptions::label_FormatFlags].name.c_str());
+        ui.label_FormatFlags->setToolTip(format_exr_options[FormatExrOptions::label_FormatFlags].desc.c_str());
+        ui.checkBox_Optimize->setText(format_exr_options[FormatExrOptions::checkBox_Optimize].name.c_str());
+        ui.checkBox_Optimize->setToolTip(format_exr_options[FormatExrOptions::checkBox_Optimize].desc.c_str());
+        ui.checkBox_Progressive->setText(format_exr_options[FormatExrOptions::checkBox_Progressive].name.c_str());
+        ui.checkBox_Progressive->setToolTip(format_exr_options[FormatExrOptions::checkBox_Progressive].desc.c_str());
+        ui.label_Compression->setText(format_exr_options[FormatExrOptions::label_Compression].name.c_str());
+        ui.label_Compression->setToolTip(format_exr_options[FormatExrOptions::label_Compression].desc.c_str());
+
+        PopulateComboBoxes(ui.comboBox_FormatFlags, format_exr_compression, sizeof(format_exr_compression) / sizeof(UIData));
+        ui.checkBox_Optimize->setAutoExclusive(true);
+        ui.checkBox_Progressive->setAutoExclusive(true);
+
+        if (not loading_preset and last_selected_format != ".exr") {
+            ui.comboBox_FormatFlags->setCurrentIndex(std::get<int>(format_exr_options[FormatExrOptions::label_FormatFlags].data));
+            ui.checkBox_Optimize->setChecked(std::get<int>(format_exr_options[FormatExrOptions::checkBox_Optimize].data));
+            ui.checkBox_Progressive->setChecked(std::get<int>(format_exr_options[FormatExrOptions::checkBox_Progressive].data));
+            ui.spinBox_Compression->setValue(std::get<int>(format_exr_options[FormatExrOptions::label_Compression].data));
+        }
+
+    }
+    else if (format == ".hdr" or format == ".pic") { // IMWRITE_HDR_COMPRESSION 
+
+        enableOptions(FORMATFLAGS);
+
+        ui.label_FormatFlags->setText("Compression Strategy:");
+
+        PopulateComboBoxes(ui.comboBox_FormatFlags, format_hdr_compression, 2);
+
+        if (not loading_preset and last_selected_format != ".hdr" and last_selected_format != ".pic") {
+            ui.comboBox_FormatFlags->setCurrentIndex(0);
+        }
+    }
+    else {
+        enableOptions(NONE);
+    }
+
+    last_selected_format = format;
 }
 
 /// <summary>
@@ -654,11 +1132,11 @@ void BatchItImage::SavePreset(bool save_all)
         preset_list.at(current_selected_preset).rotation_angle = ui.dial_Rotation->value();
         preset_list.at(current_selected_preset).format_change = ui.groupBox_ChangeFormat->isChecked();
         preset_list.at(current_selected_preset).format_extension = ui.comboBox_ImageFormat->currentIndex();
-        preset_list.at(current_selected_preset).format_subsampling = ui.comboBox_Subsampling->currentIndex();
+        preset_list.at(current_selected_preset).format_subsampling = ui.comboBox_FormatFlags->currentIndex();
         preset_list.at(current_selected_preset).format_optimize = ui.checkBox_Optimize->isChecked();
         preset_list.at(current_selected_preset).format_progressive = ui.checkBox_Progressive->isChecked();
         preset_list.at(current_selected_preset).format_quality = ui.horizontalSlider_Quality->value();
-        preset_list.at(current_selected_preset).format_compression = ui.horizontalSlider_Compression->value();
+        preset_list.at(current_selected_preset).format_compression = ui.spinBox_Compression->value();
         preset_list.at(current_selected_preset).format_extra1 = ui.spinBox_ExtraSetting1->value();
         preset_list.at(current_selected_preset).format_extra2 = ui.spinBox_ExtraSetting2->value();
         preset_list.at(current_selected_preset).save_file_policy_option = save_option;
@@ -728,11 +1206,11 @@ void BatchItImage::LoadPreset(Preset preset)
     ui.lcdNumber_Rotation->display(preset.rotation_angle);
     ui.groupBox_ChangeFormat->setChecked(preset.format_change);
     ui.comboBox_ImageFormat->setCurrentIndex(preset.format_extension);
-    ui.comboBox_Subsampling->setCurrentIndex(preset.format_subsampling);
+    ui.comboBox_FormatFlags->setCurrentIndex(preset.format_subsampling);
     ui.checkBox_Optimize->setChecked(preset.format_optimize);
     ui.checkBox_Progressive->setChecked(preset.format_progressive);
     ui.horizontalSlider_Quality->setValue(preset.format_quality);
-    ui.horizontalSlider_Compression->setValue(preset.format_compression);
+    ui.spinBox_Compression->setValue(preset.format_compression);
     ui.spinBox_ExtraSetting1->setValue(preset.format_extra1);
     ui.spinBox_ExtraSetting2->setValue(preset.format_extra2);
     ui.lineEdit_FileName->setText(QString::fromStdString(preset.save_file_name_change));
@@ -753,6 +1231,8 @@ void BatchItImage::LoadPreset(Preset preset)
         ui.lineEdit_RelativePath->setText(QString::fromStdString(preset.save_file_path_change));
     else
         ui.lineEdit_AbsolutePath->setText(QString::fromStdString(preset.save_file_path_change));
+
+    EnableSpecificFormatOptions(true);
 }
 
 /// <summary>
@@ -1025,7 +1505,7 @@ void BatchItImage::SaveImageFile(cv::Mat* image, uint image_edits_made, int imag
             
             // TODO: Format Specific Paramaters
             int subsampling = std::get<int>(
-                format_subsamplings[preset_list.at(current_selected_preset).format_subsampling].data
+                format_jpeg_subsamplings[preset_list.at(current_selected_preset).format_subsampling].data
             );
             DEBUG(subsampling);
             bool optimize = preset_list.at(current_selected_preset).format_optimize;
@@ -1047,7 +1527,8 @@ void BatchItImage::SaveImageFile(cv::Mat* image, uint image_edits_made, int imag
             image_saved = imwrite(new_file_path.generic_string(), image_edited, params);
         }
         catch (const cv::Exception& err) {
-            DEBUG(err.what());
+            DEBUG(":Exception:");
+            DEBUG_ERR(err.what());
             // TODO: log
         }
         if (image_saved) {
@@ -1882,8 +2363,9 @@ void BatchItImage::AddTextToFileName()
 void BatchItImage::CheckRelativePath()
 {
     QString existing_text = ui.lineEdit_RelativePath->text();
-    if (existing_text.front().toLatin1() == QString::fromStdString("/") or
-        existing_text.front().toLatin1() == QString::fromStdString("\\")) {
+    if (not existing_text.isEmpty() and
+        (existing_text.front().toLatin1() == QString::fromStdString("/") or
+        existing_text.front().toLatin1() == QString::fromStdString("\\"))) {
         existing_text.removeFirst();
     }
     std::string new_rel_path = std::filesystem::path(existing_text.toStdString()).make_preferred().string();

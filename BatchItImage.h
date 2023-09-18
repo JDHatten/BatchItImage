@@ -79,6 +79,7 @@ public slots:
     void RemoveFileFromTree(const QDialogButtonBox::StandardButton& role);
 
 private slots:
+    void EnableSpecificFormatOptions(bool loading_preset = false);
     void HandleFileMetadata(FileMetadata* file_metadata);
     //void HandleFileMetadata(const std::vector<struct FileMetadata> &file_metadata);
     void DeleteConfirmationPopup(bool clear_all = false);
@@ -94,14 +95,32 @@ private:
     MessageWindow* m_window;
     bool m_window_shown = false;
 
+    struct FormatJpegOptions {
+        const enum { label_FormatFlags, label_Quality, checkBox_Optimize, checkBox_Progressive, label_Compression, label_ExtraSetting1, label_ExtraSetting2, COUNT };
+    };
+    struct FormatJp2Options { const enum { label_Compression, COUNT }; };
+    struct FormatPngOptions { const enum { label_FormatFlags, checkBox_Optimize, label_Compression, COUNT }; };
+    struct FormatExrOptions { const enum { label_FormatFlags, checkBox_Optimize, checkBox_Progressive, label_Compression, COUNT }; };
+
+    // Label and Check Box Data
+    UIData format_jpeg_options[FormatJpegOptions::COUNT];
+    UIData format_jp2_options[FormatJp2Options::COUNT];
+    UIData format_png_options[FormatPngOptions::COUNT];
+    UIData format_exr_options[FormatExrOptions::COUNT];
+
+    // Combo Box Data
     UIData width_selections[6];
     UIData height_selections[6];
     UIData resampling_selections[3];
     UIData file_name_creation[4];
     UIData image_formats[22];
-    UIData format_subsamplings[5];
+    UIData format_jpeg_subsamplings[5];
+    UIData format_png_compression[5];
+    UIData format_pam_tupletype[6];
+    UIData format_exr_compression[10];
+    UIData format_hdr_compression[2];
 
-    QString supported_image_extensions_dialog_str = ""; // Built from image_formats
+    QString supported_image_extensions_dialog_str = ""; // Built from image_formats    
 
     const enum SaveOptionSelections { OVERWRITE, RENAME_ORG, NEW_NAME };
     const enum FileColumns { FILE_SELECTED, FILE_NAME, IMAGE_DIMENSIONS, FILE_SIZE, DATE_CREATED, DATE_MODIFIED, FILE_COLUMN_COUNT };
@@ -132,6 +151,7 @@ private:
 
     std::string last_existing_load_path;
     std::string last_existing_save_path;
+    std::string last_selected_format;
 
     bool search_subdirs = true;
     std::vector<struct Preset> preset_list;
@@ -164,8 +184,6 @@ private:
     void InitiateProgressBar(int max_ticks, float multiplier);
     void InitiateProgressBar(int max_ticks);
 
-    //FileMetadataWorker* new_fm_worker;
-    //std::mutex tasks_mutex;
     void DebugListPrint(int list);
 
 protected:
