@@ -1,6 +1,7 @@
 #pragma once
 
 #include "common.h"
+#include "EnhancedSlider.h"
 #include "ImageEditor.h"
 #include "ui_BatchItImage.h"
 #include "ui_MessageWindow.h"
@@ -51,10 +52,11 @@ public:
     BatchItImage(QWidget *parent = nullptr);
     ~BatchItImage();
 
+    void LoadInUiData();
     void SavePreset(bool save_all = false);
     void LoadPreset(Preset);
     void LoadPresets();
-    void LoadFileIntoTree(int);
+    void LoadFileIntoTree(int, int = -1);
     void BuildFileMetadataList(const QStringList file_list);
     std::string BytesToFileSizeString(std::uintmax_t);
     std::string CreateNewFileName(std::string file_name_changes, std::string change_data[]);
@@ -79,6 +81,7 @@ public slots:
     void RemoveFileFromTree(const QDialogButtonBox::StandardButton& role);
 
 private slots:
+    void UpdateComboBoxToolTip();
     void EnableSpecificFormatOptions(bool loading_preset = false);
     void HandleFileMetadata(FileMetadata* file_metadata);
     //void HandleFileMetadata(const std::vector<struct FileMetadata> &file_metadata);
@@ -90,23 +93,59 @@ signals:
 
 private:
     Ui::BatchItImageClass ui;
-    //Ui::Dialog_MessageWindow* ui_m;
     QString preset_settings_file;
     MessageWindow* m_window;
     bool m_window_shown = false;
 
-    struct FormatJpegOptions {
-        const enum { label_FormatFlags, label_Quality, checkBox_Optimize, checkBox_Progressive, label_Compression, label_ExtraSetting1, label_ExtraSetting2, COUNT };
+    // Enums of named objects, widgets or methods
+    const struct FileColumn {
+        enum { FILE_SELECTED, FILE_NAME, IMAGE_DIMENSIONS, FILE_SIZE, DATE_CREATED, DATE_MODIFIED, COUNT };
+        enum { FILE_LOAD_ORDER, FILE_PATH, IMAGE_SIZES, FILE_SIZES, DATE_FILE_CREATED, DATE_FILE_MODIFIED, FILE_COLUMN_COUNT };
     };
-    struct FormatJp2Options { const enum { label_Compression, COUNT }; };
-    struct FormatPngOptions { const enum { label_FormatFlags, checkBox_Optimize, label_Compression, COUNT }; };
-    struct FormatExrOptions { const enum { label_FormatFlags, checkBox_Optimize, checkBox_Progressive, label_Compression, COUNT }; };
+    const struct SortOrder { enum { ASCENDING1, DESCENDING1, ASCENDING2, DESCENDING2 }; };
+    const struct ActionMenu { enum { action_add, action_delete, action_clear, action_select, action_view, action_preview, COUNT }; };
+    const struct SaveOption { enum { OVERWRITE, RENAME_ORG, NEW_NAME }; };
+    const struct FilePathOptions {
+        enum {
+            groupBox_FileRename, radioButton_Overwrite, radioButton_RenameOriginal, radioButton_NewFileName, label_Add,
+            groupBox_SaveDir, radioButton_RelativePath, radioButton_AbsolutePath, pushButton_AddBackOneDir, pushButton_FindAbsolutePath, COUNT
+        };
+    };
+    const struct FormatJpegOptions {
+        enum {
+            label_FormatFlags, label_Quality, checkBox_Optimize, checkBox_Progressive,
+            label_Compression, label_ExtraSetting1, label_ExtraSetting2, COUNT
+        };
+    };
+    const struct FormatJp2Options { enum { label_Compression, COUNT }; };
+    const struct FormatPngOptions { enum { label_FormatFlags, checkBox_Optimize, label_Compression, COUNT }; };
+    const struct FormatWebpOptions { enum { label_Quality, COUNT }; };
+    const struct FormatAvifOptions { enum { label_Quality, label_Compression, label_ExtraSetting2, COUNT }; };
+    const struct FormatPbmOptions { enum { checkBox_Optimize, COUNT }; };
+    const struct FormatPamOptions { enum { label_FormatFlags, COUNT }; };
+    const struct FormatTiffOptions { enum { label_FormatFlags, label_Quality, label_ExtraSetting1, label_ExtraSetting2, COUNT }; };
+    const struct FormatExrOptions { enum { label_FormatFlags, checkBox_Optimize, checkBox_Progressive, label_Compression, COUNT }; };
+    const struct FormatHdrOptions { enum { label_FormatFlags, COUNT }; };
+    const struct OtherOptions { enum { tab_1, tab_2, tab_3, checkBox_SearchSubDirs, pushButton_EditAndSave, COUNT }; };
 
-    // Label and Check Box Data
+    // Tree Data
+    UIData file_tree_headers[FileColumn::COUNT];
+    UIData file_tree_menu_items[ActionMenu::COUNT];
+    std::string file_tree_other_text[FileColumn::COUNT];
+
+    // Tab, Label, Check Box, and Button Data
+    UIData file_path_options[FilePathOptions::COUNT];
     UIData format_jpeg_options[FormatJpegOptions::COUNT];
     UIData format_jp2_options[FormatJp2Options::COUNT];
     UIData format_png_options[FormatPngOptions::COUNT];
+    UIData format_webp_options[FormatPngOptions::COUNT];
+    UIData format_avif_options[FormatAvifOptions::COUNT];
+    UIData format_pbm_options[FormatPbmOptions::COUNT];
+    UIData format_pam_options[FormatPamOptions::COUNT];
+    UIData format_tiff_options[FormatTiffOptions::COUNT];
     UIData format_exr_options[FormatExrOptions::COUNT];
+    UIData format_hdr_options[FormatHdrOptions::COUNT];
+    UIData other_options[FormatHdrOptions::COUNT];
 
     // Combo Box Data
     UIData width_selections[6];
@@ -117,15 +156,13 @@ private:
     UIData format_jpeg_subsamplings[5];
     UIData format_png_compression[5];
     UIData format_pam_tupletype[6];
+    UIData format_tiff_compression[24];
+    UIData format_tiff_resolution_unit[3];
     UIData format_exr_compression[10];
     UIData format_hdr_compression[2];
 
     QString supported_image_extensions_dialog_str = ""; // Built from image_formats    
 
-    const enum SaveOptionSelections { OVERWRITE, RENAME_ORG, NEW_NAME };
-    const enum FileColumns { FILE_SELECTED, FILE_NAME, IMAGE_DIMENSIONS, FILE_SIZE, DATE_CREATED, DATE_MODIFIED, FILE_COLUMN_COUNT };
-    const enum FileColumnsAlt { FILE_LOAD_ORDER, FILE_PATH, IMAGE_SIZES, FILE_SIZES, DATE_FILE_CREATED, DATE_FILE_MODIFIED, FILE_COLUMN_NUMBER };
-    const enum SortOrders { ASCENDING1, DESCENDING1, ASCENDING2, DESCENDING2 };
     const std::string ADD_FILE_NAME = "<FILE_NAME>";
     const std::string ADD_COUNTER = "<COUNTER>";
     const std::string ADD_WIDTH = "<WIDTH>";
@@ -153,7 +190,7 @@ private:
     std::string last_existing_save_path;
     std::string last_selected_format;
 
-    bool search_subdirs = true;
+    //bool search_subdirs = true;
     std::vector<struct Preset> preset_list;
     int current_selected_preset = 0;
     int current_file_column_sorted = -1;
@@ -165,7 +202,9 @@ private:
     std::vector<struct FileMetadata> deleted_file_metadata_list;
     int last_load_count = 0;
 
-    void PopulateComboBoxes(QComboBox*, UIData*, int);
+    void SetupFileTree();
+    void AddUiObjectData(QObject* object, UIData* ui_data);
+    void PopulateComboBox(QComboBox*, UIData*, int);
     void SetupFileTreeContextMenu();
 
     template<typename DirectoryIter>
