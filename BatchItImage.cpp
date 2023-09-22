@@ -1,4 +1,8 @@
+#ifndef    BATCHITIMAGE_H
+#define    BATCHITIMAGE_H
 #include "BatchItImage.h"
+#endif
+
 
 /*
 TODO: 
@@ -66,7 +70,7 @@ void MessageWindow::ButtonBoxClicked(QAbstractButton* button)
 /// Slot -> GetFileMetadata() -> Signal -> FileMetadataReady(FileMetadata*)
 /// </summary>
 /// <param name="file_path">--A file path string.</param>
-/// <param name="load_order">--This file metadata should be added now on initilzation.</param>
+/// <param name="load_order">--This file metadata should be added now on initialization.</param>
 /// <param name="parent">--The parent object that creates this</param>
 FileMetadataWorker::FileMetadataWorker(std::string file_path, int load_order, QObject* parent)
 {
@@ -111,7 +115,7 @@ void FileMetadataWorker::GetFileMetadata()
         file_metadata->selected = false;
     }
     else {
-        file_metadata->path = file_path; // File that could not be opened. Bad image / not an image / etc.
+        file_metadata->path = file_path; // File that could not be read. Bad image / not an image / etc.
     }
     emit FileMetadataReady(file_metadata);
 }
@@ -141,366 +145,35 @@ BatchItImage::BatchItImage(QWidget* parent) : QMainWindow(parent)
         UI Text/Data
     ****************************/
 
-    // comboBox_WidthMod Item Selections
-    width_selections[0].data = ImageEditor::NO_CHANGE;
-    width_selections[0].name = "No Change";
-    width_selections[0].desc = "Image widths may still be modified if 'keep aspect ratio' is checked.";
-    width_selections[1].data = ImageEditor::CHANGE_TO;
-    width_selections[1].name = "Change Width To:";
-    width_selections[1].desc = "All image widths will be modified to a specfic number.";
-    width_selections[2].data = ImageEditor::MODIFY_BY;
-    width_selections[2].name = "Modify Width By:";
-    width_selections[2].desc = "This adds to or subtracts from an image's current width. Ex. 1080 + '220' = 1300";
-    width_selections[3].data = ImageEditor::MODIFY_BY_PCT;
-    width_selections[3].name = "Modify Width By (%):";
-    width_selections[3].desc = "This modifies an image's current width by percetage. Ex. 720 x '200%' = 1440";
-    width_selections[4].data = ImageEditor::DOWNSCALE;
-    width_selections[4].name = "Downscale Width To:";
-    width_selections[4].desc = "All images above entered width will be modified to that specfic number.\n" \
-                               "All images already at or below that number will not be modified.";
-    width_selections[5].data = ImageEditor::UPSCALE;
-    width_selections[5].name = "Upscale Width To:";
-    width_selections[5].desc = "All images below entered width will be modified to that specfic number.\n" \
-                               "All images already at or above that number will not be modified.";
-    PopulateComboBoxes(ui.comboBox_WidthMod, width_selections, 6);
+    LoadInUiData();
 
-    // comboBox_HeightMod Item Selections
-    height_selections[0].data = ImageEditor::NO_CHANGE;
-    height_selections[0].name = "No Change";
-    height_selections[0].desc = "Image heights may still be modified if 'keep aspect ratio' is checked.";
-    height_selections[1].data = ImageEditor::CHANGE_TO;
-    height_selections[1].name = "Change Height To:";
-    height_selections[1].desc = "All images heights will be modified to a specfic number.";
-    height_selections[2].data = ImageEditor::MODIFY_BY;
-    height_selections[2].name = "Modify Height By:";
-    height_selections[2].desc = "This adds to or subtracts from an image's current height. Ex. 1080 + '220' = 1300";
-    height_selections[3].data = ImageEditor::MODIFY_BY_PCT;
-    height_selections[3].name = "Modify Height By (%):";
-    height_selections[3].desc = "This modifies an image's current height by percetage. Ex. 720 x '200%' = 1440";
-    height_selections[4].data = ImageEditor::DOWNSCALE;
-    height_selections[4].name = "Downscale Height To:";
-    height_selections[4].desc = "All images above entered height will be modified to that specfic number.\n" \
-                                "All images already at or below that number will not be modified.";
-    height_selections[5].data = ImageEditor::UPSCALE;
-    height_selections[5].name = "Upscale Height To:";
-    height_selections[5].desc = "All images below entered height will be modified to that specfic number.\n" \
-                                "All images already at or above that number will not be modified.";
-    PopulateComboBoxes(ui.comboBox_HeightMod, height_selections, 6);
+    ui.tabWidget->setCurrentIndex(std::get<int>(other_options[OtherOptions::tab_1].data));
+    ui.tabWidget->setTabText(OtherOptions::tab_1, QString::fromStdString(other_options[OtherOptions::tab_1].name));
+    ui.tab_1->setToolTip(QString::fromStdString(other_options[OtherOptions::tab_1].desc));
+    ui.tabWidget->setTabText(OtherOptions::tab_2, QString::fromStdString(other_options[OtherOptions::tab_2].name));
+    ui.tab_2->setToolTip(QString::fromStdString(other_options[OtherOptions::tab_2].desc));
+    ui.tabWidget->setTabText(OtherOptions::tab_3, QString::fromStdString(other_options[OtherOptions::tab_3].name));
+    ui.tab_3->setToolTip(QString::fromStdString(other_options[OtherOptions::tab_3].desc));
 
-    ui.checkBox_KeepAspectRatio->setText("Keep Aspect Ratio");
-    ui.checkBox_KeepAspectRatio->setToolTip("In order to keep aspect ratio, either width or height must be set to \"No Change\" or \"0\"");
+    AddUiObjectData(ui.groupBox_FileRename, &file_path_options[FilePathOptions::groupBox_FileRename]);
+    AddUiObjectData(ui.radioButton_Overwrite, &file_path_options[FilePathOptions::radioButton_Overwrite]);
+    AddUiObjectData(ui.radioButton_RenameOriginal, &file_path_options[FilePathOptions::radioButton_RenameOriginal]);
+    AddUiObjectData(ui.radioButton_NewFileName, &file_path_options[FilePathOptions::radioButton_NewFileName]);
+    AddUiObjectData(ui.label_Add, &file_path_options[FilePathOptions::label_Add]);
+    AddUiObjectData(ui.groupBox_SaveDir, &file_path_options[FilePathOptions::groupBox_SaveDir]);
+    AddUiObjectData(ui.radioButton_RelativePath, &file_path_options[FilePathOptions::radioButton_RelativePath]);
+    AddUiObjectData(ui.radioButton_AbsolutePath, &file_path_options[FilePathOptions::radioButton_AbsolutePath]);
+    AddUiObjectData(ui.pushButton_AddBackOneDir, &file_path_options[FilePathOptions::pushButton_AddBackOneDir]);
+    AddUiObjectData(ui.pushButton_FindAbsolutePath, &file_path_options[FilePathOptions::pushButton_FindAbsolutePath]);
+    AddUiObjectData(ui.checkBox_SearchSubDirs, &other_options[OtherOptions::checkBox_SearchSubDirs]);
+    AddUiObjectData(ui.pushButton_EditAndSave, &other_options[OtherOptions::pushButton_EditAndSave]);
 
-    // comboBox_Resample Item Selections (Resampling Filters)
-    resampling_selections[0].data = cv::InterpolationFlags::INTER_NEAREST;
-    resampling_selections[0].name = "Resampling: Nearest";
-    resampling_selections[0].desc = "Nearest Neighbor Interpolation";
-    resampling_selections[1].data = cv::InterpolationFlags::INTER_LINEAR;
-    resampling_selections[1].name = "Resampling: Bilinear";
-    resampling_selections[1].desc = "Bilinear Interpolation";
-    resampling_selections[2].data = cv::InterpolationFlags::INTER_CUBIC;
-    resampling_selections[2].name = "Resampling: Bicubic";
-    resampling_selections[2].desc = "Bicubic Interpolation";
-    PopulateComboBoxes(ui.comboBox_Resample, resampling_selections, 3);
-
-    // comboBox_AddText
-    file_name_creation[0].data = ADD_FILE_NAME;
-    file_name_creation[0].name = "Original File Name";
-    file_name_creation[0].desc = "Add the original file name into the creation of a new file name.";
-    file_name_creation[1].data = ADD_COUNTER;
-    file_name_creation[1].name = "Incrementing Counter";
-    file_name_creation[1].desc = "Add an incrementing number into the creation of a new file name.";
-    file_name_creation[2].data = ADD_WIDTH;
-    file_name_creation[2].name = "Image Width";
-    file_name_creation[2].desc = "Add the width of the modified image into the creation of a new file name.";
-    file_name_creation[3].data = ADD_HEIGHT;
-    file_name_creation[3].name = "Image Height";
-    file_name_creation[3].desc = "Add the height of the modified image into the creation of a new file name.";
-    PopulateComboBoxes(ui.comboBox_AddText, file_name_creation, 4);
-
-    // comboBox_ImageFormat
-    uint i = 0;
-    image_formats[i].data = ".jpeg";
-    image_formats[i].name = "JPEG Files - *.jpeg";
-    image_formats[i].desc = "JPEG (Joint Photographic Experts Group) is a commonly used method of lossy compression\n" \
-                            "for digital images, particularly for those images produced by digital photography.\n" \
-                            "The degree of compression can be adjusted, allowing a selectable tradeoff between\n" \
-                            "storage size and image quality.JPEG typically achieves 10:1 compression with little\n" \
-                            "perceptible loss in image quality.";
-    image_formats[++i].data = ".jpg";
-    image_formats[i].name = "JPEG Files - *.jpg";
-    image_formats[i].desc = image_formats[i-1].desc;
-    image_formats[++i].data = ".jpe";
-    image_formats[i].name = "JPEG Files - *.jpe";
-    image_formats[i].desc = image_formats[i-2].desc;
-    image_formats[++i].data = ".jp2";
-    image_formats[i].name = "JPEG 2000 Files - *.jp2";
-    image_formats[i].desc = "JPEG 2000 (Joint Photographic Experts Group) is an image compression standard based on a\n" \
-                            "discrete wavelet transform (DWT). Note that it is still not widely supported in web\n" \
-                            "browsers (other than Safari) and hence is not generally used on the World Wide Web.";
-    image_formats[++i].data = ".png";
-    image_formats[i].name = "Portable Network Graphics - *.png";
-    image_formats[i].desc = "Portable Network Graphics (PNG) is a raster-graphics file format that supports lossless\n" \
-                            "data compression. PNG supports palette-based images (with palettes of 24-bit RGB or\n" \
-                            "32-bit RGBA colors), grayscale images (with or without an alpha channel for transparency),\n" \
-                            "and full-color non-palette-based RGB or RGBA images.";
-    image_formats[++i].data = ".webp";
-    image_formats[i].name = "WebP - *.webp";
-    image_formats[i].desc = "WebP is a raster graphics file format developed by Google intended as a replacement for\n" \
-                            "JPEG, PNG, and GIF file formats. It supports both lossy and lossless compression, as well\n" \
-                            "as animation and alpha transparency.";
-    image_formats[++i].data = ".bmp";
-    image_formats[i].name = "Windows Bitmaps - *.bmp";
-    image_formats[i].desc = "The BMP file format or bitmap, is a raster graphics image file format used to store\n" \
-                            "bitmap digital images, independently of the display device (such as a graphics adapter),\n" \
-                            "especially on Microsoft Windows and OS/2 operating systems.";
-    image_formats[++i].data = ".dib";
-    image_formats[i].name = "Windows Bitmaps - *.dib";
-    image_formats[i].desc = image_formats[i-1].desc;
-    image_formats[++i].data = ".avif";
-    image_formats[i].name = "AVIF - *.avif";
-    image_formats[i].desc = "AV1 Image File Format (AVIF) is an open, royalty-free image file format specification\n" \
-                            "for storing images or image sequences compressed with AV1 in the HEIF container format.\n" \
-                            "AV1 Supports:\n" \
-                            "* Multiple color spaces (HDR, SDR, color space signaling via CICP or ICC)\n" \
-                            "* Lossless and lossy compression\n" \
-                            "* 8-, 10-, and 12-bit color depths\n" \
-                            "* Monochrome (alpha/depth) or multi-components\n" \
-                            "* 4:2:0, 4:2:2, 4:4:4 chroma subsampling and RGB\n" \
-                            "* Film grain synthesis\n" \
-                            "* Image sequences/animation";
-    image_formats[++i].data = ".pbm";
-    image_formats[i].name = "Netpbm Formats - *.pbm";
-    image_formats[i].desc = "Netpbm (formerly Pbmplus) is an open-source package of graphics programs and a programming\n" \
-                            "library. It is used mainly in the Unix world, but also works on Microsoft Windows, macOS,\n" \
-                            "and other operating systems.  Graphics formats used and defined by the Netpbm project:\n" \
-                            "portable pixmap format (PPM), portable graymap format (PGM), and portable bitmap format (PBM).\n" \
-                            "They are also sometimes referred to collectively as the portable anymap format (PNM).";
-    image_formats[++i].data = ".pgm";
-    image_formats[i].name = "Netpbm Formats - *.pgm";
-    image_formats[i].desc = image_formats[i-1].desc;
-    image_formats[++i].data = ".ppm";
-    image_formats[i].name = "Netpbm Formats - *.ppm";
-    image_formats[i].desc = image_formats[i-2].desc;
-    image_formats[++i].data = ".pxm";
-    image_formats[i].name = "Netpbm Formats - *.pxm";
-    image_formats[i].desc = image_formats[i-3].desc;
-    image_formats[++i].data = ".pnm";
-    image_formats[i].name = "Netpbm Formats - *.pnm";
-    image_formats[i].desc = image_formats[i-4].desc;
-    image_formats[++i].data = ".pfm";
-    image_formats[i].name = "Netpbm Formats - *.pfm";
-    image_formats[i].desc = "The PFM (Portable Floatmap) is supported by the de facto reference implementation Netpbm\n" \
-                            "and is the unofficial four byte IEEE 754 single precision floating point extension.\n" \
-                            "PFM is supported by the programs Photoshop, GIMP, and ImageMagick.";
-    // TODO: Test support for this format
-    image_formats[++i].data = ".pam";
-    image_formats[i].name = "Netpbm Formats - *.pam";
-    image_formats[i].desc = "Portable Arbitrary Map (PAM) is an extension of the older binary P4...P6 graphics formats,\n" \
-                            "introduced with Netpbm version 9.7. PAM generalizes all features of PBM, PGM and PPM, and\n" \
-                            "provides for extensions. PAM is supported by XnView and FFmpeg; and defines two new\n" \
-                            "attributes: depth and tuple type.";
-    image_formats[++i].data = ".sr";
-    image_formats[i].name = "Sun Rasters - *.sr";
-    image_formats[i].desc = "Sun Raster was a raster graphics file format used on SunOS by Sun Microsystems. ACDSee,\n" \
-                            "FFmpeg, GIMP, ImageMagick, IrfanView, LibreOffice, Netpbm, PaintShop Pro, PMView, and\n" \
-                            "XnView among others support Sun Raster image files. The format does not support transparency.";
-    image_formats[++i].data = ".ras";
-    image_formats[i].name = "Sun Rasters - *.ras";
-    image_formats[i].desc = image_formats[i-1].desc;
-    image_formats[++i].data = ".tiff";
-    image_formats[i].name = "TIFF Files - *.tiff";
-    image_formats[i].desc = "Tag Image File Format (TIFF or TIF), is an image file format for storing raster graphics\n" \
-                            "images, popular among graphic artists, the publishing industry, and photographers. TIFF is\n" \
-                            "widely supported by scanning, faxing, word processing, optical character recognition,\n" \
-                            "image manipulation, desktop publishing, and page-layout applications.";
-    image_formats[++i].data = ".tif";
-    image_formats[i].name = "TIFF Files - *.tif";
-    image_formats[i].desc = image_formats[i-1].desc;
-    image_formats[++i].data = ".exr";
-    image_formats[i].name = "OpenEXR Image Files - *.exr";
-    image_formats[i].desc = "OpenEXR is a high-dynamic range, multi-channel raster file format, created under a free\n" \
-                            "software license similar to the BSD license.  It supports multiple channels of potentially\n" \
-                            "different pixel sizes, including 32-bit unsigned integer, 32-bit and 16-bit floating point\n" \
-                            "values, as well as various compression techniques which include lossless and lossy\n" \
-                            "compression algorithms. It also has arbitrary channels and encodes multiple points of view\n" \
-                            "such as left- and right-camera images.";
-    image_formats[++i].data = ".hdr";
-    image_formats[i].name = "Radiance HDR - *.hdr";
-    image_formats[i].desc = "RGBE or Radiance HDR is an image format that stores pixels as one byte each for RGB (red,\n" \
-                            "green, and blue) values with a one byte shared exponent. Thus it stores four bytes per pixel.\n" \
-                            "RGBE allows pixels to have the dynamic range and precision of floating-point values in a\n" \
-                            "relatively compact data structure (32 bits per pixel).";
-    image_formats[++i].data = ".pic";
-    image_formats[i].name = "Radiance HDR - *.pic";
-    image_formats[i].desc = image_formats[i-1].desc;
-    PopulateComboBoxes(ui.comboBox_ImageFormat, image_formats, ++i);
-
-    /* https://docs.opencv.org/4.x/d4/da8/group__imgcodecs.html#ga288b8b3da0892bd651fce07b3bbd3a56
-    *.bmp, *.dib, *.jpeg, *.jpg, *.jpe, *.jp2, *.png, *.webp, *.avif, *.pbm, *.pgm, *.ppm, *.pxm, *.pnm, *.pfm, *.sr, *.ras, *.tiff, *.tif, *.exr, *.hdr, *.pic"; */
-
-    // Specific Format Options Text (multiple sets)
-    format_jpeg_options[0].data = 1;
-    format_jpeg_options[0].name = "Subsampling:";
-    format_jpeg_options[0].desc = "Chroma subsampling is the practice of encoding images by implementing less resolution\n" \
-                                  "for chroma information than for luma information, taking advantage of the human visual\n" \
-                                  "system's lower acuity for color differences than for luminance.";
-    format_jpeg_options[1].data = 95;
-    format_jpeg_options[1].name = "Quality:";
-    format_jpeg_options[1].desc = "The JPEG format can set quality from 0 to 100 (the higher is the better). Default value is 95.";
-    format_jpeg_options[2].data = 0;
-    format_jpeg_options[2].name = "Optimize";
-    format_jpeg_options[2].desc = "JPEG optimize can lower file sizes by striping unnecessary metadata, but only noticeable\n" \
-                                  "at higher quality ranges (95+). Default is unchecked.";
-    format_jpeg_options[3].data = 0;
-    format_jpeg_options[3].name = "Progressive";
-    format_jpeg_options[3].desc = "Using the JPEG interlaced progressive format data is compressed in multiple passes of\n" \
-                                  "progressively higher detail.This is ideal for large images that will be displayed while\n" \
-                                  "downloading over a slow connection, allowing a reasonable preview after receiving only a\n" \
-                                  "portion of the data. Default is unchecked.";
-    format_jpeg_options[4].data = 0;
-    format_jpeg_options[4].name = "Restart Interval:";
-    format_jpeg_options[4].desc = "Restart interval specifies the interval between restart markers, in Minimum Coded Units\n" \
-                                  "(MCUs).They were designed to allow resynchronization after an error, but also now serve a\n" \
-                                  "new purpose, to allow for multi - threaded JPEG encoders and decoders. Default value is 95.";
-    format_jpeg_options[5].data = -1;
-    format_jpeg_options[5].name = "Luma:";
-    format_jpeg_options[5].desc = "Separate and adjust the luma quality between to 0 and 100 (-1 don’t use, default). When an\n" \
-                                  "image is converted from RGB to Y'CBCR, the luma component is the (Y'), representing brightness.";
-    format_jpeg_options[6].data = -1;
-    format_jpeg_options[6].name = "Chroma:";
-    format_jpeg_options[6].desc = "Separate and adjust the chroma quality between to 0 and 100 (-1 don’t use, default). When an\n" \
-                                  "image is converted from RGB to Y'CBCR, the chroma component is the (CB and CR), representing color.";
-
-    format_jp2_options[0].data = 1000;
-    format_jp2_options[0].name = "Compression Level:";
-    format_jp2_options[0].desc = "Use to specify the JPEG 2000 target compression rate with values from 0 to 1000. Default value is 1000.";
-
-    format_png_options[0].data = 0;
-    format_png_options[0].name = "Compression Strategy:";
-    format_png_options[0].desc = "PNG compression strategies are passed to the underlying zlib processing stage, and only affect the\n" \
-                                 "compression ratio, but not the correctness of the compressed output even if it is not set appropriately\n" \
-                                 "The effect of the [Filter] strategy is to force more Huffman coding and less string matching; it is\n" \
-                                 "somewhat intermediate between [Default] and [Huffman Only]. [Run-Length Encoding] is designed to be\n" \
-                                 "almost as fast as [Huffman Only], but gives better compression for PNG image data. [Fixed (No Huffman)]\n" \
-                                 "prevents the use of dynamic Huffman codes, allowing for a simpler decoder for special applications.";
-    format_png_options[1].data = 0;
-    format_png_options[1].name = "Binary Level";
-    format_png_options[1].desc = "If binary level (bi-level) is checked a grayscale PNG image will be created.";
-    format_png_options[2].data = 1;
-    format_png_options[2].name = "Compression Level";
-    format_png_options[2].desc = "PNG compression levels are from 0 to 9 with higher values meaning a smaller file size and longer\n" \
-                                 "compression time. If specified, the strategy is changed to [Default].\n" \
-                                 "Default value is 1 (best speed setting).";
-
-    format_exr_options[0].data = 3;
-    format_exr_options[0].name = "Compression Type:";
-    format_exr_options[0].desc = "Override EXR compression type (ZLib is default)";
-    format_exr_options[1].data = 0;
-    format_exr_options[1].name = "Store as FP16 (HALF)";
-    format_exr_options[1].desc = "Override EXR Storage Type";
-    format_exr_options[2].data = 1;
-    format_exr_options[2].name = "Store as FP32 (Default)";
-    format_exr_options[2].desc = "Override EXR Storage Type";
-    format_exr_options[3].data = 45;
-    format_exr_options[3].name = "Compression Level:";
-    format_exr_options[3].desc = "Override EXR DWA Compression Level. Default value is 45.";
-
-    // comboBox_FormatFlags (multiple sets)
-    format_jpeg_subsamplings[0].data = cv::IMWRITE_JPEG_SAMPLING_FACTOR_411;
-    format_jpeg_subsamplings[0].name = "4x1, 1x1, 1x1";
-    format_jpeg_subsamplings[0].desc = "JPEG Sampling 4:1:1.";
-    format_jpeg_subsamplings[1].data = cv::IMWRITE_JPEG_SAMPLING_FACTOR_420;
-    format_jpeg_subsamplings[1].name = "2x2, 1x1, 1x1 (Default)";
-    format_jpeg_subsamplings[1].desc = "JPEG Sampling 4:2:0. In most cases this is the best option.";
-    format_jpeg_subsamplings[2].data = cv::IMWRITE_JPEG_SAMPLING_FACTOR_422;
-    format_jpeg_subsamplings[2].name = "2x1, 1x1, 1x1";
-    format_jpeg_subsamplings[2].desc = "JPEG Sampling 4:2:2.";
-    format_jpeg_subsamplings[3].data = cv::IMWRITE_JPEG_SAMPLING_FACTOR_440;
-    format_jpeg_subsamplings[3].name = "1x2, 1x1, 1x1";
-    format_jpeg_subsamplings[3].desc = "JPEG Sampling 4:4:0.";
-    format_jpeg_subsamplings[4].data = cv::IMWRITE_JPEG_SAMPLING_FACTOR_444;
-    format_jpeg_subsamplings[4].name = "1x1, 1x1, 1x1 (No Subsampling)";
-    format_jpeg_subsamplings[4].desc = "JPEG Sampling 4:4:4. It can help to turn off subsampling when using more than one quality\n" \
-                                       "setting (Luma/Chroma).";
-    PopulateComboBoxes(ui.comboBox_FormatFlags, format_jpeg_subsamplings, 5);
-
-    format_png_compression[0].data = cv::IMWRITE_PNG_STRATEGY_DEFAULT;
-    format_png_compression[0].name = "Default";
-    format_png_compression[0].desc = "Use this value for normal data.";
-    format_png_compression[1].data = cv::IMWRITE_PNG_STRATEGY_FILTERED;
-    format_png_compression[1].name = "Filtered";
-    format_png_compression[1].desc = "Use this value for data produced by a filter (or predictor). Filtered data consists mostly of small\n" \
-                                     "values with a somewhat random distribution.In this case, the compression algorithm is tuned to\n" \
-                                     "compress them better.";
-    format_png_compression[2].data = cv::IMWRITE_PNG_STRATEGY_HUFFMAN_ONLY;
-    format_png_compression[2].name = "Huffman Only";
-    format_png_compression[2].desc = "Use this value to force Huffman encoding only (no string match).";
-    format_png_compression[3].data = cv::IMWRITE_PNG_STRATEGY_RLE;
-    format_png_compression[3].name = "Run-Length Encoding";
-    format_png_compression[3].desc = "Use this value to limit match distances to one (run-length encoding).";
-    format_png_compression[4].data = cv::IMWRITE_PNG_STRATEGY_FIXED;
-    format_png_compression[4].name = "Fixed (No Huffman)";
-    format_png_compression[4].desc = "Using this value prevents the use of dynamic Huffman codes, allowing for a simpler decoder for\n" \
-                                     "special applications.";
-
-    format_pam_tupletype[0].data = cv::IMWRITE_PAM_FORMAT_NULL;
-    format_pam_tupletype[0].name = "Format Null";
-    format_pam_tupletype[0].desc = "";
-    format_pam_tupletype[1].data = cv::IMWRITE_PAM_FORMAT_BLACKANDWHITE;
-    format_pam_tupletype[1].name = "Format Black and White";
-    format_pam_tupletype[1].desc = "";
-    format_pam_tupletype[2].data = cv::IMWRITE_PAM_FORMAT_GRAYSCALE;
-    format_pam_tupletype[2].name = "Format Grayscale";
-    format_pam_tupletype[2].desc = "";
-    format_pam_tupletype[3].data = cv::IMWRITE_PAM_FORMAT_GRAYSCALE_ALPHA;
-    format_pam_tupletype[3].name = "Format Grayscale Alpha";
-    format_pam_tupletype[3].desc = "";
-    format_pam_tupletype[4].data = cv::IMWRITE_PAM_FORMAT_RGB;
-    format_pam_tupletype[4].name = "Format RGB";
-    format_pam_tupletype[4].desc = "";
-    format_pam_tupletype[5].data = cv::IMWRITE_PAM_FORMAT_RGB_ALPHA;
-    format_pam_tupletype[5].name = "Format RGB Alpha";
-    format_pam_tupletype[5].desc = "";
-
-    format_exr_compression[0].data = cv::IMWRITE_EXR_COMPRESSION_NO;
-    format_exr_compression[0].name = "None";
-    format_exr_compression[0].desc = "No Compression.";
-    format_exr_compression[1].data = cv::IMWRITE_EXR_COMPRESSION_RLE;
-    format_exr_compression[1].name = "Run-Length Encoding";
-    format_exr_compression[1].desc = "Run-length encoding compression.";
-    format_exr_compression[2].data = cv::IMWRITE_EXR_COMPRESSION_ZIPS;
-    format_exr_compression[2].name = "ZLib 1 SL";
-    format_exr_compression[2].desc = "ZLib compression, one scan line at a time.";
-    format_exr_compression[3].data = cv::IMWRITE_EXR_COMPRESSION_ZIP;
-    format_exr_compression[3].name = "ZLib 16 SL (Default)";
-    format_exr_compression[3].desc = "ZLib compression in blocks of 16 scan lines (default).";
-    format_exr_compression[4].data = cv::IMWRITE_EXR_COMPRESSION_PIZ;
-    format_exr_compression[4].name = "Piz Wavelet";
-    format_exr_compression[4].desc = "Piz-based wavelet compression.";
-    format_exr_compression[5].data = cv::IMWRITE_EXR_COMPRESSION_PXR24;
-    format_exr_compression[5].name = "PXR24 (Lossy)";
-    format_exr_compression[5].desc = "Lossy 24-bit float compression.";
-    format_exr_compression[6].data = cv::IMWRITE_EXR_COMPRESSION_B44;
-    format_exr_compression[6].name = "4-by-4 Fixed (Lossy)";
-    format_exr_compression[6].desc = "B44 lossy 4-by-4 pixel block compression, fixed compression rate.";
-    format_exr_compression[7].data = cv::IMWRITE_EXR_COMPRESSION_B44A;
-    format_exr_compression[7].name = "4-by-4 Flat (Lossy)";
-    format_exr_compression[7].desc = "B44A lossy 4-by-4 pixel block compression, flat fields are compressed more.";
-    format_exr_compression[8].data = cv::IMWRITE_EXR_COMPRESSION_DWAA;
-    format_exr_compression[8].name = "DWAA 32 SL (Lossy)";
-    format_exr_compression[8].desc = "DWAA Lossy DCT based compression, in blocks of 32 scanlines. More efficient for partial buffer access.";
-    format_exr_compression[9].data = cv::IMWRITE_EXR_COMPRESSION_DWAB;
-    format_exr_compression[9].name = "DWAB 256 SL (Lossy)";
-    format_exr_compression[9].desc = "DWAB Lossy DCT based compression, in blocks of 256 scanlines. More efficient space wise and faster\n" \
-                                     "to decode full frames than DWAA.";
-
-    format_hdr_compression[0].data = cv::IMWRITE_HDR_COMPRESSION_NONE;
-    format_hdr_compression[0].name = "None (Default)";
-    format_hdr_compression[0].desc = "No compression.";
-    format_hdr_compression[1].data = cv::IMWRITE_HDR_COMPRESSION_RLE;
-    format_hdr_compression[1].name = "Run-Length Encoding";
-    format_hdr_compression[1].desc = "The only compression option.";
-
+    PopulateComboBox(ui.comboBox_WidthMod, width_selections, sizeof(width_selections) / sizeof(UIData));
+    PopulateComboBox(ui.comboBox_HeightMod, height_selections, sizeof(height_selections) / sizeof(UIData));
+    PopulateComboBox(ui.comboBox_Resample, resampling_selections, sizeof(resampling_selections) / sizeof(UIData));
+    PopulateComboBox(ui.comboBox_AddText, file_name_creation, sizeof(file_name_creation) / sizeof(UIData));
+    PopulateComboBox(ui.comboBox_ImageFormat, image_formats, sizeof(image_formats) / sizeof(UIData));
+    //PopulateComboBox(ui.comboBox_FormatFlags, format_jpeg_subsamplings, sizeof(format_jpeg_subsamplings) / sizeof(UIData));
 
 
     /***************************
@@ -508,22 +181,14 @@ BatchItImage::BatchItImage(QWidget* parent) : QMainWindow(parent)
     ****************************/
 
     ui.progressBar->setVisible(false);
-    ui.treeWidget_FileInfo->clear();
-    ui.treeWidget_FileInfo->headerItem()->setText(FILE_SELECTED, "");
-    ui.treeWidget_FileInfo->setColumnWidth(FILE_SELECTED, ui.treeWidget_FileInfo->minimumWidth());
-    //ui.treeWidget_FileInfo->setSortingEnabled(true);
-    ui.treeWidget_FileInfo->header()->setSectionsClickable(true);
-    ui.treeWidget_FileInfo->header()->sortIndicatorOrder();
-
-    ui.treeWidget_FileInfo->installEventFilter(this); // Keep watch of all events happening in file tree. -> eventFilter()
-
     preset_list.reserve(10);
     current_file_metadata_list.reserve(30);
     deleted_file_metadata_list.reserve(10);
 
     // TODO: get settings for search sub dirs, recent images loaded (last 10?), others?
-    ui.checkBox_SearchSubDirs->setChecked(search_subdirs);
+    //ui.checkBox_SearchSubDirs->setChecked(search_subdirs);
 
+    SetupFileTree();
     LoadPresets();
 
     // All characters allowed in file names or paths, plus <>. 
@@ -559,16 +224,20 @@ BatchItImage::BatchItImage(QWidget* parent) : QMainWindow(parent)
 
     // Image File Tree
     connect(ui.treeWidget_FileInfo->header(), SIGNAL(sectionClicked(int)), this, SLOT(SortFileTreeByColumn(int)));
-    connect(ui.checkBox_SearchSubDirs, &QCheckBox::stateChanged, [this] { search_subdirs = ui.checkBox_SearchSubDirs->isChecked(); });
+    //connect(ui.checkBox_SearchSubDirs, &QCheckBox::stateChanged, [this] { search_subdirs = ui.checkBox_SearchSubDirs->isChecked(); });
     SetupFileTreeContextMenu();
 
     // Image Edit Widgets
     connect(ui.comboBox_Preset_1, SIGNAL(currentIndexChanged(int)), this, SLOT(ChangePreset(int)));
     //connect(ui.comboBox_Preset_1, SIGNAL(currentIndexChanged(int)), ui.comboBox_Preset_2, SLOT(ChangePresets(int))); // Done in the ui xml + 9 Others
-    
+    connect(ui.comboBox_WidthMod, SIGNAL(currentIndexChanged(int)), this, SLOT(UpdateComboBoxToolTip()));
+    connect(ui.comboBox_HeightMod, SIGNAL(currentIndexChanged(int)), this, SLOT(UpdateComboBoxToolTip()));
+    connect(ui.comboBox_Resample, SIGNAL(currentIndexChanged(int)), this, SLOT(UpdateComboBoxToolTip()));
+
     // Image Save Widgets
     connect(ui.pushButton_EditAndSave, SIGNAL(clicked(bool)), this, SLOT(EditAndSave()));
     connect(ui.comboBox_AddText, SIGNAL(activated(int)), this, SLOT(AddTextToFileName()));
+    connect(ui.comboBox_AddText, SIGNAL(currentIndexChanged(int)), this, SLOT(UpdateComboBoxToolTip()));
     connect(ui.lineEdit_RelativePath, SIGNAL(editingFinished()), this, SLOT(CheckRelativePath()));
     connect(ui.pushButton_AddBackOneDir, &QAbstractButton::pressed,
         [this] {
@@ -578,7 +247,7 @@ BatchItImage::BatchItImage(QWidget* parent) : QMainWindow(parent)
     connect(ui.lineEdit_AbsolutePath, SIGNAL(editingFinished()), this, SLOT(CheckAbsolutePath()));
     connect(ui.pushButton_FindAbsolutePath, &QAbstractButton::pressed,
         [this] { ui.lineEdit_AbsolutePath->setText(GetSaveDirectoryPath()); });
-    //connect(ui.comboBox_ImageFormat, SIGNAL(currentIndexChanged(int)), this, SLOT(EnableSpecificFormatOptions(int)));
+    connect(ui.groupBox_ChangeFormat, SIGNAL(toggled(bool)), this, SLOT(EnableSpecificFormatOptions()));
     connect(ui.comboBox_ImageFormat, &QComboBox::currentIndexChanged,
         [this] {
             ui.comboBox_ImageFormat->setToolTip(ui.comboBox_ImageFormat->currentData(Qt::ToolTipRole).toString());
@@ -587,7 +256,6 @@ BatchItImage::BatchItImage(QWidget* parent) : QMainWindow(parent)
     connect(ui.comboBox_FormatFlags, &QComboBox::currentIndexChanged,
         [this] {
             ui.comboBox_FormatFlags->setToolTip(ui.comboBox_FormatFlags->currentData(Qt::ToolTipRole).toString());
-
             if (ui.comboBox_ImageFormat->currentData() == ".exr") {
                 if (ui.comboBox_FormatFlags->currentData() == cv::IMWRITE_EXR_COMPRESSION_DWAA or
                     ui.comboBox_FormatFlags->currentData() == cv::IMWRITE_EXR_COMPRESSION_DWAB) {
@@ -620,8 +288,8 @@ BatchItImage::BatchItImage(QWidget* parent) : QMainWindow(parent)
     ui.treeWidget_Combine->addTopLevelItem(new_item);
 
     // TODO: Status Bar
-    QString status_meesage = "BatchItImage";
-    ui.statusbar->showMessage(status_meesage, -1);
+    //QString status_message = "BatchItImage";
+    //ui.statusbar->showMessage(status_message, -1);
 }
 
 BatchItImage::~BatchItImage() {}
@@ -631,31 +299,663 @@ BatchItImage::~BatchItImage() {}
 void BatchItImage::Test()
 {
     DEBUG("--TEST--");
-    //_comboBox_Preset_1->addItem("New Item");
-    //image_label->setText("Something Else");
-    //DEBUG(ui.comboBox_AddText->currentData().toString().toStdString());
-    //DEBUG(ui.comboBox_AddText->currentData().toChar());
-    //qDebug() << ui.comboBox_AddText->currentData();
-    //DEBUG(ui.comboBox_AddText->currentData().typeName());
-
-    /*
-    if (strcmp(ui.comboBox_AddText->currentData().typeName(), "int") == 0)
-    {
-        DEBUG("INT");
-        //int cur_data = ui.comboBox_AddText->currentData().toInt();
-        DEBUG(ui.comboBox_AddText->currentData().toInt());
-    }
-    else
-    {
-        DEBUG("STRING");
-        //std::string cur_data = ui.comboBox_AddText->currentData().toString().toStdString();
-        DEBUG(ui.comboBox_AddText->currentData().toString().toStdString());
-    }
-    */
-
-    //ui.progressBar->setValue(current_load_number);
+    QObject* obj = sender();
+    DEBUG(obj->objectName().toStdString());
 }
 
+
+/// <summary>
+/// Load in all text and other ui data.
+/// </summary>
+void BatchItImage::LoadInUiData()
+{
+    // treeWidget_FileInfo
+    file_tree_headers[FileColumn::FILE_SELECTED].data = 1; // TODO: 1 = Initial Sort/Bold Text (after files loaded)?
+    file_tree_headers[FileColumn::FILE_SELECTED].name = "";
+    file_tree_headers[FileColumn::FILE_SELECTED].desc = "The load order of image files.";
+    file_tree_headers[FileColumn::FILE_NAME].data = 0;
+    file_tree_headers[FileColumn::FILE_NAME].name = "File Name";
+    file_tree_headers[FileColumn::FILE_NAME].desc = "The name of an image file, click an arrow to show full path.";
+    file_tree_headers[FileColumn::IMAGE_DIMENSIONS].data = 0;
+    file_tree_headers[FileColumn::IMAGE_DIMENSIONS].name = "Dimensions";
+    file_tree_headers[FileColumn::IMAGE_DIMENSIONS].desc = "Image Dimensions/Size (Width x Height).";
+    file_tree_headers[FileColumn::FILE_SIZE].data = 0;
+    file_tree_headers[FileColumn::FILE_SIZE].name = "File Size";
+    file_tree_headers[FileColumn::FILE_SIZE].desc = "The file size in bytes.";
+    file_tree_headers[FileColumn::DATE_CREATED].data = 0;
+    file_tree_headers[FileColumn::DATE_CREATED].name = "Date Created";
+    file_tree_headers[FileColumn::DATE_CREATED].desc = "The date a file was created.";
+    file_tree_headers[FileColumn::DATE_MODIFIED].data = 0;
+    file_tree_headers[FileColumn::DATE_MODIFIED].name = "Date Modified";
+    file_tree_headers[FileColumn::DATE_MODIFIED].desc = "The date a file was last modified.";
+
+    file_tree_menu_items[ActionMenu::action_add].data = 0; // TODO: 1 = Bold, default double click action?
+    file_tree_menu_items[ActionMenu::action_add].name = "Add Images";
+    file_tree_menu_items[ActionMenu::action_add].desc = "Add more images to this file viewer.";
+    file_tree_menu_items[ActionMenu::action_delete].data = 0;
+    file_tree_menu_items[ActionMenu::action_delete].name = "Delete Images";
+    file_tree_menu_items[ActionMenu::action_delete].desc = "Delete images from this file viewer (does not delete from system).";
+    file_tree_menu_items[ActionMenu::action_clear].data = 0;
+    file_tree_menu_items[ActionMenu::action_clear].name = "Clear List";
+    file_tree_menu_items[ActionMenu::action_clear].desc = "Clear entire list of files from file viewer.";
+    file_tree_menu_items[ActionMenu::action_select].data = 0;
+    file_tree_menu_items[ActionMenu::action_select].name = "Select Image";
+    file_tree_menu_items[ActionMenu::action_select].desc = "Select or check image file currently highlighted.";
+    file_tree_menu_items[ActionMenu::action_view].data = 0;
+    file_tree_menu_items[ActionMenu::action_view].name = "View Image";
+    file_tree_menu_items[ActionMenu::action_view].desc = "View image file currently highlighted.";
+    file_tree_menu_items[ActionMenu::action_preview].data = 0;
+    file_tree_menu_items[ActionMenu::action_preview].name = "Preview Modified Image";
+    file_tree_menu_items[ActionMenu::action_preview].desc = "Preview a modified version of the image file currently highlighted using the current selected preset.\n" \
+        "This modified image will only be a preview the edits will not be saved to file.";
+
+    file_tree_other_text[FileColumn::FILE_LOAD_ORDER] = "Load Order: ";
+    file_tree_other_text[FileColumn::FILE_NAME] = "File Path: ";
+    file_tree_other_text[FileColumn::IMAGE_DIMENSIONS] = "Image [Width x Height]: ";
+    file_tree_other_text[FileColumn::FILE_SIZE] = "File Size: ";
+    file_tree_other_text[FileColumn::DATE_CREATED] = "Date File Created: ";
+    file_tree_other_text[FileColumn::DATE_MODIFIED] = "Date File Modified: ";
+
+    // comboBox_WidthMod Item Selections
+    width_selections[0].data = ImageEditor::NO_CHANGE;
+    width_selections[0].name = "No Change";
+    width_selections[0].desc = "Image widths may still be modified if 'keep aspect ratio' is checked.";
+    width_selections[1].data = ImageEditor::CHANGE_TO;
+    width_selections[1].name = "Change Width To:";
+    width_selections[1].desc = "All image widths will be modified to a specific number.";
+    width_selections[2].data = ImageEditor::MODIFY_BY;
+    width_selections[2].name = "Modify Width By:";
+    width_selections[2].desc = "This adds to or subtracts from an image's current width. Ex. 1080 + '220' = 1300";
+    width_selections[3].data = ImageEditor::MODIFY_BY_PCT;
+    width_selections[3].name = "Modify Width By (%):";
+    width_selections[3].desc = "This modifies an image's current width by percentage. Ex. 720 x '200%' = 1440";
+    width_selections[4].data = ImageEditor::DOWNSCALE;
+    width_selections[4].name = "Downscale Width To:";
+    width_selections[4].desc = "All images above entered width will be modified to that specific number.\n" \
+        "All images already at or below that number will not be modified.";
+    width_selections[5].data = ImageEditor::UPSCALE;
+    width_selections[5].name = "Upscale Width To:";
+    width_selections[5].desc = "All images below entered width will be modified to that specific number.\n" \
+        "All images already at or above that number will not be modified.";
+
+    // comboBox_HeightMod Item Selections
+    height_selections[0].data = ImageEditor::NO_CHANGE;
+    height_selections[0].name = "No Change";
+    height_selections[0].desc = "Image heights may still be modified if 'keep aspect ratio' is checked.";
+    height_selections[1].data = ImageEditor::CHANGE_TO;
+    height_selections[1].name = "Change Height To:";
+    height_selections[1].desc = "All images heights will be modified to a specific number.";
+    height_selections[2].data = ImageEditor::MODIFY_BY;
+    height_selections[2].name = "Modify Height By:";
+    height_selections[2].desc = "This adds to or subtracts from an image's current height. Ex. 1080 + '220' = 1300";
+    height_selections[3].data = ImageEditor::MODIFY_BY_PCT;
+    height_selections[3].name = "Modify Height By (%):";
+    height_selections[3].desc = "This modifies an image's current height by percentage. Ex. 720 x '200%' = 1440";
+    height_selections[4].data = ImageEditor::DOWNSCALE;
+    height_selections[4].name = "Downscale Height To:";
+    height_selections[4].desc = "All images above entered height will be modified to that specific number.\n" \
+        "All images already at or below that number will not be modified.";
+    height_selections[5].data = ImageEditor::UPSCALE;
+    height_selections[5].name = "Upscale Height To:";
+    height_selections[5].desc = "All images below entered height will be modified to that specific number.\n" \
+        "All images already at or above that number will not be modified.";
+
+
+    // TODO: create UIData for this as well as other edit image widgets
+    ui.checkBox_KeepAspectRatio->setText("Keep Aspect Ratio");
+    ui.checkBox_KeepAspectRatio->setToolTip("In order to keep aspect ratio, either width or height must be set to \"No Change\" or \"0\"");
+
+
+    file_path_options[FilePathOptions::groupBox_FileRename].data = 1;
+    file_path_options[FilePathOptions::groupBox_FileRename].name = "Modify Image File Names:";
+    file_path_options[FilePathOptions::groupBox_FileRename].desc = "";
+    file_path_options[FilePathOptions::radioButton_Overwrite].data = 0;
+    file_path_options[FilePathOptions::radioButton_Overwrite].name = "Overwrite Original File";
+    file_path_options[FilePathOptions::radioButton_Overwrite].desc = "If selected, this will overwrite the original image file with the new edited image file.";
+    file_path_options[FilePathOptions::radioButton_RenameOriginal].data = 0;
+    file_path_options[FilePathOptions::radioButton_RenameOriginal].name = "Rename Original File";
+    file_path_options[FilePathOptions::radioButton_RenameOriginal].desc = "If selected, this will rename the original image file, and use it's name for the new edited image file.";
+    file_path_options[FilePathOptions::radioButton_NewFileName].data = 1;
+    file_path_options[FilePathOptions::radioButton_NewFileName].name = "Create New File Name";
+    file_path_options[FilePathOptions::radioButton_NewFileName].desc = "If selected, a new file name will be used for the new edited image file.";
+    file_path_options[FilePathOptions::label_Add].data = 0;
+    file_path_options[FilePathOptions::label_Add].name = "Add:";
+    file_path_options[FilePathOptions::label_Add].desc = "Add metadata to file name edit text box (to be included in a new file name).";
+    file_path_options[FilePathOptions::groupBox_SaveDir].data = 1;
+    file_path_options[FilePathOptions::groupBox_SaveDir].name = "Save All Image Files In:";
+    file_path_options[FilePathOptions::groupBox_SaveDir].desc = "";
+    file_path_options[FilePathOptions::radioButton_RelativePath].data = 1;
+    file_path_options[FilePathOptions::radioButton_RelativePath].name = "Relative Paths:";
+    file_path_options[FilePathOptions::radioButton_RelativePath].desc = "Relative to the currently edited image file path.";
+    file_path_options[FilePathOptions::radioButton_AbsolutePath].data = 0;
+    file_path_options[FilePathOptions::radioButton_AbsolutePath].name = "Absolute Path:";
+    file_path_options[FilePathOptions::radioButton_AbsolutePath].desc = "The absolute path all edited images will be saved to.";
+    file_path_options[FilePathOptions::pushButton_AddBackOneDir].data = 0;
+    file_path_options[FilePathOptions::pushButton_AddBackOneDir].name = "Add \"Back One Directory\" For Relative Paths";
+    file_path_options[FilePathOptions::pushButton_AddBackOneDir].desc = "Start relative path up one directory level.";
+    file_path_options[FilePathOptions::pushButton_FindAbsolutePath].data = 0;
+    file_path_options[FilePathOptions::pushButton_FindAbsolutePath].name = "Search For An Absolute Path";
+    file_path_options[FilePathOptions::pushButton_FindAbsolutePath].desc = "Open dialog window to select a directory adding it to the absolute path text box.";
+
+    // comboBox_Resample Item Selections (Resampling Filters) 
+    resampling_selections[0].data = cv::InterpolationFlags::INTER_NEAREST;
+    resampling_selections[0].name = "Resampling: Nearest";
+    resampling_selections[0].desc = "Nearest Neighbor Interpolation";
+    resampling_selections[1].data = cv::InterpolationFlags::INTER_LINEAR;
+    resampling_selections[1].name = "Resampling: Bilinear";
+    resampling_selections[1].desc = "Bilinear Interpolation";
+    resampling_selections[2].data = cv::InterpolationFlags::INTER_CUBIC;
+    resampling_selections[2].name = "Resampling: Bicubic";
+    resampling_selections[2].desc = "Bicubic Interpolation";
+    // TODO: add more Resampling Filters
+
+    // comboBox_AddText
+    file_name_creation[0].data = ADD_FILE_NAME;
+    file_name_creation[0].name = "Original File Name";
+    file_name_creation[0].desc = "Add the original file name into the creation of a new file name.";
+    file_name_creation[1].data = ADD_COUNTER;
+    file_name_creation[1].name = "Incrementing Counter";
+    file_name_creation[1].desc = "Add an incrementing number into the creation of a new file name.";
+    file_name_creation[2].data = ADD_WIDTH;
+    file_name_creation[2].name = "Image Width";
+    file_name_creation[2].desc = "Add the width of the modified image into the creation of a new file name.";
+    file_name_creation[3].data = ADD_HEIGHT;
+    file_name_creation[3].name = "Image Height";
+    file_name_creation[3].desc = "Add the height of the modified image into the creation of a new file name.";
+
+    // comboBox_ImageFormat
+    uint i = 0;
+    image_formats[i].data = ".jpeg";
+    image_formats[i].name = "JPEG Files - *.jpeg";
+    image_formats[i].desc = "JPEG (Joint Photographic Experts Group) is a commonly used method of lossy compression\n" \
+        "for digital images, particularly for those images produced by digital photography.\n" \
+        "The degree of compression can be adjusted, allowing a selectable tradeoff between\n" \
+        "storage size and image quality.JPEG typically achieves 10:1 compression with little\n" \
+        "perceptible loss in image quality.";
+    image_formats[++i].data = ".jpg";
+    image_formats[i].name = "JPEG Files - *.jpg";
+    image_formats[i].desc = image_formats[i - 1].desc;
+    image_formats[++i].data = ".jpe";
+    image_formats[i].name = "JPEG Files - *.jpe";
+    image_formats[i].desc = image_formats[i - 2].desc;
+    image_formats[++i].data = ".jp2";
+    image_formats[i].name = "JPEG 2000 Files - *.jp2";
+    image_formats[i].desc = "JPEG 2000 (Joint Photographic Experts Group) is an image compression standard based on a\n" \
+        "discrete wavelet transform (DWT). Note that it is still not widely supported in web\n" \
+        "browsers (other than Safari) and hence is not generally used on the World Wide Web.";
+    image_formats[++i].data = ".png";
+    image_formats[i].name = "Portable Network Graphics - *.png";
+    image_formats[i].desc = "Portable Network Graphics (PNG) is a raster-graphics file format that supports lossless\n" \
+        "data compression. PNG supports palette-based images (with palettes of 24-bit RGB or\n" \
+        "32-bit RGBA colors), grayscale images (with or without an alpha channel for transparency),\n" \
+        "and full-color non-palette-based RGB or RGBA images.";
+    image_formats[++i].data = ".webp";
+    image_formats[i].name = "WebP - *.webp";
+    image_formats[i].desc = "WebP is a raster graphics file format developed by Google intended as a replacement for\n" \
+        "JPEG, PNG, and GIF file formats. It supports both lossy and lossless compression, as well\n" \
+        "as animation and alpha transparency.";
+    image_formats[++i].data = ".bmp";
+    image_formats[i].name = "Windows Bitmaps - *.bmp";
+    image_formats[i].desc = "The BMP file format or bitmap, is a raster graphics image file format used to store\n" \
+        "bitmap digital images, independently of the display device (such as a graphics adapter),\n" \
+        "especially on Microsoft Windows and OS/2 operating systems.";
+    image_formats[++i].data = ".dib";
+    image_formats[i].name = "Windows Bitmaps - *.dib";
+    image_formats[i].desc = image_formats[i - 1].desc;
+    image_formats[++i].data = ".avif";
+    image_formats[i].name = "AVIF - *.avif";
+    image_formats[i].desc = "AV1 Image File Format (AVIF) is an open, royalty-free image file format specification\n" \
+        "for storing images or image sequences compressed with AV1 in the HEIF container format.\n" \
+        "AV1 Supports:\n" \
+        "* Multiple color spaces (HDR, SDR, color space signaling via CICP or ICC)\n" \
+        "* Lossless and lossy compression\n" \
+        "* 8-, 10-, and 12-bit color depths\n" \
+        "* Monochrome (alpha/depth) or multi-components\n" \
+        "* 4:2:0, 4:2:2, 4:4:4 chroma subsampling and RGB\n" \
+        "* Film grain synthesis\n" \
+        "* Image sequences/animation";
+    image_formats[++i].data = ".pbm";
+    image_formats[i].name = "Netpbm Formats - *.pbm";
+    image_formats[i].desc = "Netpbm (formerly Pbmplus) is an open-source package of graphics programs and a programming\n" \
+        "library. It is used mainly in the Unix world, but also works on Microsoft Windows, macOS,\n" \
+        "and other operating systems.  Graphics formats used and defined by the Netpbm project:\n" \
+        "portable pixmap format (PPM), portable graymap format (PGM), and portable bitmap format (PBM).\n" \
+        "They are also sometimes referred to collectively as the portable anymap format (PNM).";
+    image_formats[++i].data = ".pgm";
+    image_formats[i].name = "Netpbm Formats - *.pgm";
+    image_formats[i].desc = image_formats[i - 1].desc;
+    image_formats[++i].data = ".ppm";
+    image_formats[i].name = "Netpbm Formats - *.ppm";
+    image_formats[i].desc = image_formats[i - 2].desc;
+    image_formats[++i].data = ".pxm";
+    image_formats[i].name = "Netpbm Formats - *.pxm";
+    image_formats[i].desc = image_formats[i - 3].desc;
+    image_formats[++i].data = ".pnm";
+    image_formats[i].name = "Netpbm Formats - *.pnm";
+    image_formats[i].desc = image_formats[i - 4].desc;
+    image_formats[++i].data = ".pfm";
+    image_formats[i].name = "Netpbm Formats - *.pfm";
+    image_formats[i].desc = "The PFM (Portable Floatmap) is supported by the de facto reference implementation Netpbm\n" \
+        "and is the unofficial four byte IEEE 754 single precision floating point extension.\n" \
+        "PFM is supported by the programs Photoshop, GIMP, and ImageMagick.";
+    // TODO: Test support for this format
+    image_formats[++i].data = ".pam";
+    image_formats[i].name = "Netpbm Formats - *.pam";
+    image_formats[i].desc = "Portable Arbitrary Map (PAM) is an extension of the older binary P4...P6 graphics formats,\n" \
+        "introduced with Netpbm version 9.7. PAM generalizes all features of PBM, PGM and PPM, and\n" \
+        "provides for extensions. PAM is supported by XnView and FFmpeg; and defines two new\n" \
+        "attributes: depth and tuple type.";
+    image_formats[++i].data = ".sr";
+    image_formats[i].name = "Sun Rasters - *.sr";
+    image_formats[i].desc = "Sun Raster was a raster graphics file format used on SunOS by Sun Microsystems. ACDSee,\n" \
+        "FFmpeg, GIMP, ImageMagick, IrfanView, LibreOffice, Netpbm, PaintShop Pro, PMView, and\n" \
+        "XnView among others support Sun Raster image files. The format does not support transparency.";
+    image_formats[++i].data = ".ras";
+    image_formats[i].name = "Sun Rasters - *.ras";
+    image_formats[i].desc = image_formats[i - 1].desc;
+    image_formats[++i].data = ".tiff";
+    image_formats[i].name = "TIFF Files - *.tiff";
+    image_formats[i].desc = "Tag Image File Format (TIFF or TIF), is an image file format for storing raster graphics\n" \
+        "images, popular among graphic artists, the publishing industry, and photographers. TIFF is\n" \
+        "widely supported by scanning, faxing, word processing, optical character recognition,\n" \
+        "image manipulation, desktop publishing, and page-layout applications.";
+    image_formats[++i].data = ".tif";
+    image_formats[i].name = "TIFF Files - *.tif";
+    image_formats[i].desc = image_formats[i - 1].desc;
+    image_formats[++i].data = ".exr";
+    image_formats[i].name = "OpenEXR Image Files - *.exr";
+    image_formats[i].desc = "OpenEXR is a high-dynamic range, multi-channel raster file format, created under a free\n" \
+        "software license similar to the BSD license.  It supports multiple channels of potentially\n" \
+        "different pixel sizes, including 32-bit unsigned integer, 32-bit and 16-bit floating point\n" \
+        "values, as well as various compression techniques which include lossless and lossy\n" \
+        "compression algorithms. It also has arbitrary channels and encodes multiple points of view\n" \
+        "such as left- and right-camera images.";
+    image_formats[++i].data = ".hdr";
+    image_formats[i].name = "Radiance HDR - *.hdr";
+    image_formats[i].desc = "RGBE or Radiance HDR is an image format that stores pixels as one byte each for RGB (red,\n" \
+        "green, and blue) values with a one byte shared exponent. Thus it stores four bytes per pixel.\n" \
+        "RGBE allows pixels to have the dynamic range and precision of floating-point values in a\n" \
+        "relatively compact data structure (32 bits per pixel).";
+    image_formats[++i].data = ".pic";
+    image_formats[i].name = "Radiance HDR - *.pic";
+    image_formats[i].desc = image_formats[i - 1].desc;
+
+    // Specific Format Widget Options (multiple sets)
+    format_jpeg_options[FormatJpegOptions::label_FormatFlags].data = 1;
+    format_jpeg_options[FormatJpegOptions::label_FormatFlags].name = "Subsampling:";
+    format_jpeg_options[FormatJpegOptions::label_FormatFlags].desc = "Chroma subsampling is the practice of encoding images by implementing less resolution\n" \
+        "for chroma information than for luma information, taking advantage of the human visual\n" \
+        "system's lower acuity for color differences than for luminance.";
+    format_jpeg_options[FormatJpegOptions::label_Quality].data = 95;
+    format_jpeg_options[FormatJpegOptions::label_Quality].name = "Quality:";
+    format_jpeg_options[FormatJpegOptions::label_Quality].desc = "JPEG quality can be between 0 and 100 (the higher the better). Default value is 95.";
+    format_jpeg_options[FormatJpegOptions::checkBox_Optimize].data = 0;
+    format_jpeg_options[FormatJpegOptions::checkBox_Optimize].name = "Optimize";
+    format_jpeg_options[FormatJpegOptions::checkBox_Optimize].desc = "JPEG optimize can lower file sizes by striping unnecessary metadata, but only noticeable\n" \
+        "at higher quality ranges (95+). Default is unchecked.";
+    format_jpeg_options[FormatJpegOptions::checkBox_Progressive].data = 0;
+    format_jpeg_options[FormatJpegOptions::checkBox_Progressive].name = "Progressive";
+    format_jpeg_options[FormatJpegOptions::checkBox_Progressive].desc = "Using the JPEG interlaced progressive format data is compressed in multiple passes of\n" \
+        "progressively higher detail.This is ideal for large images that will be displayed while\n" \
+        "downloading over a slow connection, allowing a reasonable preview after receiving only a\n" \
+        "portion of the data. Default is unchecked.";
+    format_jpeg_options[FormatJpegOptions::label_Compression].data = 0;
+    format_jpeg_options[FormatJpegOptions::label_Compression].name = "Restart Interval:";
+    format_jpeg_options[FormatJpegOptions::label_Compression].desc = "Restart interval specifies the interval between restart markers, in Minimum Coded Units\n" \
+        "(MCUs).They were designed to allow resynchronization after an error, but also now serve a\n" \
+        "new purpose, to allow for multi - threaded JPEG encoders and decoders. Default value is 95.";
+    format_jpeg_options[FormatJpegOptions::label_ExtraSetting1].data = -1;
+    format_jpeg_options[FormatJpegOptions::label_ExtraSetting1].name = "Luma:";
+    format_jpeg_options[FormatJpegOptions::label_ExtraSetting1].desc = "Separate and adjust the luma quality between to 0 and 100 (-1 don't use, default). When an\n" \
+        "image is converted from RGB to Y'CBCR, the luma component is the (Y'), representing brightness.";
+    format_jpeg_options[FormatJpegOptions::label_ExtraSetting2].data = -1;
+    format_jpeg_options[FormatJpegOptions::label_ExtraSetting2].name = "Chroma:";
+    format_jpeg_options[FormatJpegOptions::label_ExtraSetting2].desc = "Separate and adjust the chroma quality between to 0 and 100 (-1 don't use, default). When an\n" \
+        "image is converted from RGB to Y'CBCR, the chroma component is the (CB and CR), representing color.";
+
+    format_jp2_options[FormatJp2Options::label_Compression].data = 1000;
+    format_jp2_options[FormatJp2Options::label_Compression].name = "Compression Level:";
+    format_jp2_options[FormatJp2Options::label_Compression].desc = "Use to specify the JPEG 2000 target compression rate with values from 0 to 1000. Default value is 1000.";
+
+    format_png_options[FormatPngOptions::label_FormatFlags].data = 0;
+    format_png_options[FormatPngOptions::label_FormatFlags].name = "Compression Strategy:";
+    format_png_options[FormatPngOptions::label_FormatFlags].desc = "PNG compression strategies are passed to the underlying zlib processing stage, and only affect the\n" \
+        "compression ratio, but not the correctness of the compressed output even if it is not set appropriately\n" \
+        "The effect of the [Filter] strategy is to force more Huffman coding and less string matching; it is\n" \
+        "somewhat intermediate between [Default] and [Huffman Only]. [Run-Length Encoding] is designed to be\n" \
+        "almost as fast as [Huffman Only], but gives better compression for PNG image data. [Fixed (No Huffman)]\n" \
+        "prevents the use of dynamic Huffman codes, allowing for a simpler decoder for special applications.";
+    format_png_options[FormatPngOptions::checkBox_Optimize].data = 0;
+    format_png_options[FormatPngOptions::checkBox_Optimize].name = "Binary Level";
+    format_png_options[FormatPngOptions::checkBox_Optimize].desc = "If binary level (bi-level) is checked a grayscale PNG image will be created. Default is unchecked.";
+    format_png_options[FormatPngOptions::label_Compression].data = 1;
+    format_png_options[FormatPngOptions::label_Compression].name = "Compression Level";
+    format_png_options[FormatPngOptions::label_Compression].desc = "PNG compression levels are from 0 to 9 with higher values meaning a smaller file size and longer\n" \
+        "compression time. If specified, the strategy is changed to [Default].\n" \
+        "Default value is 1 (best speed setting).";
+
+    format_webp_options[FormatWebpOptions::label_Quality].data = 100;
+    format_webp_options[FormatWebpOptions::label_Quality].name = "Quality:";
+    format_webp_options[FormatWebpOptions::label_Quality].desc = "WebP quality can be between 0 and 100 (the higher the better). With 100 quality, the lossless\n" \
+        "compression is used. Default value is 100.";
+
+    format_avif_options[FormatAvifOptions::label_Quality].data = 95;
+    format_avif_options[FormatAvifOptions::label_Quality].name = "Quality:";
+    format_avif_options[FormatAvifOptions::label_Quality].desc = "AVIF quality can be between 0 and 100 (the higher the better). Default value is 95.";
+    format_avif_options[FormatAvifOptions::label_Compression].data = 9;
+    format_avif_options[FormatAvifOptions::label_Compression].name = "Speed:";
+    format_avif_options[FormatAvifOptions::label_Compression].desc = "The AVIF creation speed can be between 0 (slowest) and 9 (fastest). Default value is 9.";
+    format_avif_options[FormatAvifOptions::label_ExtraSetting2].data = 8;
+    format_avif_options[FormatAvifOptions::label_ExtraSetting2].name = "Color Depth:";
+    format_avif_options[FormatAvifOptions::label_ExtraSetting2].desc = "AVIF can have 8-, 10- or 12-bit color depths. If greater than 8, it is stored/read as a float with\n" \
+        "pixels having any value between 0 and 1.0. Default value is 8.";
+
+    format_pbm_options[FormatPbmOptions::checkBox_Optimize].data = 1;
+    format_pbm_options[FormatPbmOptions::checkBox_Optimize].name = "Binary Format";
+    format_pbm_options[FormatPbmOptions::checkBox_Optimize].desc = "For PBM, PGM, or PPM, using a binary format creates a grayscale image. Default is checked.";
+
+    format_pam_options[FormatPamOptions::label_FormatFlags].data = 0;
+    format_pam_options[FormatPamOptions::label_FormatFlags].name = "Tuple Type:";
+    format_pam_options[FormatPamOptions::label_FormatFlags].desc = "The tuple type attribute specifies what kind of image the PAM file represents, thus enabling it to\n" \
+        "stand for the older Netpbm formats, as well as to be extended to new uses, like transparency.";
+
+    format_tiff_options[FormatTiffOptions::label_FormatFlags].data = 4;
+    format_tiff_options[FormatTiffOptions::label_FormatFlags].name = "Compression Scheme:";
+    format_tiff_options[FormatTiffOptions::label_FormatFlags].desc = "The compression scheme used on the image data. Note that this is a complete list of schemes from the\n" \
+        "libtiff documents and some may not be currently supported in this app.\n" \
+        "Compression schemes that do work: LWZ (default), Adobe Deflate, and Deflate.";
+    format_tiff_options[FormatTiffOptions::label_Quality].data = 2;
+    format_tiff_options[FormatTiffOptions::label_Quality].name = "Resolution Unit:";
+    format_tiff_options[FormatTiffOptions::label_Quality].desc = "The resolution unit of measurement for X and Y directions.";
+    format_tiff_options[FormatTiffOptions::label_ExtraSetting1].data = 0;
+    format_tiff_options[FormatTiffOptions::label_ExtraSetting1].name = "X:";
+    format_tiff_options[FormatTiffOptions::label_ExtraSetting1].desc = "The number of pixels per \"resolution unit\" in the image's width or X direction. Default value is 0.";
+    format_tiff_options[FormatTiffOptions::label_ExtraSetting2].data = 0;
+    format_tiff_options[FormatTiffOptions::label_ExtraSetting2].name = "Y:";
+    format_tiff_options[FormatTiffOptions::label_ExtraSetting2].desc = "The number of pixels per \"resolution unit\" in the image's height (length) or Y direction. Default value is 0.";
+
+    format_exr_options[FormatExrOptions::label_FormatFlags].data = 3;
+    format_exr_options[FormatExrOptions::label_FormatFlags].name = "Compression Type:";
+    format_exr_options[FormatExrOptions::label_FormatFlags].desc = "Override EXR compression type (ZLib is default)";
+    format_exr_options[FormatExrOptions::checkBox_Optimize].data = 0;
+    format_exr_options[FormatExrOptions::checkBox_Optimize].name = "Store as FP16 (HALF)";
+    format_exr_options[FormatExrOptions::checkBox_Optimize].desc = "Override EXR Storage Type";
+    format_exr_options[FormatExrOptions::checkBox_Progressive].data = 1;
+    format_exr_options[FormatExrOptions::checkBox_Progressive].name = "Store as FP32 (Default)";
+    format_exr_options[FormatExrOptions::checkBox_Progressive].desc = "Override EXR Storage Type";
+    format_exr_options[FormatExrOptions::label_Compression].data = 45;
+    format_exr_options[FormatExrOptions::label_Compression].name = "Compression Level:";
+    format_exr_options[FormatExrOptions::label_Compression].desc = "Override EXR DWA Compression Level. Default value is 45.";
+
+    format_hdr_options[FormatHdrOptions::label_FormatFlags].data = 0;
+    format_hdr_options[FormatHdrOptions::label_FormatFlags].name = "Compression Strategy:";
+    format_hdr_options[FormatHdrOptions::label_FormatFlags].desc = "For HDR files there are only really two strategies: compress or don't compress.";
+
+    // comboBox_FormatFlags (multiple sets)
+    format_jpeg_subsamplings[0].data = cv::IMWRITE_JPEG_SAMPLING_FACTOR_411;
+    format_jpeg_subsamplings[0].name = "4x1, 1x1, 1x1";
+    format_jpeg_subsamplings[0].desc = "JPEG Sampling 4:1:1.";
+    format_jpeg_subsamplings[1].data = cv::IMWRITE_JPEG_SAMPLING_FACTOR_420;
+    format_jpeg_subsamplings[1].name = "2x2, 1x1, 1x1 (Default)";
+    format_jpeg_subsamplings[1].desc = "JPEG Sampling 4:2:0. In most cases this is the best option.";
+    format_jpeg_subsamplings[2].data = cv::IMWRITE_JPEG_SAMPLING_FACTOR_422;
+    format_jpeg_subsamplings[2].name = "2x1, 1x1, 1x1";
+    format_jpeg_subsamplings[2].desc = "JPEG Sampling 4:2:2.";
+    format_jpeg_subsamplings[3].data = cv::IMWRITE_JPEG_SAMPLING_FACTOR_440;
+    format_jpeg_subsamplings[3].name = "1x2, 1x1, 1x1";
+    format_jpeg_subsamplings[3].desc = "JPEG Sampling 4:4:0.";
+    format_jpeg_subsamplings[4].data = cv::IMWRITE_JPEG_SAMPLING_FACTOR_444;
+    format_jpeg_subsamplings[4].name = "1x1, 1x1, 1x1 (No Subsampling)";
+    format_jpeg_subsamplings[4].desc = "JPEG Sampling 4:4:4. It can help to turn off subsampling when using more than one quality\n" \
+        "setting (Luma/Chroma).";
+
+    format_png_compression[0].data = cv::IMWRITE_PNG_STRATEGY_DEFAULT;
+    format_png_compression[0].name = "Default";
+    format_png_compression[0].desc = "Use this value for normal data.";
+    format_png_compression[1].data = cv::IMWRITE_PNG_STRATEGY_FILTERED;
+    format_png_compression[1].name = "Filtered";
+    format_png_compression[1].desc = "Use this value for data produced by a filter (or predictor). Filtered data consists mostly of small\n" \
+        "values with a somewhat random distribution.In this case, the compression algorithm is tuned to\n" \
+        "compress them better.";
+    format_png_compression[2].data = cv::IMWRITE_PNG_STRATEGY_HUFFMAN_ONLY;
+    format_png_compression[2].name = "Huffman Only";
+    format_png_compression[2].desc = "Use this value to force Huffman encoding only (no string match).";
+    format_png_compression[3].data = cv::IMWRITE_PNG_STRATEGY_RLE;
+    format_png_compression[3].name = "Run-Length Encoding";
+    format_png_compression[3].desc = "Use this value to limit match distances to one (run-length encoding).";
+    format_png_compression[4].data = cv::IMWRITE_PNG_STRATEGY_FIXED;
+    format_png_compression[4].name = "Fixed (No Huffman)";
+    format_png_compression[4].desc = "Using this value prevents the use of dynamic Huffman codes, allowing for a simpler decoder for\n" \
+        "special applications.";
+
+    format_pam_tupletype[0].data = cv::IMWRITE_PAM_FORMAT_NULL; // TODO: test what this does
+    format_pam_tupletype[0].name = "Format Null";
+    format_pam_tupletype[0].desc = "No tuple type used.";
+    format_pam_tupletype[1].data = cv::IMWRITE_PAM_FORMAT_BLACKANDWHITE;
+    format_pam_tupletype[1].name = "Black and White";
+    format_pam_tupletype[1].desc = "Black and white is a special case of grayscale, with only 1 byte per pixel (1 depth).";
+    format_pam_tupletype[2].data = cv::IMWRITE_PAM_FORMAT_GRAYSCALE;
+    format_pam_tupletype[2].name = "Grayscale";
+    format_pam_tupletype[2].desc = "Grayscale is equivalent to PGM (portable graymap), with 2 bytes per pixel (1 depth).";
+    format_pam_tupletype[3].data = cv::IMWRITE_PAM_FORMAT_GRAYSCALE_ALPHA;
+    format_pam_tupletype[3].name = "Grayscale Alpha";
+    format_pam_tupletype[3].desc = "Grayscale alpha is equivalent to PGM (portable graymap), but has transparency not directly possible\n" \
+        "in PGM, with 4 bytes per pixel (2 depth).";
+    format_pam_tupletype[4].data = cv::IMWRITE_PAM_FORMAT_RGB;
+    format_pam_tupletype[4].name = "RGB";
+    format_pam_tupletype[4].desc = "RGB (red, green, blue) uses a greater depth of colors, with 6 bytes per pixel (3 depth).";
+    format_pam_tupletype[5].data = cv::IMWRITE_PAM_FORMAT_RGB_ALPHA;
+    format_pam_tupletype[5].name = "RGB Alpha";
+    format_pam_tupletype[5].desc = "RGB Alpha uses the colors red, green, and blue with a transparency layer, adding up to 8 bytes per\n" \
+        "pixel (4 depth).";
+
+    // TODO: Find more info on Tiff Compression Schemes https://www.awaresystems.be/imaging/tiff/tifftags/baseline.html
+    format_tiff_compression[0].data = ImageEditor::COMPRESSION_NONE;
+    format_tiff_compression[0].name = "None";
+    format_tiff_compression[0].desc = "No Compression.";
+    format_tiff_compression[1].data = ImageEditor::COMPRESSION_CCITTRLE;
+    format_tiff_compression[1].name = "CCITT RLE";
+    format_tiff_compression[1].desc = "";
+    format_tiff_compression[2].data = ImageEditor::COMPRESSION_CCITTFAX3;
+    format_tiff_compression[2].name = "CCITT FAX3/T4";
+    format_tiff_compression[2].desc = "";
+    format_tiff_compression[3].data = ImageEditor::COMPRESSION_CCITTFAX4;
+    format_tiff_compression[3].name = "CCITT FAX4/T6";
+    format_tiff_compression[3].desc = "";
+    format_tiff_compression[4].data = ImageEditor::COMPRESSION_LZW;
+    format_tiff_compression[4].name = "LZW (Default)";
+    format_tiff_compression[4].desc = "LZW is the default compression scheme.";
+    format_tiff_compression[5].data = ImageEditor::COMPRESSION_OJPEG;
+    format_tiff_compression[5].name = "OJPEG";
+    format_tiff_compression[5].desc = "";
+    format_tiff_compression[6].data = ImageEditor::COMPRESSION_JPEG;
+    format_tiff_compression[6].name = "JPEG";
+    format_tiff_compression[6].desc = "";
+    format_tiff_compression[7].data = ImageEditor::COMPRESSION_ADOBE_DEFLATE;
+    format_tiff_compression[7].name = "ADOBE DEFLATE";
+    format_tiff_compression[7].desc = "";
+    format_tiff_compression[8].data = ImageEditor::COMPRESSION_NEXT;
+    format_tiff_compression[8].name = "NEXT";
+    format_tiff_compression[8].desc = "";
+    format_tiff_compression[9].data = ImageEditor::COMPRESSION_CCITTRLEW;
+    format_tiff_compression[9].name = "CCITT RLE-W";
+    format_tiff_compression[9].desc = "";
+    format_tiff_compression[10].data = ImageEditor::COMPRESSION_PACKBITS;
+    format_tiff_compression[10].name = "PACK BITS";
+    format_tiff_compression[10].desc = "";
+    format_tiff_compression[11].data = ImageEditor::COMPRESSION_THUNDERSCAN;
+    format_tiff_compression[11].name = "THUNDER SCAN";
+    format_tiff_compression[11].desc = "";
+    format_tiff_compression[12].data = ImageEditor::COMPRESSION_IT8CTPAD;
+    format_tiff_compression[12].name = "IT8 CTPAD";
+    format_tiff_compression[12].desc = "";
+    format_tiff_compression[13].data = ImageEditor::COMPRESSION_IT8LW;
+    format_tiff_compression[13].name = "IT8 LW";
+    format_tiff_compression[13].desc = "";
+    format_tiff_compression[14].data = ImageEditor::COMPRESSION_IT8MP;
+    format_tiff_compression[14].name = "IT8 MP";
+    format_tiff_compression[14].desc = "";
+    format_tiff_compression[15].data = ImageEditor::COMPRESSION_IT8BL;
+    format_tiff_compression[15].name = "IT8 BL";
+    format_tiff_compression[15].desc = "";
+    format_tiff_compression[16].data = ImageEditor::COMPRESSION_PIXARFILM;
+    format_tiff_compression[16].name = "PIXAR FILM";
+    format_tiff_compression[16].desc = "";
+    format_tiff_compression[17].data = ImageEditor::COMPRESSION_PIXARLOG;
+    format_tiff_compression[17].name = "PIXAR LOG";
+    format_tiff_compression[17].desc = "";
+    format_tiff_compression[18].data = ImageEditor::COMPRESSION_DEFLATE;
+    format_tiff_compression[18].name = "DEFLATE";
+    format_tiff_compression[18].desc = "";
+    format_tiff_compression[19].data = ImageEditor::COMPRESSION_DCS;
+    format_tiff_compression[19].name = "DCS";
+    format_tiff_compression[19].desc = "";
+    format_tiff_compression[20].data = ImageEditor::COMPRESSION_JBIG;
+    format_tiff_compression[20].name = "JBIG";
+    format_tiff_compression[20].desc = "";
+    format_tiff_compression[21].data = ImageEditor::COMPRESSION_SGILOG;
+    format_tiff_compression[21].name = "SGI LOG";
+    format_tiff_compression[21].desc = "";
+    format_tiff_compression[22].data = ImageEditor::COMPRESSION_SGILOG24;
+    format_tiff_compression[22].name = "SGI LOG24";
+    format_tiff_compression[22].desc = "";
+    format_tiff_compression[23].data = ImageEditor::COMPRESSION_JP2000;
+    format_tiff_compression[23].name = "JP2000";
+    format_tiff_compression[23].desc = "";
+
+    format_tiff_resolution_unit[0].data = ImageEditor::RESUNIT_NONE;
+    format_tiff_resolution_unit[0].name = "Resolution Unit:";
+    format_tiff_resolution_unit[0].desc = "No absolute unit of measurement. Used for images that may have a non-square aspect ratio, but no\n" \
+        "meaningful absolute dimensions.";
+    format_tiff_resolution_unit[1].data = ImageEditor::RESUNIT_INCH;
+    format_tiff_resolution_unit[1].name = "Resolution Unit:";
+    format_tiff_resolution_unit[1].desc = "Inch (Default)";
+    format_tiff_resolution_unit[2].data = ImageEditor::RESUNIT_CENTIMETER;
+    format_tiff_resolution_unit[2].name = "Resolution Unit:";
+    format_tiff_resolution_unit[2].desc = "Centimeter";
+
+    format_exr_compression[0].data = cv::IMWRITE_EXR_COMPRESSION_NO;
+    format_exr_compression[0].name = "None";
+    format_exr_compression[0].desc = "No Compression.";
+    format_exr_compression[1].data = cv::IMWRITE_EXR_COMPRESSION_RLE;
+    format_exr_compression[1].name = "Run-Length Encoding";
+    format_exr_compression[1].desc = "Run-length encoding compression.";
+    format_exr_compression[2].data = cv::IMWRITE_EXR_COMPRESSION_ZIPS;
+    format_exr_compression[2].name = "ZLib 1 SL";
+    format_exr_compression[2].desc = "ZLib compression, one scan line at a time.";
+    format_exr_compression[3].data = cv::IMWRITE_EXR_COMPRESSION_ZIP;
+    format_exr_compression[3].name = "ZLib 16 SL (Default)";
+    format_exr_compression[3].desc = "ZLib compression in blocks of 16 scan lines (default).";
+    format_exr_compression[4].data = cv::IMWRITE_EXR_COMPRESSION_PIZ;
+    format_exr_compression[4].name = "Piz Wavelet";
+    format_exr_compression[4].desc = "Piz-based wavelet compression.";
+    format_exr_compression[5].data = cv::IMWRITE_EXR_COMPRESSION_PXR24;
+    format_exr_compression[5].name = "PXR24 (Lossy)";
+    format_exr_compression[5].desc = "Lossy 24-bit float compression.";
+    format_exr_compression[6].data = cv::IMWRITE_EXR_COMPRESSION_B44;
+    format_exr_compression[6].name = "4-by-4 Fixed (Lossy)";
+    format_exr_compression[6].desc = "B44 lossy 4-by-4 pixel block compression, fixed compression rate.";
+    format_exr_compression[7].data = cv::IMWRITE_EXR_COMPRESSION_B44A;
+    format_exr_compression[7].name = "4-by-4 Flat (Lossy)";
+    format_exr_compression[7].desc = "B44A lossy 4-by-4 pixel block compression, flat fields are compressed more.";
+    format_exr_compression[8].data = cv::IMWRITE_EXR_COMPRESSION_DWAA;
+    format_exr_compression[8].name = "DWAA 32 SL (Lossy)";
+    format_exr_compression[8].desc = "DWAA Lossy DCT based compression, in blocks of 32 scanlines. More efficient for partial buffer access.";
+    format_exr_compression[9].data = cv::IMWRITE_EXR_COMPRESSION_DWAB;
+    format_exr_compression[9].name = "DWAB 256 SL (Lossy)";
+    format_exr_compression[9].desc = "DWAB Lossy DCT based compression, in blocks of 256 scanlines. More efficient space wise and faster\n" \
+        "to decode full frames than DWAA.";
+
+    format_hdr_compression[0].data = cv::IMWRITE_HDR_COMPRESSION_NONE;
+    format_hdr_compression[0].name = "None (Default)";
+    format_hdr_compression[0].desc = "No compression.";
+    format_hdr_compression[1].data = cv::IMWRITE_HDR_COMPRESSION_RLE;
+    format_hdr_compression[1].name = "Run-Length Encoding";
+    format_hdr_compression[1].desc = "The only compression option.";
+
+    // Various Other Widget data
+    other_options[OtherOptions::tab_1].data = 0; // Default current tab index, ignores other tab.data.
+    other_options[OtherOptions::tab_1].name = "Images";
+    other_options[OtherOptions::tab_1].desc = "Image File Viewer Tab";
+    other_options[OtherOptions::tab_2].data = 0;
+    other_options[OtherOptions::tab_2].name = "Image Edits";
+    other_options[OtherOptions::tab_2].desc = "Image Edit Tools Tab";
+    other_options[OtherOptions::tab_3].data = 0;
+    other_options[OtherOptions::tab_3].name = "Save Options";
+    other_options[OtherOptions::tab_3].desc = "File Save Options Tab";
+    other_options[OtherOptions::checkBox_SearchSubDirs].data = 1;
+    other_options[OtherOptions::checkBox_SearchSubDirs].name = "When Searching Directories Search Sub-Directories As Well";
+    other_options[OtherOptions::checkBox_SearchSubDirs].desc = "When file directories/folders are dropped into the image file viewer an image file search will begin\n" \
+                                                               "in the directory, and it this is checked, all its sub-directories too.";
+    other_options[OtherOptions::pushButton_EditAndSave].data = 0;
+    other_options[OtherOptions::pushButton_EditAndSave].name = "Start Editing And Saving Images";
+    other_options[OtherOptions::pushButton_EditAndSave].desc = "";
+    /*other_options[OtherOptions::].data = 0;
+    other_options[OtherOptions::].name = "";
+    other_options[OtherOptions::].desc = "";*/
+
+}
+
+/// <summary>
+/// Setup file tree with initial settings and header titles.
+/// </summary>
+void BatchItImage::SetupFileTree()
+{
+    ui.treeWidget_FileInfo->clear();
+    for (int col = 0; col < FileColumn::COUNT; col++) {
+        ui.treeWidget_FileInfo->headerItem()->setText(col, QString::fromStdString(file_tree_headers[col].name));
+        ui.treeWidget_FileInfo->headerItem()->setToolTip(col, QString::fromStdString(file_tree_headers[col].desc));
+    }
+    ui.treeWidget_FileInfo->setColumnWidth(FileColumn::FILE_SELECTED, ui.treeWidget_FileInfo->minimumWidth());
+    ui.treeWidget_FileInfo->header()->setSectionsClickable(true);
+    ui.treeWidget_FileInfo->header()->sortIndicatorOrder();
+    ui.treeWidget_FileInfo->installEventFilter(this); // Keep watch of all events happening in file tree. -> eventFilter()
+    ui.treeWidget_FileInfo->setMouseTracking(true);
+}
+
+/// <summary>
+/// Add display text, tooltip descriptions, and other data to various ui objects/widgets.
+/// </summary>
+/// <param name="object">--Pointer to an object/widget.</param>
+/// <param name="object_data">--Pointer to a UIData.</param>
+void BatchItImage::AddUiObjectData(QObject* object, UIData* object_data)
+{
+    std::string object_class = object->metaObject()->className();
+    DEBUG2("AddUiObjectData: ", object_class);
+    
+    if ("QCheckBox" == object_class) {
+        QCheckBox* cb = qobject_cast<QCheckBox*>(object);
+        cb->setChecked(std::get<int>(object_data->data));
+        cb->setText(QString::fromStdString(object_data->name));
+        cb->setStatusTip(QString::fromStdString(object_data->desc));
+        cb->setToolTip(QString::fromStdString(object_data->desc));
+    }
+    else if ("QGroupBox" == object_class) {
+        QGroupBox* gb = qobject_cast<QGroupBox*>(object);
+        gb->setChecked(std::get<int>(object_data->data));
+        gb->setTitle(QString::fromStdString(object_data->name));
+        gb->setStatusTip(QString::fromStdString(object_data->desc));
+        gb->setToolTip(QString::fromStdString(object_data->desc));
+    }else if ("QLabel" == object_class) {
+        QLabel* lbl = qobject_cast<QLabel*>(object);
+        lbl->setText(QString::fromStdString(object_data->name));
+        lbl->setStatusTip(QString::fromStdString(object_data->desc));
+        lbl->setToolTip(QString::fromStdString(object_data->desc));
+    }
+    else if ("QRadioButton" == object_class) {
+        QRadioButton* rb = qobject_cast<QRadioButton*>(object);
+        rb->setChecked(std::get<int>(object_data->data));
+        rb->setText(QString::fromStdString(object_data->name));
+        rb->setStatusTip(QString::fromStdString(object_data->desc));
+        rb->setToolTip(QString::fromStdString(object_data->desc));
+    }
+    else if ("QPushButton" == object_class) {
+        QPushButton* pb = qobject_cast<QPushButton*>(object);
+        pb->setText(QString::fromStdString(object_data->name));
+        pb->setStatusTip(QString::fromStdString(object_data->desc));
+        pb->setToolTip(QString::fromStdString(object_data->desc));
+    }
+}
 
 /// <summary>
 /// Add items to various combo boxes which include titles, tooltip descriptions, and other data.
@@ -663,7 +963,7 @@ void BatchItImage::Test()
 /// <param name="cb">--Pointer to a QComboBox.</param>
 /// <param name="items">--Data array to enter into a combo box.</param>
 /// <param name="items_size">--Size/length of item data array.</param>
-void BatchItImage::PopulateComboBoxes(QComboBox* cb, UIData items[], int items_size)
+void BatchItImage::PopulateComboBox(QComboBox* cb, UIData items[], int items_size)
 {
     cb->clear();
     for (int i = 0; i < items_size; i++) {
@@ -683,14 +983,29 @@ void BatchItImage::PopulateComboBoxes(QComboBox* cb, UIData items[], int items_s
             QString::fromStdString(items[i].desc),
             Qt::ToolTipRole
         );
+        cb->setItemData( i,
+            QString::fromStdString(items[i].desc),
+            Qt::StatusTipRole
+        );
     }
+    cb->setStatusTip(cb->currentData(Qt::StatusTipRole).toString());
     cb->setToolTip(cb->currentData(Qt::ToolTipRole).toString());
+}
+
+/// <summary>
+/// Slot: Update a combo box tooltip when index changes.
+/// </summary>
+void BatchItImage::UpdateComboBoxToolTip()
+{
+    QComboBox* cb = qobject_cast<QComboBox*>(sender());
+    cb->setToolTip(cb->currentData(Qt::ToolTipRole).toString());
+    //DEBUG2("UpdateComboBoxToolTip: ", cb->objectName().toStdString());
 }
 
 
 void BatchItImage::EnableSpecificFormatOptions(bool loading_preset)
 {
-    //DEBUG2("EnableSpecificFormatOptions: ", loading_presets);
+    DEBUG2("EnableSpecificFormatOptions: ", loading_preset);
     const std::string format = ui.comboBox_ImageFormat->currentData().toString().toStdString();
 
     int NONE = 0;
@@ -706,10 +1021,12 @@ void BatchItImage::EnableSpecificFormatOptions(bool loading_preset)
             if (options & FORMATFLAGS) {
                 ui.label_FormatFlags->setFont(*font_default);
                 ui.comboBox_FormatFlags->setEnabled(true);
+                ui.comboBox_FormatFlags->setFont(*font_default);
             }
             else {
                 ui.label_FormatFlags->setFont(*font_default_light);
                 ui.comboBox_FormatFlags->setEnabled(false);
+                ui.comboBox_FormatFlags->setFont(*font_default_light);
             }
             if (options & QUALITY) {
                 ui.label_Quality->setFont(*font_default);
@@ -740,29 +1057,35 @@ void BatchItImage::EnableSpecificFormatOptions(bool loading_preset)
             if (options & COMPRESSION) {
                 ui.label_Compression->setFont(*font_default);
                 ui.spinBox_Compression->setEnabled(true);
+                ui.spinBox_Compression->setFont(*font_default);
                 ui.spinBox_ExtraSetting1->setSingleStep(1);
             }
             else {
                 ui.label_Compression->setFont(*font_default_light);
                 ui.spinBox_Compression->setEnabled(false);
+                ui.spinBox_Compression->setFont(*font_default_light);
             }
             if (options & EXTRASETTING1) {
                 ui.label_ExtraSetting1->setFont(*font_default);
                 ui.spinBox_ExtraSetting1->setEnabled(true);
+                ui.spinBox_ExtraSetting1->setFont(*font_default);
                 ui.spinBox_ExtraSetting1->setSingleStep(1);
             }
             else {
                 ui.label_ExtraSetting1->setFont(*font_default_light);
                 ui.spinBox_ExtraSetting1->setEnabled(false);
+                ui.spinBox_ExtraSetting1->setFont(*font_default_light);
             }
             if (options & EXTRASETTING2) {
                 ui.label_ExtraSetting2->setFont(*font_default);
                 ui.spinBox_ExtraSetting2->setEnabled(true);
+                ui.spinBox_ExtraSetting2->setFont(*font_default);
                 ui.spinBox_ExtraSetting2->setSingleStep(1);
             }
             else {
                 ui.label_ExtraSetting2->setFont(*font_default_light);
                 ui.spinBox_ExtraSetting2->setEnabled(false);
+                ui.spinBox_ExtraSetting2->setFont(*font_default_light);
             }
             
             
@@ -788,15 +1111,20 @@ void BatchItImage::EnableSpecificFormatOptions(bool loading_preset)
         ui.label_ExtraSetting2->setText(format_jpeg_options[FormatJpegOptions::label_ExtraSetting2].name.c_str());
         ui.label_ExtraSetting2->setToolTip(format_jpeg_options[FormatJpegOptions::label_ExtraSetting2].desc.c_str());
 
-        PopulateComboBoxes(ui.comboBox_FormatFlags, format_jpeg_subsamplings, sizeof(format_jpeg_subsamplings) / sizeof(UIData));
+        if (loading_preset)
+            PopulateComboBox(ui.comboBox_FormatFlags, format_jpeg_subsamplings, sizeof(format_jpeg_subsamplings) / sizeof(UIData));
+        
+        int default_quality_value = std::get<int>(format_jpeg_options[FormatJpegOptions::label_Quality].data);
         ui.horizontalSlider_Quality->setRange(0, 100);
+        ui.horizontalSlider_Quality->addTextValue(default_quality_value, default_quality_value, "Default", true);
         ui.spinBox_Compression->setRange(0, 65535);
         ui.spinBox_ExtraSetting1->setRange(-1, 100);
         ui.spinBox_ExtraSetting2->setRange(-1, 100);
 
         if (not loading_preset and last_selected_format != ".jpeg" and last_selected_format != ".jpg" and last_selected_format != ".jpe") {
+            PopulateComboBox(ui.comboBox_FormatFlags, format_jpeg_subsamplings, sizeof(format_jpeg_subsamplings) / sizeof(UIData));
             ui.comboBox_FormatFlags->setCurrentIndex(std::get<int>(format_jpeg_options[FormatJpegOptions::label_FormatFlags].data));
-            ui.horizontalSlider_Quality->setValue(std::get<int>(format_jpeg_options[FormatJpegOptions::label_Quality].data));
+            ui.horizontalSlider_Quality->setValue(default_quality_value);
             ui.checkBox_Optimize->setChecked(std::get<int>(format_jpeg_options[FormatJpegOptions::checkBox_Optimize].data));
             ui.checkBox_Progressive->setChecked(std::get<int>(format_jpeg_options[FormatJpegOptions::checkBox_Progressive].data));
             ui.spinBox_Compression->setValue(std::get<int>(format_jpeg_options[FormatJpegOptions::label_Compression].data));
@@ -828,7 +1156,7 @@ void BatchItImage::EnableSpecificFormatOptions(bool loading_preset)
         ui.label_Compression->setText(format_png_options[FormatPngOptions::label_Compression].name.c_str());
         ui.label_Compression->setToolTip(format_png_options[FormatPngOptions::label_Compression].desc.c_str());
 
-        PopulateComboBoxes(ui.comboBox_FormatFlags, format_png_compression, sizeof(format_png_compression) / sizeof(UIData));
+        PopulateComboBox(ui.comboBox_FormatFlags, format_png_compression, sizeof(format_png_compression) / sizeof(UIData));
         ui.spinBox_Compression->setRange(0, 9);
 
         if (not loading_preset and last_selected_format != ".png") {
@@ -841,12 +1169,15 @@ void BatchItImage::EnableSpecificFormatOptions(bool loading_preset)
 
         enableOptions(QUALITY);
 
-        ui.label_Quality->setText("Quality:");
+        ui.label_Quality->setText(format_webp_options[FormatWebpOptions::label_Quality].name.c_str());
+        ui.label_Quality->setToolTip(format_webp_options[FormatWebpOptions::label_Quality].desc.c_str());
 
-        ui.horizontalSlider_Quality->setRange(0, 100);
+        int default_quality_value = std::get<int>(format_webp_options[FormatWebpOptions::label_Quality].data);
+        ui.horizontalSlider_Quality->setRange(1, 100);
+        ui.horizontalSlider_Quality->addTextValue(default_quality_value, default_quality_value, "Default", true);
 
         if (not loading_preset and last_selected_format != ".webp") {
-            ui.horizontalSlider_Quality->setValue(95);
+            ui.horizontalSlider_Quality->setValue(default_quality_value);
         }
     }
     else if (format == ".avif") { // cv::IMWRITE_AVIF_QUALITY  cv::IMWRITE_AVIF_DEPTH  cv::IMWRITE_AVIF_SPEED    IMWRITE_JPEG_SAMPLING_FACTOR??? test?
@@ -854,63 +1185,86 @@ void BatchItImage::EnableSpecificFormatOptions(bool loading_preset)
         enableOptions(QUALITY + COMPRESSION + EXTRASETTING2);
 
         //ui.label_FormatFlags->setText(":");
-        ui.label_Quality->setText("Quality:");
-        ui.label_Compression->setText("Speed:");
-        ui.label_ExtraSetting2->setText("Color Depth:");
+        ui.label_Quality->setText(format_avif_options[FormatAvifOptions::label_Quality].name.c_str());
+        ui.label_Quality->setToolTip(format_avif_options[FormatAvifOptions::label_Quality].desc.c_str());
+        ui.label_Compression->setText(format_avif_options[FormatAvifOptions::label_Compression].name.c_str());
+        ui.label_Compression->setToolTip(format_avif_options[FormatAvifOptions::label_Compression].desc.c_str());
+        ui.label_ExtraSetting2->setText(format_avif_options[FormatAvifOptions::label_ExtraSetting2].name.c_str());
+        ui.label_ExtraSetting2->setToolTip(format_avif_options[FormatAvifOptions::label_ExtraSetting2].desc.c_str());
 
+        int default_quality_value = std::get<int>(format_avif_options[FormatAvifOptions::label_Quality].data);
         ui.horizontalSlider_Quality->setRange(0, 100);
+        ui.horizontalSlider_Quality->addTextValue(default_quality_value, default_quality_value, "Default", true);
         ui.spinBox_Compression->setRange(0, 9);
         ui.spinBox_ExtraSetting2->setRange(8, 12); // TODO: validate to only type 8,10,12?
         ui.spinBox_ExtraSetting2->setSingleStep(2);
 
         if (not loading_preset and last_selected_format != ".avif") {
             //ui.comboBox_FormatFlags->setCurrentIndex(0);
-            ui.horizontalSlider_Quality->setValue(95);
-            ui.spinBox_Compression->setValue(9);
-            ui.spinBox_ExtraSetting2->setValue(8);
+            ui.horizontalSlider_Quality->setValue(default_quality_value);
+            ui.spinBox_Compression->setValue(std::get<int>(format_avif_options[FormatAvifOptions::label_Compression].data));
+            ui.spinBox_ExtraSetting2->setValue(std::get<int>(format_avif_options[FormatAvifOptions::label_ExtraSetting2].data));
         }
     }
     else if (format == ".pbm" or format == ".pgm" or format == ".ppm") { // IMWRITE_PXM_BINARY
 
         enableOptions(OPTIMIZE);
 
-        ui.checkBox_Optimize->setText("Binary Format");
+        ui.checkBox_Optimize->setText(format_pbm_options[FormatPbmOptions::checkBox_Optimize].name.c_str());
+        ui.checkBox_Optimize->setToolTip(format_pbm_options[FormatPbmOptions::checkBox_Optimize].desc.c_str());
 
         if (not loading_preset and last_selected_format != ".pbm" and last_selected_format != ".pgm" and last_selected_format != ".ppm") {
-            ui.checkBox_Optimize->setChecked(true);
+            ui.checkBox_Optimize->setChecked(std::get<int>(format_pbm_options[FormatPbmOptions::checkBox_Optimize].data));
         }
     }
     else if (format == ".pam") { // IMWRITE_PAM_TUPLETYPE
 
         enableOptions(FORMATFLAGS);
 
-        ui.label_FormatFlags->setText("Tuple Type:");
-        //ui.label_FormatFlags->setToolTip("PAM specific Tuple Type flags used in PAM files.");
+        ui.label_FormatFlags->setText(format_pam_options[FormatPamOptions::label_FormatFlags].name.c_str());
+        ui.label_FormatFlags->setToolTip(format_pam_options[FormatPamOptions::label_FormatFlags].desc.c_str());
 
-        PopulateComboBoxes(ui.comboBox_FormatFlags, format_pam_tupletype, 6);
+        PopulateComboBox(ui.comboBox_FormatFlags, format_pam_tupletype, sizeof(format_pam_tupletype) / sizeof(UIData));
 
         if (not loading_preset and last_selected_format != ".pam") {
-            ui.comboBox_FormatFlags->setCurrentIndex(0);
+            ui.comboBox_FormatFlags->setCurrentIndex(std::get<int>(format_pam_options[FormatPamOptions::label_FormatFlags].data));
         }
     }
     else if (format == ".tiff" or format == ".tif") {
-        /* TODO: http://www.simplesystems.org/libtiff/
-        IMWRITE_TIFF_RESUNIT 
-        For TIFF, use to specify which DPI resolution unit to set; see libtiff documentation for valid values.
 
-        IMWRITE_TIFF_XDPI
-        For TIFF, use to specify the X direction DPI.
+        enableOptions(FORMATFLAGS + QUALITY + EXTRASETTING1 + EXTRASETTING2);
 
-        IMWRITE_TIFF_YDPI
-        For TIFF, use to specify the Y direction DPI.
+        ui.label_FormatFlags->setText(format_tiff_options[FormatTiffOptions::label_FormatFlags].name.c_str());
+        ui.label_FormatFlags->setToolTip(format_tiff_options[FormatTiffOptions::label_FormatFlags].desc.c_str());
+        ui.label_Quality->setText(format_tiff_options[FormatTiffOptions::label_Quality].name.c_str());
+        ui.label_Quality->setToolTip(format_tiff_options[FormatTiffOptions::label_Quality].desc.c_str());
+        ui.label_ExtraSetting1->setText(format_tiff_options[FormatTiffOptions::label_ExtraSetting1].name.c_str());
+        ui.label_ExtraSetting1->setToolTip(format_tiff_options[FormatTiffOptions::label_ExtraSetting1].desc.c_str());
+        ui.label_ExtraSetting2->setText(format_tiff_options[FormatTiffOptions::label_ExtraSetting2].name.c_str());
+        ui.label_ExtraSetting2->setToolTip(format_tiff_options[FormatTiffOptions::label_ExtraSetting2].desc.c_str());
 
-        IMWRITE_TIFF_COMPRESSION
-        For TIFF, use to specify the image compression scheme. 
-        See libtiff for integer constants corresponding to compression formats.
-        Note, for images whose depth is CV_32F, only libtiff's SGILOG compression scheme is used. 
-        For other supported depths, the compression scheme can be specified by this flag;
-        LZW compression is the default.
-        */
+        if (loading_preset)
+            PopulateComboBox(ui.comboBox_FormatFlags, format_tiff_compression, sizeof(format_tiff_compression) / sizeof(UIData));
+        ui.horizontalSlider_Quality->setRange(1, 3);
+        for (auto& tiff_ru : format_tiff_resolution_unit) {
+            ui.horizontalSlider_Quality->addTextValue(
+                std::get<int>(tiff_ru.data),
+                std::get<int>(tiff_ru.data),
+                QString::fromStdString(tiff_ru.name + " " + tiff_ru.desc),
+                true
+            );
+        }
+        ui.spinBox_ExtraSetting1->setRange(0, INT_MAX);
+        ui.spinBox_ExtraSetting2->setRange(0, INT_MAX);
+
+        if (not loading_preset and last_selected_format != ".tiff" and last_selected_format != ".tif") {
+            PopulateComboBox(ui.comboBox_FormatFlags, format_tiff_compression, sizeof(format_tiff_compression) / sizeof(UIData));
+            ui.comboBox_FormatFlags->setCurrentIndex(std::get<int>(format_tiff_options[FormatTiffOptions::label_FormatFlags].data));
+            ui.horizontalSlider_Quality->setValue(std::get<int>(format_tiff_options[FormatTiffOptions::label_Quality].data));
+            ui.spinBox_ExtraSetting1->setValue(std::get<int>(format_tiff_options[FormatTiffOptions::label_ExtraSetting1].data));
+            ui.spinBox_ExtraSetting2->setValue(std::get<int>(format_tiff_options[FormatTiffOptions::label_ExtraSetting2].data));
+        }
+
     }
     else if (format == ".exr") { // IMWRITE_EXR_TYPE  IMWRITE_EXR_COMPRESSION  IMWRITE_EXR_DWA_COMPRESSION_LEVEL
 
@@ -925,7 +1279,7 @@ void BatchItImage::EnableSpecificFormatOptions(bool loading_preset)
         ui.label_Compression->setText(format_exr_options[FormatExrOptions::label_Compression].name.c_str());
         ui.label_Compression->setToolTip(format_exr_options[FormatExrOptions::label_Compression].desc.c_str());
 
-        PopulateComboBoxes(ui.comboBox_FormatFlags, format_exr_compression, sizeof(format_exr_compression) / sizeof(UIData));
+        PopulateComboBox(ui.comboBox_FormatFlags, format_exr_compression, sizeof(format_exr_compression) / sizeof(UIData));
         ui.checkBox_Optimize->setAutoExclusive(true);
         ui.checkBox_Progressive->setAutoExclusive(true);
 
@@ -941,19 +1295,26 @@ void BatchItImage::EnableSpecificFormatOptions(bool loading_preset)
 
         enableOptions(FORMATFLAGS);
 
-        ui.label_FormatFlags->setText("Compression Strategy:");
+        ui.label_FormatFlags->setText(format_hdr_options[FormatHdrOptions::label_FormatFlags].name.c_str());
+        ui.label_FormatFlags->setToolTip(format_hdr_options[FormatHdrOptions::label_FormatFlags].desc.c_str());
 
-        PopulateComboBoxes(ui.comboBox_FormatFlags, format_hdr_compression, 2);
+        if (loading_preset)
+            PopulateComboBox(ui.comboBox_FormatFlags, format_hdr_compression, sizeof(format_hdr_compression) / sizeof(UIData));
 
         if (not loading_preset and last_selected_format != ".hdr" and last_selected_format != ".pic") {
-            ui.comboBox_FormatFlags->setCurrentIndex(0);
+            PopulateComboBox(ui.comboBox_FormatFlags, format_hdr_compression, sizeof(format_hdr_compression) / sizeof(UIData));
+            ui.comboBox_FormatFlags->setCurrentIndex(std::get<int>(format_hdr_options[FormatHdrOptions::label_FormatFlags].data));
         }
     }
     else {
         enableOptions(NONE);
     }
-
-    last_selected_format = format;
+    // If change format check box unchecked, make sure to disable all options after adding data/text and preset loaded.
+    if (not ui.groupBox_ChangeFormat->isChecked()) {
+        enableOptions(NONE);
+    }
+    if (not loading_preset)
+        last_selected_format = format;
 }
 
 /// <summary>
@@ -961,12 +1322,19 @@ void BatchItImage::EnableSpecificFormatOptions(bool loading_preset)
 /// </summary>
 void BatchItImage::SetupFileTreeContextMenu()
 {
-    action_add = new QAction("Add Images", this);
-    action_delete = new QAction("Delete Images", this);
-    action_clear = new QAction("Clear List", this);
-    action_select = new QAction("Select Image", this);
-    action_view = new QAction("View Image", this);
-    action_preview = new QAction("Preview Modified Image", this);
+    action_add = new QAction(QString::fromStdString(file_tree_menu_items[ActionMenu::action_add].name), this);
+    action_delete = new QAction(QString::fromStdString(file_tree_menu_items[ActionMenu::action_delete].name), this);
+    action_clear = new QAction(QString::fromStdString(file_tree_menu_items[ActionMenu::action_clear].name), this);
+    action_select = new QAction(QString::fromStdString(file_tree_menu_items[ActionMenu::action_select].name), this);
+    action_view = new QAction(QString::fromStdString(file_tree_menu_items[ActionMenu::action_view].name), this);
+    action_preview = new QAction(QString::fromStdString(file_tree_menu_items[ActionMenu::action_preview].name), this);
+
+    action_add->setToolTip(QString::fromStdString(file_tree_menu_items[ActionMenu::action_add].desc));
+    action_delete->setToolTip(QString::fromStdString(file_tree_menu_items[ActionMenu::action_delete].desc));
+    action_clear->setToolTip(QString::fromStdString(file_tree_menu_items[ActionMenu::action_clear].desc));
+    action_select->setToolTip(QString::fromStdString(file_tree_menu_items[ActionMenu::action_select].desc));
+    action_view->setToolTip(QString::fromStdString(file_tree_menu_items[ActionMenu::action_view].desc));
+    action_preview->setToolTip(QString::fromStdString(file_tree_menu_items[ActionMenu::action_preview].desc));
 
     auto action_line_1 = new QAction(this);
     action_line_1->setSeparator(true);
@@ -1091,7 +1459,7 @@ void BatchItImage::SavePreset(bool save_all)
             settings.setValue("rotation_angle", preset_list.at(i).rotation_angle);
             settings.setValue("format_change", preset_list.at(i).format_change);
             settings.setValue("format", preset_list.at(i).format_extension);
-            settings.setValue("format_subsampling", preset_list.at(i).format_subsampling);
+            settings.setValue("format_format_flag", preset_list.at(i).format_format_flag);
             settings.setValue("format_optimize", preset_list.at(i).format_optimize);
             settings.setValue("format_progressive", preset_list.at(i).format_progressive);
             settings.setValue("format_quality", preset_list.at(i).format_quality);
@@ -1110,13 +1478,13 @@ void BatchItImage::SavePreset(bool save_all)
 
         int save_option;
         if (ui.radioButton_Overwrite->isChecked()) {
-            save_option = OVERWRITE;
+            save_option = SaveOption::OVERWRITE;
         }
         else if (ui.radioButton_RenameOriginal->isChecked()) {
-            save_option = RENAME_ORG;
+            save_option = SaveOption::RENAME_ORG;
         }
         else {
-            save_option = NEW_NAME;
+            save_option = SaveOption::NEW_NAME;
         }
         bool relative_save_path = ui.radioButton_RelativePath->isChecked();
 
@@ -1132,7 +1500,7 @@ void BatchItImage::SavePreset(bool save_all)
         preset_list.at(current_selected_preset).rotation_angle = ui.dial_Rotation->value();
         preset_list.at(current_selected_preset).format_change = ui.groupBox_ChangeFormat->isChecked();
         preset_list.at(current_selected_preset).format_extension = ui.comboBox_ImageFormat->currentIndex();
-        preset_list.at(current_selected_preset).format_subsampling = ui.comboBox_FormatFlags->currentIndex();
+        preset_list.at(current_selected_preset).format_format_flag = ui.comboBox_FormatFlags->currentIndex();
         preset_list.at(current_selected_preset).format_optimize = ui.checkBox_Optimize->isChecked();
         preset_list.at(current_selected_preset).format_progressive = ui.checkBox_Progressive->isChecked();
         preset_list.at(current_selected_preset).format_quality = ui.horizontalSlider_Quality->value();
@@ -1172,7 +1540,7 @@ void BatchItImage::SavePreset(bool save_all)
         settings.setValue("rotation_angle", preset_list.at(current_selected_preset).rotation_angle);
         settings.setValue("format_change", preset_list.at(current_selected_preset).format_change);
         settings.setValue("format_extension", preset_list.at(current_selected_preset).format_extension);
-        settings.setValue("format_subsampling", preset_list.at(current_selected_preset).format_subsampling);
+        settings.setValue("format_format_flag", preset_list.at(current_selected_preset).format_format_flag);
         settings.setValue("format_optimize", preset_list.at(current_selected_preset).format_optimize);
         settings.setValue("format_progressive", preset_list.at(current_selected_preset).format_progressive);
         settings.setValue("format_quality", preset_list.at(current_selected_preset).format_quality);
@@ -1206,7 +1574,7 @@ void BatchItImage::LoadPreset(Preset preset)
     ui.lcdNumber_Rotation->display(preset.rotation_angle);
     ui.groupBox_ChangeFormat->setChecked(preset.format_change);
     ui.comboBox_ImageFormat->setCurrentIndex(preset.format_extension);
-    ui.comboBox_FormatFlags->setCurrentIndex(preset.format_subsampling);
+    ui.comboBox_FormatFlags->setCurrentIndex(preset.format_format_flag);
     ui.checkBox_Optimize->setChecked(preset.format_optimize);
     ui.checkBox_Progressive->setChecked(preset.format_progressive);
     ui.horizontalSlider_Quality->setValue(preset.format_quality);
@@ -1215,10 +1583,10 @@ void BatchItImage::LoadPreset(Preset preset)
     ui.spinBox_ExtraSetting2->setValue(preset.format_extra2);
     ui.lineEdit_FileName->setText(QString::fromStdString(preset.save_file_name_change));
     int save_option = preset.save_file_policy_option;
-    if (save_option == OVERWRITE) {
+    if (save_option == SaveOption::OVERWRITE) {
         ui.radioButton_Overwrite->setChecked(true);
     }
-    else if (save_option == RENAME_ORG) {
+    else if (save_option == SaveOption::RENAME_ORG) {
         ui.radioButton_RenameOriginal->setChecked(true);
     }
     else { // save_option == NEW_NAME
@@ -1257,7 +1625,7 @@ void BatchItImage::LoadPresets()
     //preset1.rotation_angle = 0;
     //preset1.format_change = false;
     //preset1.format_extension = 0;
-    //preset1.format_subsampling = 1;
+    //preset1.format_format_flag = 1;
     //preset1.format_optimize = false;
     //preset1.format_progressive = false;
     //preset1.format_quality = 95;
@@ -1281,14 +1649,14 @@ void BatchItImage::LoadPresets()
     //preset2.rotation_angle = 0;
     //preset2.format_change = false;
     //preset2.format_extension = 0;
-    //preset2.format_subsampling = 1;
+    //preset2.format_format_flag = 1;
     //preset2.format_optimize = false;
     //preset2.format_progressive = false;
     //preset2.format_quality = 95;
     //preset2.format_compression = 0;
     //preset2.format_extra1 = -1;
     //preset2.format_extra2 = -1;
-    preset2.save_file_policy_option = RENAME_ORG;
+    preset2.save_file_policy_option = SaveOption::RENAME_ORG;
     preset2.save_file_name_change = "<FILE_NAME>__org";
     //preset2.relative_save_path = true;
     //preset2.save_file_path_change = "";
@@ -1312,7 +1680,7 @@ void BatchItImage::LoadPresets()
             preset.rotation_angle = settings.value("rotation_angle").toInt();
             preset.format_change = settings.value("format_change").toBool();
             preset.format_extension = settings.value("format_extension").toInt();
-            preset.format_subsampling = settings.value("format_subsampling").toInt();
+            preset.format_format_flag = settings.value("format_format_flag").toInt();
             preset.format_optimize = settings.value("format_optimize").toBool();
             preset.format_progressive = settings.value("format_progressive").toBool();
             preset.format_quality = settings.value("format_quality").toInt();
@@ -1458,7 +1826,7 @@ void BatchItImage::SaveImageFile(cv::Mat* image, uint image_edits_made, int imag
             }
         }
 
-        if (save_option == RENAME_ORG or save_option == NEW_NAME) {
+        if (save_option == SaveOption::RENAME_ORG or save_option == SaveOption::NEW_NAME) {
             std::string file_name_changes = preset_list.at(current_selected_preset).save_file_name_change;
 
             std::string change_data[4] = {
@@ -1473,7 +1841,7 @@ void BatchItImage::SaveImageFile(cv::Mat* image, uint image_edits_made, int imag
             // TODO: how to handle permissions?
             //if (std::filesystem::exists(file_path_rename))
 
-            if (save_option == RENAME_ORG) {
+            if (save_option == SaveOption::RENAME_ORG) {
                 std::filesystem::path org_file_path_rename = org_file_path.parent_path() / file_name_changes;
                 std::filesystem::rename(org_file_path, org_file_path_rename);
                 // TODO: If RENAME_ORG and an absolute or a relative path that isn't empty or just "\",
@@ -1481,13 +1849,13 @@ void BatchItImage::SaveImageFile(cv::Mat* image, uint image_edits_made, int imag
                 // Inform user before starting the edit process. (No need to rename org if not intending to overwrite it, or is there?)
                 new_file_path = std::filesystem::path(new_root_save_path / org_file_path.stem());// .generic_string();
             }
-            else if (save_option == NEW_NAME) {
+            else if (save_option == SaveOption::NEW_NAME) {
                 new_file_path = std::filesystem::path(new_root_save_path / file_name_changes);
                 //std::filesystem::path new_file_path_rename = new_root_save_path / file_name_changes;
                 //new_file_path = new_file_path_rename.generic_string();
             }
         }
-        else { // save_option == OVERWRITE
+        else { // save_option == SaveOption::OVERWRITE
             new_file_path = org_file_path.parent_path() / org_file_path.stem();
         }
 
@@ -1504,18 +1872,18 @@ void BatchItImage::SaveImageFile(cv::Mat* image, uint image_edits_made, int imag
             new_file_path.replace_extension(extension);
             
             // TODO: Format Specific Paramaters
-            int subsampling = std::get<int>(
-                format_jpeg_subsamplings[preset_list.at(current_selected_preset).format_subsampling].data
+            int format_flag = std::get<int>(
+                format_jpeg_subsamplings[preset_list.at(current_selected_preset).format_format_flag].data
             );
-            DEBUG(subsampling);
+            DEBUG(format_flag);
+            int quality = preset_list.at(current_selected_preset).format_quality;
             bool optimize = preset_list.at(current_selected_preset).format_optimize;
             bool progressive = preset_list.at(current_selected_preset).format_progressive;
-            int quality = preset_list.at(current_selected_preset).format_quality;
             int compression = preset_list.at(current_selected_preset).format_compression;
             int extra1 = preset_list.at(current_selected_preset).format_extra1;
             int extra2 = preset_list.at(current_selected_preset).format_extra2;
             
-            ie->GetFormatParams(&params, extension, subsampling, optimize, progressive, quality, compression, extra1, extra2);
+            ie->GetFormatParams(&params, extension, format_flag, quality, optimize, progressive, compression, extra1, extra2);
         }
         else {
             new_file_path.replace_extension(org_file_path.extension());
@@ -1532,7 +1900,7 @@ void BatchItImage::SaveImageFile(cv::Mat* image, uint image_edits_made, int imag
             // TODO: log
         }
         if (image_saved) {
-            DEBUG2("New edited image is succusfully saved at: ", new_file_path.generic_string());
+            DEBUG2("New edited image is successfully saved at: ", new_file_path.generic_string());
         }
         else {
             DEBUG2("Failed to save the edited image: ", new_file_path.generic_string());
@@ -1584,7 +1952,7 @@ void BatchItImage::AddNewFiles(QStringList file_list)
         }
         if (std::filesystem::is_directory(file_path)) {
             QStringList files_from_dir;
-            if (search_subdirs)
+            if (ui.checkBox_SearchSubDirs->isChecked())
                 files_from_dir = IterateDirectory(std::filesystem::recursive_directory_iterator(file_path));
             else
                 files_from_dir = IterateDirectory(std::filesystem::directory_iterator(file_path));
@@ -1742,7 +2110,8 @@ void BatchItImage::HandleFileMetadata(FileMetadata* file_metadata)
 /// Insert a file into the tree widget from the list of file metadata.
 /// </summary>
 /// <param name="file_index">--An index from "current_file_metadata_list"</param>
-void BatchItImage::LoadFileIntoTree(int file_index)
+/// <param name="sorted_column">--The column index that was last sorted. Default value is -1/none.</param>
+void BatchItImage::LoadFileIntoTree(int file_index, int sorted_column)
 {
     UpdateProgressBar();
 
@@ -1758,11 +2127,11 @@ void BatchItImage::LoadFileIntoTree(int file_index)
     struct stat t_stat;
     stat(file.path.data(), &t_stat);
 
-    // Formated File Size:
+    // Formatted File Size:
     size_t file_size = t_stat.st_size;
     std::string file_size_str = BytesToFileSizeString(file_size);
 
-    // Formated File Creation and Last Modified Times: https://en.cppreference.com/w/c/chrono
+    // Formatted File Creation and Last Modified Dates: https://en.cppreference.com/w/c/chrono
     char date_created[50];
     char date_modified[50];
     struct tm* file_ctime = localtime(&t_stat.st_ctime);
@@ -1775,31 +2144,41 @@ void BatchItImage::LoadFileIntoTree(int file_index)
     QCheckBox* file_selected_check_box = new QCheckBox(ui.treeWidget_FileInfo);
     file_selected_check_box->setText("");
     file_selected_check_box->setChecked(file.selected);
+    file_selected_check_box->setStatusTip(QString::fromStdString(file_tree_other_text[FileColumn::FILE_LOAD_ORDER] + std::to_string(file.load_order)));
     
-    //connect(file_selected_check_box, &QAbstractButton::toggled, this,
-    //    [this, file_selected_check_box] { // Update event: file selected in file metadata list.
-    //        DEBUG4("Row: ", ui.treeWidget_FileInfo->currentIndex().row(), " Checked: ", file_selected_check_box->isChecked());
-    //        current_file_metadata_list.at(ui.treeWidget_FileInfo->currentIndex().row()).selected = file_selected_check_box->isChecked();
-    //    });
     connect(file_selected_check_box, SIGNAL(toggled(bool)), this, SLOT(FileSelectionChange(bool)));
 
-    ui.treeWidget_FileInfo->setItemWidget(new_item, FILE_SELECTED, file_selected_check_box);
-    new_item->setData(FILE_SELECTED, Qt::ToolTipRole, QVariant(file.load_order));
-    //new_item->setData(FILE_SELECTED, Qt::StatusTipRole, QVariant(file.load_order)); // TODO: Setup ui.statusbar https://doc.qt.io/qt-6/qt.html#ItemDataRole-enum
-    new_item->setText(FILE_NAME, QString::fromStdString(file_path.filename().string()));
-    new_item->setText(IMAGE_DIMENSIONS, QString::fromStdString(std::to_string(file.width) + " x " + std::to_string(file.height)));
-    new_item->setTextAlignment(FILE_SIZE, Qt::AlignCenter);
-    new_item->setText(FILE_SIZE, QString::fromStdString(file_size_str));
-    new_item->setTextAlignment(FILE_SIZE, Qt::AlignRight);
-    //new_item->setSizeHint(FILE_SIZE, QSize(10, 10));
-    new_item->setText(DATE_CREATED, QString::fromStdString(date_created));
-    new_item->setText(DATE_MODIFIED, QString::fromStdString(date_modified));
-    new_item->setFont(FILE_SELECTED, *font_mono);
-    new_item->setFont(FILE_NAME, *font_mono_bold);
-    new_item->setFont(IMAGE_DIMENSIONS, *font_mono);
-    new_item->setFont(FILE_SIZE, *font_mono);
-    new_item->setFont(DATE_CREATED, *font_mono);
-    new_item->setFont(DATE_MODIFIED, *font_mono);
+    ui.treeWidget_FileInfo->setItemWidget(new_item, FileColumn::FILE_SELECTED, file_selected_check_box);
+    new_item->setToolTip(FileColumn::FILE_SELECTED, QString::fromStdString(file_tree_other_text[FileColumn::FILE_LOAD_ORDER] + std::to_string(file.load_order)));
+    //new_item->setData(FileColumn::FILE_SELECTED, Qt::ToolTipRole, QVariant(file.load_order));
+    //new_item->setData(FileColumn::FILE_SELECTED, Qt::StatusTipRole, QVariant(file.load_order)); // Won't show for widget column
+    new_item->setText(FileColumn::FILE_NAME, QString::fromStdString(file_path.filename().string()));
+    new_item->setStatusTip(FileColumn::FILE_NAME, QString::fromStdString(file_tree_other_text[FileColumn::FILE_NAME] + file.path));
+    new_item->setToolTip(FileColumn::FILE_NAME, QString::fromStdString(file_tree_other_text[FileColumn::FILE_NAME] + file.path));
+    new_item->setText(FileColumn::IMAGE_DIMENSIONS, QString::fromStdString(std::to_string(file.width) + " x " + std::to_string(file.height)));
+    new_item->setTextAlignment(FileColumn::IMAGE_DIMENSIONS, Qt::AlignCenter);
+    new_item->setStatusTip(FileColumn::IMAGE_DIMENSIONS, QString::fromStdString(file_tree_other_text[FileColumn::IMAGE_DIMENSIONS] + std::to_string(file.width) + " x " + std::to_string(file.height)));
+    //new_item->setToolTip(FileColumn::IMAGE_DIMENSIONS, QString::fromStdString("Image Width: " + std::to_string(file.width) + ",   Image Height: " + std::to_string(file.height)));
+    new_item->setToolTip(FileColumn::IMAGE_DIMENSIONS, QString::fromStdString(file_tree_other_text[FileColumn::IMAGE_DIMENSIONS] + std::to_string(file.width) + " x " + std::to_string(file.height)));
+    new_item->setText(FileColumn::FILE_SIZE, QString::fromStdString(file_size_str));
+    new_item->setTextAlignment(FileColumn::FILE_SIZE, Qt::AlignRight);
+    new_item->setStatusTip(FileColumn::FILE_SIZE, QString::fromStdString(file_tree_other_text[FileColumn::FILE_SIZE] + file_size_str));
+    new_item->setToolTip(FileColumn::FILE_SIZE, QString::fromStdString(file_tree_other_text[FileColumn::FILE_SIZE] + file_size_str));
+    new_item->setText(FileColumn::DATE_CREATED, QString::fromStdString(date_created));
+    new_item->setStatusTip(FileColumn::DATE_CREATED, QString::fromStdString(file_tree_other_text[FileColumn::DATE_CREATED]).append(date_created));
+    new_item->setToolTip(FileColumn::DATE_CREATED, QString::fromStdString(file_tree_other_text[FileColumn::DATE_CREATED]).append(date_created));
+    new_item->setText(FileColumn::DATE_MODIFIED, QString::fromStdString(date_modified));
+    new_item->setStatusTip(FileColumn::DATE_MODIFIED, QString::fromStdString(file_tree_other_text[FileColumn::DATE_MODIFIED]).append(date_modified));
+    new_item->setToolTip(FileColumn::DATE_MODIFIED, QString::fromStdString(file_tree_other_text[FileColumn::DATE_MODIFIED]).append(date_modified));
+    
+    new_item->setFont(FileColumn::FILE_SELECTED, *font_mono);
+    new_item->setFont(FileColumn::FILE_NAME, *font_mono);
+    new_item->setFont(FileColumn::IMAGE_DIMENSIONS, *font_mono);
+    new_item->setFont(FileColumn::FILE_SIZE, *font_mono);
+    new_item->setFont(FileColumn::DATE_CREATED, *font_mono);
+    new_item->setFont(FileColumn::DATE_MODIFIED, *font_mono);
+    if (sorted_column > -1 and sorted_column < FileColumn::COUNT)
+        new_item->setFont(sorted_column, *font_mono_bold);
 
     QTreeWidgetItem* item_file_path = new QTreeWidgetItem(new_item);
     item_file_path->setText(0, QString::fromStdString(file_path.string()));
@@ -1841,7 +2220,7 @@ void BatchItImage::FileSelectionChange(bool checked)
 void BatchItImage::ResizeFileTreeColumns()
 {
     DEBUG("ResizeFileTreeColumns");
-    for (int i = 0; i < FILE_COLUMN_COUNT; i++) {
+    for (int i = 0; i < FileColumn::COUNT; i++) {
         ui.treeWidget_FileInfo->resizeColumnToContents(i);
         //ui.treeWidget_FileInfo->header()->ResizeToContents;
     }
@@ -1861,80 +2240,92 @@ void BatchItImage::SortFileTreeByColumn(int index)
     // Get sort order
     if (current_file_column_sorted != index) {
         current_file_column_sorted = index;
-        current_file_sort_order = ASCENDING1;
+        current_file_sort_order = SortOrder::ASCENDING1;
     }
     else {
-        current_file_sort_order = (current_file_sort_order < DESCENDING2) ? ++current_file_sort_order : ASCENDING1;
+        current_file_sort_order = (current_file_sort_order < SortOrder::DESCENDING2) ? ++current_file_sort_order : SortOrder::ASCENDING1;
         qsort_indicator = (fmod(current_file_sort_order, 2) == 0) ? Qt::SortOrder::AscendingOrder : Qt::SortOrder::DescendingOrder;
     }
     
     // Sort list of file metadata based on column clicked.
-    if (current_file_column_sorted == FILE_LOAD_ORDER and (current_file_sort_order == ASCENDING1 or current_file_sort_order == ASCENDING2)) {
+    if (current_file_column_sorted == FileColumn::FILE_LOAD_ORDER and
+        (current_file_sort_order == SortOrder::ASCENDING1 or current_file_sort_order == SortOrder::ASCENDING2)) {
         std::sort(begin(current_file_metadata_list), end(current_file_metadata_list), [](auto const& left, auto const& right) {
                 return left.load_order < right.load_order;
             });
     }
-    else if (current_file_column_sorted == FILE_LOAD_ORDER and (current_file_sort_order == DESCENDING1 or current_file_sort_order == DESCENDING2)) {
+    else if (current_file_column_sorted == FileColumn::FILE_LOAD_ORDER and
+        (current_file_sort_order == SortOrder::DESCENDING1 or current_file_sort_order == SortOrder::DESCENDING2)) {
         std::sort(begin(current_file_metadata_list), end(current_file_metadata_list), [](auto const& left, auto const& right) {
                 return left.load_order > right.load_order;
             });
     }
-    else if (current_file_column_sorted == FILE_NAME and (current_file_sort_order == ASCENDING1 or current_file_sort_order == ASCENDING2)) {
+    else if (current_file_column_sorted == FileColumn::FILE_NAME and
+        (current_file_sort_order == SortOrder::ASCENDING1 or current_file_sort_order == SortOrder::ASCENDING2)) {
         std::sort(begin(current_file_metadata_list), end(current_file_metadata_list), [](auto const& left, auto const& right) {
                 return left.path < right.path;
             });
     }
-    else if (current_file_column_sorted == FILE_NAME and (current_file_sort_order == DESCENDING1 or current_file_sort_order == DESCENDING2)) {
+    else if (current_file_column_sorted == FileColumn::FILE_NAME and
+        (current_file_sort_order == SortOrder::DESCENDING1 or current_file_sort_order == SortOrder::DESCENDING2)) {
         std::sort(begin(current_file_metadata_list), end(current_file_metadata_list), [](auto const& left, auto const& right) {
                 return left.path > right.path;
             });
     }
-    else if (current_file_column_sorted == IMAGE_DIMENSIONS and (current_file_sort_order == ASCENDING1)) {
+    else if (current_file_column_sorted == FileColumn::IMAGE_DIMENSIONS and (current_file_sort_order == SortOrder::ASCENDING1)) {
         std::sort(begin(current_file_metadata_list), end(current_file_metadata_list), [](auto const& left, auto const& right) {
                 return left.width < right.width;
             });
     }
-    else if (current_file_column_sorted == IMAGE_DIMENSIONS and (current_file_sort_order == DESCENDING1)) {
+    else if (current_file_column_sorted == FileColumn::IMAGE_DIMENSIONS and (current_file_sort_order == SortOrder::DESCENDING1)) {
         std::sort(begin(current_file_metadata_list), end(current_file_metadata_list), [](auto const& left, auto const& right) {
                 return left.width > right.width;
             });
     }
-    else if (current_file_column_sorted == IMAGE_DIMENSIONS and (current_file_sort_order == ASCENDING2)) {
+    else if (current_file_column_sorted == FileColumn::IMAGE_DIMENSIONS and
+        (current_file_sort_order == SortOrder::ASCENDING2)) {
         std::sort(begin(current_file_metadata_list), end(current_file_metadata_list), [](auto const& left, auto const& right) {
                 return left.height < right.height;
             });
     }
-    else if (current_file_column_sorted == IMAGE_DIMENSIONS and (current_file_sort_order == DESCENDING2)) {
+    else if (current_file_column_sorted == FileColumn::IMAGE_DIMENSIONS and
+        (current_file_sort_order == SortOrder::DESCENDING2)) {
         std::sort(begin(current_file_metadata_list), end(current_file_metadata_list), [](auto const& left, auto const& right) {
                 return left.height > right.height;
             });
     }
-    else if (current_file_column_sorted == FILE_SIZE and (current_file_sort_order == ASCENDING1 or current_file_sort_order == ASCENDING2)) {
+    else if (current_file_column_sorted == FileColumn::FILE_SIZE and
+        (current_file_sort_order == SortOrder::ASCENDING1 or current_file_sort_order == SortOrder::ASCENDING2)) {
         std::sort(begin(current_file_metadata_list), end(current_file_metadata_list), [](auto const& left, auto const& right) {
                 return left.size < right.size;
             });
     }
-    else if (current_file_column_sorted == FILE_SIZE and (current_file_sort_order == DESCENDING1 or current_file_sort_order == DESCENDING2)) {
+    else if (current_file_column_sorted == FileColumn::FILE_SIZE and
+        (current_file_sort_order == SortOrder::DESCENDING1 or current_file_sort_order == SortOrder::DESCENDING2)) {
         std::sort(begin(current_file_metadata_list), end(current_file_metadata_list), [](auto const& left, auto const& right) {
                 return left.size > right.size;
             });
     }
-    else if (current_file_column_sorted == DATE_CREATED and (current_file_sort_order == ASCENDING1 or current_file_sort_order == ASCENDING2)) {
+    else if (current_file_column_sorted == FileColumn::DATE_CREATED and
+        (current_file_sort_order == SortOrder::ASCENDING1 or current_file_sort_order == SortOrder::ASCENDING2)) {
         std::sort(begin(current_file_metadata_list), end(current_file_metadata_list), [](auto const& left, auto const& right) {
                 return left.date_created < right.date_created;
             });
     }
-    else if (current_file_column_sorted == DATE_CREATED and (current_file_sort_order == DESCENDING1 or current_file_sort_order == DESCENDING2)) {
+    else if (current_file_column_sorted == FileColumn::DATE_CREATED and
+        (current_file_sort_order == SortOrder::DESCENDING1 or current_file_sort_order == SortOrder::DESCENDING2)) {
         std::sort(begin(current_file_metadata_list), end(current_file_metadata_list), [](auto const& left, auto const& right) {
                 return left.date_created > right.date_created;
             });
     }
-    else if (current_file_column_sorted == DATE_MODIFIED and (current_file_sort_order == ASCENDING1 or current_file_sort_order == ASCENDING2)) {
+    else if (current_file_column_sorted == FileColumn::DATE_MODIFIED and
+        (current_file_sort_order == SortOrder::ASCENDING1 or current_file_sort_order == SortOrder::ASCENDING2)) {
         std::sort(begin(current_file_metadata_list), end(current_file_metadata_list), [](auto const& left, auto const& right) {
                 return left.date_modified < right.date_modified;
             });
     }
-    else if (current_file_column_sorted == DATE_MODIFIED and (current_file_sort_order == DESCENDING1 or current_file_sort_order == DESCENDING2)) {
+    else if (current_file_column_sorted == FileColumn::DATE_MODIFIED and
+        (current_file_sort_order == SortOrder::DESCENDING1 or current_file_sort_order == SortOrder::DESCENDING2)) {
         std::sort(begin(current_file_metadata_list), end(current_file_metadata_list), [](auto const& left, auto const& right) {
                 return left.date_modified > right.date_modified;
             });
@@ -1943,7 +2334,7 @@ void BatchItImage::SortFileTreeByColumn(int index)
     // Clear file tree and add back sorted files
     ui.treeWidget_FileInfo->clear();
     for (int i = 0; i < current_file_metadata_list.size(); i++) {
-        LoadFileIntoTree(i);
+        LoadFileIntoTree(i, current_file_column_sorted);
     }
 
     ui.treeWidget_FileInfo->header()->setSortIndicator(current_file_column_sorted, qsort_indicator);
@@ -1954,7 +2345,7 @@ void BatchItImage::SortFileTreeByColumn(int index)
 /// Convert bytes into a formated file size string -> KB -> MB -> GB -> TB.
 /// </summary>
 /// <param name="bytes">--File size in bytes.</param>
-/// <returns>A Formated String - Example: " 1.37 MB "</returns>
+/// <returns>A Formatted String - Example: " 1.37 MB "</returns>
 std::string BatchItImage::BytesToFileSizeString(std::uintmax_t bytes)
 {
     std::string file_size_str;
