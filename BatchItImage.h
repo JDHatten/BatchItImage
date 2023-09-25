@@ -4,6 +4,7 @@
 #include "EnhancedSlider.h"
 #include "ImageEditor.h"
 #include "ui_BatchItImage.h"
+#include "ui_DialogEditPresetDesc.h"
 #include "ui_MessageWindow.h"
 
 
@@ -38,9 +39,31 @@ signals:
 public slots:
     void ButtonBoxClicked(QAbstractButton* button);
 protected:
-    void changeEvent(QEvent* e);
+    void changeEvent(QEvent* event);
+    void closeEvent(QCloseEvent* event) override;
 private:
     //Ui::Dialog_MessageWindow* m_ui;
+};
+
+
+class DialogEditPresetDesc : public QDialog
+{
+    Q_OBJECT
+public:
+    DialogEditPresetDesc(QString title, QString message, std::vector<Preset>* preset_list, uint current_selected_preset, QWidget* parent = nullptr);
+    ~DialogEditPresetDesc();
+    Ui::Dialog_EditPresetDesc ui;
+signals:
+    void ButtonClicked(const QDialogButtonBox::StandardButton&);
+private slots:
+    void ButtonBoxClicked(QAbstractButton* button);
+    void PresetIndexChanged(int index);
+protected:
+    void closeEvent(QCloseEvent* event) override;
+private:
+    std::vector<Preset>* preset_list;
+    uint current_selected_preset;
+    void UpdateComboBox();
 };
 
 
@@ -56,10 +79,12 @@ public:
     void SavePreset(bool save_all = false);
     void LoadPreset(Preset);
     void LoadPresets();
+    static void AddPresetsToComboBox(std::vector<Preset>* preset_list, QComboBox* preset_cb[], uint count = 1);
+    bool SavePresetDialog();
     void LoadFileIntoTree(int, int = -1);
     void BuildFileMetadataList(const QStringList file_list);
     std::string BytesToFileSizeString(std::uintmax_t);
-    std::string CreateNewFileName(std::string file_name_changes, std::string change_data[]);
+    std::string CreateNewFileName(std::string file_name_changes, std::string metadata_inserts[]);
     int GetCurrentFileTreeRow();
     int IsFileInList(std::string path, std::vector<FileMetadata> list);
     int IsFileInList(std::string path, std::vector<FileMetadata> list, const size_t search_range[2]);
@@ -69,6 +94,7 @@ public:
 public slots:
     void Test();
     void ChangePreset(int index);
+    void ChangePresetDescription();
     void LoadImageFiles();
     void AddNewFiles(QStringList file_list);
     void FileSelectionChange(bool checked);
@@ -127,7 +153,10 @@ private:
     const struct FormatExrOptions { enum { label_FormatFlags, checkBox_Optimize, checkBox_Progressive, label_Compression, COUNT }; };
     const struct FormatHdrOptions { enum { label_FormatFlags, COUNT }; };
     const struct OtherOptions { enum { tab_1, tab_2, tab_3, checkBox_SearchSubDirs, pushButton_EditAndSave, COUNT }; };
-
+    const struct DialogMessages { enum { action_delete, action_clear, SavePresetDialog, HandleFileMetadata, CheckAbsolutePath, COUNT }; }; // TODO
+    
+    UIData dialog_messages[DialogMessages::COUNT]; // TODO
+    
     // Tree Data
     UIData file_tree_headers[FileColumn::COUNT];
     UIData file_tree_menu_items[ActionMenu::COUNT];
@@ -145,7 +174,7 @@ private:
     UIData format_tiff_options[FormatTiffOptions::COUNT];
     UIData format_exr_options[FormatExrOptions::COUNT];
     UIData format_hdr_options[FormatHdrOptions::COUNT];
-    UIData other_options[FormatHdrOptions::COUNT];
+    UIData other_options[OtherOptions::COUNT];
 
     // Combo Box Data
     UIData width_selections[6];
@@ -193,6 +222,7 @@ private:
     //bool search_subdirs = true;
     std::vector<struct Preset> preset_list;
     int current_selected_preset = 0;
+    bool unsaved_preset_settings = false; // TODO
     int current_file_column_sorted = -1;
     int current_file_sort_order = -1;
     float current_load_number = 0.0f;
