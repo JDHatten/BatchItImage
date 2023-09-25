@@ -14,12 +14,12 @@ TODO:
 */
 
 
-MessageWindow::MessageWindow(QString title, QString message, QFlags<QDialogButtonBox::StandardButton> buttons, QWidget* parent) : QDialog(parent)//, m_ui(new Ui::Dialog_MessageWindow)
+MessageWindow::MessageWindow(QString title, QString message, QFlags<QDialogButtonBox::StandardButton> buttons, QWidget* parent)
+    : QDialog(parent)//, m_ui(new Ui::Dialog_MessageWindow)
 {
     //m_ui->setupUi(this);
     ui.setupUi(this);
     //m_ui = &ui;
-    
     setWindowTitle(title);
     ui.label_Message->setText(message);
     ui.buttonBox->setStandardButtons(buttons);
@@ -27,18 +27,26 @@ MessageWindow::MessageWindow(QString title, QString message, QFlags<QDialogButto
 }
 MessageWindow::~MessageWindow()
 {
+    DEBUG("MessageWindow Deconstructed");
     //delete m_ui;
 }
-void MessageWindow::changeEvent(QEvent* e)
+void MessageWindow::changeEvent(QEvent* event)
 {
     //DEBUG("MessageWindow changeEvent");
-    QDialog::changeEvent(e);
+    QDialog::changeEvent(event);
+}
+void MessageWindow::closeEvent(QCloseEvent* event)
+{
+    if (event->spontaneous()) {
+        DEBUG("The X-close button was clicked.");
+        emit ButtonClicked(QDialogButtonBox::Close);
+    }
+    QWidget::closeEvent(event);
 }
 void MessageWindow::ButtonBoxClicked(QAbstractButton* button)
 {
-    DEBUG("MessageWindow ButtonBoxClicked");
     QDialogButtonBox::StandardButton std_button = ui.buttonBox->standardButton(button);
-    DEBUG(std_button);
+    DEBUG2("MessageWindow::ButtonBoxClicked: ", std_button);
     emit ButtonClicked(std_button);
     /*
     QDialogButtonBox::Ok	    0x00000400	An "OK" button defined with the AcceptRole.
@@ -61,6 +69,60 @@ void MessageWindow::ButtonBoxClicked(QAbstractButton* button)
     QDialogButtonBox::Ignore	0x00100000	An "Ignore" button defined with the AcceptRole.
     QDialogButtonBox::NoButton	0x00000000	An invalid button.
     */
+}
+
+
+DialogEditPresetDesc::DialogEditPresetDesc(QString title, QString message, std::vector<Preset>* preset_list, uint current_selected_preset, QWidget* parent)
+    : QDialog(parent)
+{
+    ui.setupUi(this);
+    setWindowTitle(title);
+    ui.label_Message->setText(message);
+    DialogEditPresetDesc::preset_list = preset_list;
+    DialogEditPresetDesc:: current_selected_preset = current_selected_preset;
+    UpdateComboBox();
+    PresetIndexChanged(current_selected_preset);
+    connect(ui.buttonBox, SIGNAL(clicked(QAbstractButton*)), this, SLOT(ButtonBoxClicked(QAbstractButton*)));
+    connect(ui.comboBox_Preset_4, SIGNAL(currentIndexChanged(int)), this, SLOT(PresetIndexChanged(int)));
+}
+DialogEditPresetDesc::~DialogEditPresetDesc()
+{
+    DEBUG("DialogEditPresetDesc Deconstructed");
+}
+void DialogEditPresetDesc::PresetIndexChanged(int index)
+{
+    DEBUG2("PresetIndexChanged:", index);
+    ui.lineEdit_PresetDesc->setText(preset_list->at(index).description);
+    current_selected_preset = index;
+}
+void DialogEditPresetDesc::UpdateComboBox()
+{
+    DEBUG("UpdateComboBox");
+    BatchItImage::AddPresetsToComboBox(preset_list, &ui.comboBox_Preset_4);
+}
+void DialogEditPresetDesc::closeEvent(QCloseEvent* event)
+{
+    if (event->spontaneous()) {
+        DEBUG("The X-close button was clicked.");
+        emit ButtonClicked(QDialogButtonBox::Close);
+    }
+    QWidget::closeEvent(event);
+}
+void DialogEditPresetDesc::ButtonBoxClicked(QAbstractButton* button)
+{
+    QDialogButtonBox::StandardButton std_button = ui.buttonBox->standardButton(button);
+    DEBUG2("DialogEditPresetDesc::ButtonBoxClicked: ", std_button);
+
+    if (QDialogButtonBox::Apply & std_button) {
+        QString updated_description = ui.lineEdit_PresetDesc->text();
+        preset_list->at(current_selected_preset).description = updated_description;
+        DEBUG(updated_description.toStdString());
+        UpdateComboBox();
+    }
+    else if (QDialogButtonBox::Reset & std_button) {
+        PresetIndexChanged(current_selected_preset);
+    }
+    emit ButtonClicked(std_button);
 }
 
 
@@ -140,7 +202,6 @@ BatchItImage::BatchItImage(QWidget* parent) : QMainWindow(parent)
     aboutQtAct->setText("About QT");
     ui.menuHelp->addAction(aboutQtAct);
 
-
     /***************************
         UI Text/Data
     ****************************/
@@ -175,7 +236,6 @@ BatchItImage::BatchItImage(QWidget* parent) : QMainWindow(parent)
     PopulateComboBox(ui.comboBox_ImageFormat, image_formats, sizeof(image_formats) / sizeof(UIData));
     //PopulateComboBox(ui.comboBox_FormatFlags, format_jpeg_subsamplings, sizeof(format_jpeg_subsamplings) / sizeof(UIData));
 
-
     /***************************
         Prep UI Widgets, Etc
     ****************************/
@@ -184,6 +244,9 @@ BatchItImage::BatchItImage(QWidget* parent) : QMainWindow(parent)
     preset_list.reserve(10);
     current_file_metadata_list.reserve(30);
     deleted_file_metadata_list.reserve(10);
+
+    ui.dial_Rotation->setInvertedAppearance(true);
+    ui.dial_Rotation->setInvertedControls(true);
 
     // TODO: get settings for search sub dirs, recent images loaded (last 10?), others?
     //ui.checkBox_SearchSubDirs->setChecked(search_subdirs);
@@ -210,17 +273,22 @@ BatchItImage::BatchItImage(QWidget* parent) : QMainWindow(parent)
     supported_image_extensions_dialog_str.append("\nAll Files (*)");
     DEBUG(supported_image_extensions_dialog_str.toStdString());
 
-
-
     /***************************
         UI Events
     ****************************/
 
-    // Menu
-    connect(ui.action_AddImages, SIGNAL(triggered(bool)), this, SLOT(LoadImageFiles()));
-    connect(ui.action_About, SIGNAL(triggered(bool)), this, SLOT(Test()));
+    // Menu Actions
+    connect(ui.action_About, SIGNAL(triggered(bool)), this, SLOT(Test())); // TODO
     //connect(ui.action_About, &QAbstractButton::pressed, this, &QApplication::aboutQt);
     connect(aboutQtAct, &QAction::triggered, [this] { QApplication::aboutQt(); });
+    connect(ui.action_AddImages, SIGNAL(triggered(bool)), this, SLOT(LoadImageFiles()));
+    connect(ui.action_AddImageToCombine, SIGNAL(triggered(bool)), this, SLOT(Test())); // TODO
+    connect(ui.action_AddNewPreset, SIGNAL(triggered(bool)), this, SLOT(Test())); // TODO
+    connect(ui.action_ChangePresetDesc, SIGNAL(triggered(bool)), this, SLOT(ChangePresetDescription()));
+    connect(ui.action_Close, SIGNAL(triggered(bool)), this, SLOT(Test())); // TODO
+    connect(ui.action_RemovePreset, SIGNAL(triggered(bool)), this, SLOT(Test())); // TODO
+    connect(ui.action_SaveLogAs, SIGNAL(triggered(bool)), this, SLOT(Test())); // TODO
+    connect(ui.action_SavePresets, SIGNAL(triggered(bool)), this, SLOT(Test())); // TODO
 
     // Image File Tree
     connect(ui.treeWidget_FileInfo->header(), SIGNAL(sectionClicked(int)), this, SLOT(SortFileTreeByColumn(int)));
@@ -233,6 +301,7 @@ BatchItImage::BatchItImage(QWidget* parent) : QMainWindow(parent)
     connect(ui.comboBox_WidthMod, SIGNAL(currentIndexChanged(int)), this, SLOT(UpdateComboBoxToolTip()));
     connect(ui.comboBox_HeightMod, SIGNAL(currentIndexChanged(int)), this, SLOT(UpdateComboBoxToolTip()));
     connect(ui.comboBox_Resample, SIGNAL(currentIndexChanged(int)), this, SLOT(UpdateComboBoxToolTip()));
+    connect(ui.dial_Rotation, SIGNAL(valueChanged(int)), this, SLOT(Test())); // TODO
 
     // Image Save Widgets
     connect(ui.pushButton_EditAndSave, SIGNAL(clicked(bool)), this, SLOT(EditAndSave()));
@@ -271,12 +340,10 @@ BatchItImage::BatchItImage(QWidget* parent) : QMainWindow(parent)
             }
         });
 
-
-
     /***************************
         Testing
     ****************************/
-    
+
     // TODO: Combine Tree
     ui.treeWidget_Combine->clear();
 
@@ -290,6 +357,7 @@ BatchItImage::BatchItImage(QWidget* parent) : QMainWindow(parent)
     // TODO: Status Bar
     //QString status_message = "BatchItImage";
     //ui.statusbar->showMessage(status_message, -1);
+
 }
 
 BatchItImage::~BatchItImage() {}
@@ -603,7 +671,7 @@ void BatchItImage::LoadInUiData()
     format_jpeg_options[FormatJpegOptions::label_Compression].name = "Restart Interval:";
     format_jpeg_options[FormatJpegOptions::label_Compression].desc = "Restart interval specifies the interval between restart markers, in Minimum Coded Units\n" \
         "(MCUs).They were designed to allow resynchronization after an error, but also now serve a\n" \
-        "new purpose, to allow for multi - threaded JPEG encoders and decoders. Default value is 95.";
+        "new purpose, to allow for multi - threaded JPEG encoders and decoders. Default value is 0.";
     format_jpeg_options[FormatJpegOptions::label_ExtraSetting1].data = -1;
     format_jpeg_options[FormatJpegOptions::label_ExtraSetting1].name = "Luma:";
     format_jpeg_options[FormatJpegOptions::label_ExtraSetting1].desc = "Separate and adjust the luma quality between to 0 and 100 (-1 don't use, default). When an\n" \
@@ -876,13 +944,13 @@ void BatchItImage::LoadInUiData()
     // Various Other Widget data
     other_options[OtherOptions::tab_1].data = 0; // Default current tab index, ignores other tab.data.
     other_options[OtherOptions::tab_1].name = "Images";
-    other_options[OtherOptions::tab_1].desc = "Image File Viewer Tab";
+    //other_options[OtherOptions::tab_1].desc = "Image File Viewer Tab";
     other_options[OtherOptions::tab_2].data = 0;
     other_options[OtherOptions::tab_2].name = "Image Edits";
-    other_options[OtherOptions::tab_2].desc = "Image Edit Tools Tab";
+    //other_options[OtherOptions::tab_2].desc = "Image Edit Tools Tab";
     other_options[OtherOptions::tab_3].data = 0;
     other_options[OtherOptions::tab_3].name = "Save Options";
-    other_options[OtherOptions::tab_3].desc = "File Save Options Tab";
+    //other_options[OtherOptions::tab_3].desc = "File Save Options Tab";
     other_options[OtherOptions::checkBox_SearchSubDirs].data = 1;
     other_options[OtherOptions::checkBox_SearchSubDirs].name = "When Searching Directories Search Sub-Directories As Well";
     other_options[OtherOptions::checkBox_SearchSubDirs].desc = "When file directories/folders are dropped into the image file viewer an image file search will begin\n" \
@@ -1002,7 +1070,11 @@ void BatchItImage::UpdateComboBoxToolTip()
     //DEBUG2("UpdateComboBoxToolTip: ", cb->objectName().toStdString());
 }
 
-
+/// <summary>
+/// Enable format specific ui options depending on which format change option is currently selected.
+/// Each format makes use of a different set of options.
+/// </summary>
+/// <param name="loading_preset">--If loading presets do not insert any default values. Default is false.</param>
 void BatchItImage::EnableSpecificFormatOptions(bool loading_preset)
 {
     DEBUG2("EnableSpecificFormatOptions: ", loading_preset);
@@ -1081,14 +1153,15 @@ void BatchItImage::EnableSpecificFormatOptions(bool loading_preset)
                 ui.spinBox_ExtraSetting2->setEnabled(true);
                 ui.spinBox_ExtraSetting2->setFont(*font_default);
                 ui.spinBox_ExtraSetting2->setSingleStep(1);
+                ui.spinBox_ExtraSetting2->disconnect(
+                    ui.spinBox_ExtraSetting2, &QAbstractSpinBox::editingFinished, this, nullptr
+                );
             }
             else {
                 ui.label_ExtraSetting2->setFont(*font_default_light);
                 ui.spinBox_ExtraSetting2->setEnabled(false);
                 ui.spinBox_ExtraSetting2->setFont(*font_default_light);
             }
-            
-            
         };
 
     // IMWRITE_JPEG_QUALITY  IMWRITE_JPEG_PROGRESSIVE  IMWRITE_JPEG_OPTIMIZE  IMWRITE_JPEG_RST_INTERVAL  IMWRITE_JPEG_LUMA_QUALITY  IMWRITE_JPEG_CHROMA_QUALITY  IMWRITE_JPEG_SAMPLING_FACTOR
@@ -1180,7 +1253,7 @@ void BatchItImage::EnableSpecificFormatOptions(bool loading_preset)
             ui.horizontalSlider_Quality->setValue(default_quality_value);
         }
     }
-    else if (format == ".avif") { // cv::IMWRITE_AVIF_QUALITY  cv::IMWRITE_AVIF_DEPTH  cv::IMWRITE_AVIF_SPEED    IMWRITE_JPEG_SAMPLING_FACTOR??? test?
+    else if (format == ".avif") { // cv::IMWRITE_AVIF_QUALITY  cv::IMWRITE_AVIF_DEPTH  cv::IMWRITE_AVIF_SPEED   TODO: test  IMWRITE_JPEG_SAMPLING_FACTOR
 
         enableOptions(QUALITY + COMPRESSION + EXTRASETTING2);
 
@@ -1196,7 +1269,14 @@ void BatchItImage::EnableSpecificFormatOptions(bool loading_preset)
         ui.horizontalSlider_Quality->setRange(0, 100);
         ui.horizontalSlider_Quality->addTextValue(default_quality_value, default_quality_value, "Default", true);
         ui.spinBox_Compression->setRange(0, 9);
-        ui.spinBox_ExtraSetting2->setRange(8, 12); // TODO: validate to only type 8,10,12?
+        ui.spinBox_ExtraSetting2->setRange(8, 12);
+        ui.spinBox_ExtraSetting2->connect(ui.spinBox_ExtraSetting2, &QAbstractSpinBox::editingFinished, this,
+            [this] { // Only 8, 10, 12
+                int val = ui.spinBox_ExtraSetting2->value();
+                if (val == 9 or val == 11) {
+                    ui.spinBox_ExtraSetting2->setValue(10);
+                }
+            });
         ui.spinBox_ExtraSetting2->setSingleStep(2);
 
         if (not loading_preset and last_selected_format != ".avif") {
@@ -1365,6 +1445,19 @@ void BatchItImage::SetupFileTreeContextMenu()
         action_add, action_delete, action_clear, action_line_1, 
         action_select, action_line_2, action_view, action_preview 
         });
+
+#ifdef DEBUG
+    DEBUG("Adding: action_debug_quick_load");
+    QAction* action_debug_quick_load = new QAction("Debug Quick Load", this);
+    QStringList testing_file_list;
+    //testing_file_list.append(qdefault_path + R"(/test_images/01.jpg)"); // large file
+    testing_file_list.append(qdefault_path + R"(/test_images/79.jpg)");
+    testing_file_list.append(qdefault_path + R"(/test_images/evil_monkey.png)");
+    testing_file_list.append(qdefault_path + R"(/test_images/AC01.png)");
+    testing_file_list.append(qdefault_path + R"(/test_images/AC02.png)");
+    connect(action_debug_quick_load, &QAction::triggered, [this, testing_file_list] { AddNewFiles(testing_file_list); });
+    ui.treeWidget_FileInfo->addAction(action_debug_quick_load);
+#endif // DEBUG
 }
 
 /// <summary>
@@ -1410,7 +1503,6 @@ void BatchItImage::ChangePreset(int index)
         SavePreset(); // Save previous preset before change
         current_selected_preset = index;
         //DEBUG2("current_selected_preset: ", current_selected_preset);
-        //emit valueChanged(index);
         
         ui.comboBox_Preset_1->setCurrentIndex(current_selected_preset);
         ui.comboBox_Preset_2->setCurrentIndex(current_selected_preset);
@@ -1430,19 +1522,16 @@ void BatchItImage::ChangePreset(int index)
 /// <param name="save_all">--Save all presets to settings file.</param>
 void BatchItImage::SavePreset(bool save_all)
 {
-    //DEBUG("SavePresets");
+    DEBUG2("SavePresets->current_selected_preset: ", current_selected_preset);
 
     //QStringList recent_image_files;
     //recent_image_files.resize(20);
     // TODO: record time file added, sort descending, when adding to "recent_image_files" create new QStringList and join with old.
 
-
     QSettings settings(preset_settings_file, QSettings::IniFormat);
     settings.beginGroup("Settings");
     settings.setValue("current_selected_preset", ui.comboBox_Preset_1->currentIndex());
     settings.endGroup();
-
-    DEBUG2("SP->current_selected_preset: ", current_selected_preset);
 
     if (save_all) {
         DEBUG("Saving All Settings Presets (Defaults)");
@@ -1456,7 +1545,9 @@ void BatchItImage::SavePreset(bool save_all)
             settings.setValue("height_number", preset_list.at(i).height_number);
             settings.setValue("keep_aspect_ratio", preset_list.at(i).keep_aspect_ratio);
             settings.setValue("resampling_filter", preset_list.at(i).resampling_filter);
-            settings.setValue("rotation_angle", preset_list.at(i).rotation_angle);
+            settings.setValue("rotation_degrees", preset_list.at(i).rotation_degrees);
+            settings.setValue("increase_boundaries", preset_list.at(i).increase_boundaries);
+            settings.setValue("flip_image", preset_list.at(i).flip_image);
             settings.setValue("format_change", preset_list.at(i).format_change);
             settings.setValue("format", preset_list.at(i).format_extension);
             settings.setValue("format_format_flag", preset_list.at(i).format_format_flag);
@@ -1490,14 +1581,16 @@ void BatchItImage::SavePreset(bool save_all)
 
         // Update current preset in list then save it in settings
         preset_list.at(current_selected_preset).index = current_selected_preset;
-        preset_list.at(current_selected_preset).description = ui.comboBox_Preset_1->currentText();
+        //preset_list.at(current_selected_preset).description = ui.comboBox_Preset_1->itemText(current_selected_preset); // Updated in ChangePresetDescription()
         preset_list.at(current_selected_preset).width_change_selection = ui.comboBox_WidthMod->currentIndex();
         preset_list.at(current_selected_preset).width_number = ui.spinBox_WidthNumber->value();
         preset_list.at(current_selected_preset).height_change_selection = ui.comboBox_HeightMod->currentIndex();
         preset_list.at(current_selected_preset).height_number = ui.spinBox_HeightNumber->value();
         preset_list.at(current_selected_preset).keep_aspect_ratio = ui.checkBox_KeepAspectRatio->isChecked();
         preset_list.at(current_selected_preset).resampling_filter = ui.comboBox_Resample->currentIndex();
-        preset_list.at(current_selected_preset).rotation_angle = ui.dial_Rotation->value();
+        preset_list.at(current_selected_preset).rotation_degrees = ui.dial_Rotation->value();
+        preset_list.at(current_selected_preset).increase_boundaries = ui.checkBox_IncreaseBounds->isChecked();
+        preset_list.at(current_selected_preset).flip_image = ui.checkBox_FlipImage->isChecked();
         preset_list.at(current_selected_preset).format_change = ui.groupBox_ChangeFormat->isChecked();
         preset_list.at(current_selected_preset).format_extension = ui.comboBox_ImageFormat->currentIndex();
         preset_list.at(current_selected_preset).format_format_flag = ui.comboBox_FormatFlags->currentIndex();
@@ -1515,20 +1608,6 @@ void BatchItImage::SavePreset(bool save_all)
         else
             preset_list.at(current_selected_preset).save_file_path_change = ui.lineEdit_AbsolutePath->text().toStdString();
 
-
-        /*settings.beginGroup("Preset" + std::to_string(current_selected_preset));
-        settings.setValue("description", ui.comboBox_Preset_1->currentText());
-        settings.setValue("width_change_selection", ui.comboBox_WidthMod->currentIndex());
-        settings.setValue("width_number", ui.spinBox_WidthNumber->value());
-        settings.setValue("height_change_selection", ui.comboBox_HeightMod->currentIndex());
-        settings.setValue("height_number", ui.spinBox_HeightNumber->value());
-        settings.setValue("keep_aspect_ratio", ui.checkBox_KeepAspectRatio->isChecked());
-        settings.setValue("resampling_filter", ui.comboBox_Resample->currentIndex());
-        settings.setValue("rotation_angle", ui.dial_Rotation->value());
-        settings.setValue("save_file_policy_option", save_option);
-        settings.setValue("save_file_name_change", ui.lineEdit_FileName->text());
-        settings.endGroup();*/
-
         settings.beginGroup("Preset" + std::to_string(current_selected_preset));
         settings.setValue("description", preset_list.at(current_selected_preset).description);
         settings.setValue("width_change_selection", preset_list.at(current_selected_preset).width_change_selection);
@@ -1537,7 +1616,9 @@ void BatchItImage::SavePreset(bool save_all)
         settings.setValue("height_number", preset_list.at(current_selected_preset).height_number);
         settings.setValue("keep_aspect_ratio", preset_list.at(current_selected_preset).keep_aspect_ratio);
         settings.setValue("resampling_filter", preset_list.at(current_selected_preset).resampling_filter);
-        settings.setValue("rotation_angle", preset_list.at(current_selected_preset).rotation_angle);
+        settings.setValue("rotation_degrees", preset_list.at(current_selected_preset).rotation_degrees);
+        settings.setValue("increase_boundaries", preset_list.at(current_selected_preset).increase_boundaries);
+        settings.setValue("flip_image", preset_list.at(current_selected_preset).flip_image);
         settings.setValue("format_change", preset_list.at(current_selected_preset).format_change);
         settings.setValue("format_extension", preset_list.at(current_selected_preset).format_extension);
         settings.setValue("format_format_flag", preset_list.at(current_selected_preset).format_format_flag);
@@ -1553,7 +1634,6 @@ void BatchItImage::SavePreset(bool save_all)
         settings.setValue("save_file_path_change", preset_list.at(current_selected_preset).save_file_path_change.c_str());
         settings.endGroup();
     }
-
 }
 
 /// <summary>
@@ -1570,8 +1650,10 @@ void BatchItImage::LoadPreset(Preset preset)
     ui.spinBox_HeightNumber->setValue(preset.height_number);
     ui.comboBox_Resample->setCurrentIndex(preset.resampling_filter);
     ui.checkBox_KeepAspectRatio->setChecked(preset.keep_aspect_ratio);
-    ui.dial_Rotation->setValue(preset.rotation_angle);
-    ui.lcdNumber_Rotation->display(preset.rotation_angle);
+    ui.dial_Rotation->setValue(preset.rotation_degrees);
+    ui.lcdNumber_Rotation->display(preset.rotation_degrees);
+    ui.checkBox_IncreaseBounds->setChecked(preset.increase_boundaries);
+    ui.checkBox_FlipImage->setChecked(preset.flip_image);
     ui.groupBox_ChangeFormat->setChecked(preset.format_change);
     ui.comboBox_ImageFormat->setCurrentIndex(preset.format_extension);
     ui.comboBox_FormatFlags->setCurrentIndex(preset.format_format_flag);
@@ -1615,14 +1697,14 @@ void BatchItImage::LoadPresets()
     // Default Presets (will be used when none are found in the settings file.)
     Preset preset1;
     preset1.index = 0;
-    preset1.description = "[Preset #" + QString::fromStdString(std::to_string(preset1.index + 1)) + "] (Default) Create New 600x600 Image.";
+    preset1.description = "(Default) Create New 600x600 Image.";
     preset1.width_change_selection = ImageEditor::CHANGE_TO;
     preset1.width_number = 600;
     preset1.height_change_selection = ImageEditor::CHANGE_TO;
     preset1.height_number = 600;
     //preset1.keep_aspect_ratio = true;
     preset1.resampling_filter = cv::InterpolationFlags::INTER_CUBIC;
-    //preset1.rotation_angle = 0;
+    //preset1.rotation_degrees = 0;
     //preset1.format_change = false;
     //preset1.format_extension = 0;
     //preset1.format_format_flag = 1;
@@ -1639,14 +1721,14 @@ void BatchItImage::LoadPresets()
 
     Preset preset2;
     preset2.index = 1;
-    preset2.description = "[Preset #" + QString::fromStdString(std::to_string(preset2.index + 1)) + "] (Default) Resize Image 200x200 and Rename Original.";
+    preset2.description = "(Default) Resize Image 200x200 and Rename Original.";
     preset2.width_change_selection = ImageEditor::CHANGE_TO;
     preset2.width_number = 200;
     preset2.height_change_selection = ImageEditor::CHANGE_TO;
     preset2.height_number = 200;
     preset2.keep_aspect_ratio = false;
     preset2.resampling_filter = cv::InterpolationFlags::INTER_CUBIC;
-    //preset2.rotation_angle = 0;
+    //preset2.rotation_degrees = 0;
     //preset2.format_change = false;
     //preset2.format_extension = 0;
     //preset2.format_format_flag = 1;
@@ -1677,7 +1759,9 @@ void BatchItImage::LoadPresets()
             preset.height_number = settings.value("height_number").toInt();
             preset.keep_aspect_ratio = settings.value("keep_aspect_ratio").toBool();
             preset.resampling_filter = settings.value("resampling_filter").toInt();
-            preset.rotation_angle = settings.value("rotation_angle").toInt();
+            preset.rotation_degrees = settings.value("rotation_degrees").toInt();
+            preset.increase_boundaries = settings.value("increase_boundaries").toBool();
+            preset.flip_image = settings.value("flip_image").toBool();
             preset.format_change = settings.value("format_change").toBool();
             preset.format_extension = settings.value("format_extension").toInt();
             preset.format_format_flag = settings.value("format_format_flag").toInt();
@@ -1702,7 +1786,7 @@ void BatchItImage::LoadPresets()
 
         //qDebug() << settings.allKeys();
 
-        // TEMP: load only defaults, keep presets as defualts between sesions.
+        // TEMP: load only defaults, keep presets as defaults between sessions.
         preset_list.push_back({ preset1 });
         preset_list.push_back({ preset2 });
     }
@@ -1714,27 +1798,99 @@ void BatchItImage::LoadPresets()
     }
 
     // Add preset titles into all preset combo boxes.
-    ui.comboBox_Preset_1->clear();
-    ui.comboBox_Preset_2->clear();
-    ui.comboBox_Preset_3->clear();
-    for (int i = 0; i < preset_list.size(); i++) {
-        ui.comboBox_Preset_1->insertItem( i,
-            preset_list.at(i).description,
-            QString::fromStdString("Preset" + std::to_string(i))
-        );
-        ui.comboBox_Preset_2->insertItem( i,
-            preset_list.at(i).description,
-            QString::fromStdString("Preset" + std::to_string(i))
-        );
-        ui.comboBox_Preset_3->insertItem( i,
-            preset_list.at(i).description,
-            QString::fromStdString("Preset" + std::to_string(i))
-        );
-    }
+    QComboBox* preset_comboboxes[]{ ui.comboBox_Preset_1, ui.comboBox_Preset_2, ui.comboBox_Preset_3 };
+    AddPresetsToComboBox(&preset_list, preset_comboboxes, 3);
+    //AddPresetsToComboBox(&preset_list, &ui.comboBox_Preset_1);
     ChangePreset(cspi);
 
     // Load selected preset data into ui.
     LoadPreset(preset_list.at(current_selected_preset));
+}
+
+/// <summary>
+/// Open dialog allowing user to change any preset description.
+/// </summary>
+void BatchItImage::ChangePresetDescription()
+{
+    DEBUG("ChangePresetDescription");
+    DialogEditPresetDesc* epc_window = new DialogEditPresetDesc(
+        "Change Preset Description",
+        "Change Title Description of Currently Selected Preset.",
+        &preset_list,
+        current_selected_preset,
+        this
+    );
+    epc_window->exec();
+    QComboBox* preset_comboboxes[]{ ui.comboBox_Preset_1, ui.comboBox_Preset_2, ui.comboBox_Preset_3 };
+    AddPresetsToComboBox(&preset_list, preset_comboboxes, 3);
+    SavePreset(true);
+    delete epc_window;
+}
+
+/// <summary>
+/// [Static] Add preset descriptions to one or more combo boxes.
+/// </summary>
+/// <param name="preset_list">--Pointer to the preset list.</param>
+/// <param name="preset_cb">--Pointer to one or more combo boxes.</param>
+/// <param name="count">--The amount of combo boxes.</param>
+void BatchItImage::AddPresetsToComboBox(std::vector<Preset>* preset_list, QComboBox* preset_cb[], uint count)
+{
+    for (uint x = 0; x < count; x++) {
+        preset_cb[x]->blockSignals(true);
+        preset_cb[x]->clear();
+
+        for (int i = 0; i < preset_list->size(); i++) {
+
+            QString preset_text = "[Preset #" + QVariant(i + 1).toString() + "] "; // TODO: add to UI Text/Data?
+
+            preset_cb[x]->insertItem(i,
+                preset_text + preset_list->at(i).description,
+                QString::fromStdString("Preset" + std::to_string(i))
+            );
+            preset_cb[x]->setItemData(i,
+                preset_list->at(i).description,
+                Qt::ToolTipRole
+            );
+            preset_cb[x]->setItemData(i,
+                preset_list->at(i).description,
+                Qt::StatusTipRole
+            );
+        }
+        preset_cb[x]->setStatusTip(preset_cb[x]->currentData(Qt::StatusTipRole).toString());
+        preset_cb[x]->setToolTip(preset_cb[x]->currentData(Qt::ToolTipRole).toString());
+        preset_cb[x]->blockSignals(false);
+    }
+}
+
+/// <summary>
+/// Dialog asking user to save or discard any changes made to current preset before editing images.
+/// </summary>
+/// <returns>True if editing of images aborted by user.</returns>
+bool BatchItImage::SavePresetDialog()
+{
+    m_window = new MessageWindow(
+        "Save Current Preset",
+        "Before editing any images, with the current settings, would you like to \"Save/Discard\" those settings to the currently selected preset?\nYou may also choose to \"Abort\" the editing of images.",
+        QDialogButtonBox::Save | QDialogButtonBox::Discard | QDialogButtonBox::Abort,
+        this
+    );
+    bool abort = false;
+    bool* abort_p = &abort;
+    connect(m_window, &MessageWindow::ButtonClicked, 
+        [=](QDialogButtonBox::StandardButton button_clicked) {
+            if (QDialogButtonBox::Save & button_clicked)
+                SavePreset();
+            if (QDialogButtonBox::Discard & button_clicked)
+                m_window->close();
+            else if (QDialogButtonBox::Abort & button_clicked or QDialogButtonBox::Close & button_clicked) {
+                bool abort = true;
+                *abort_p = abort;
+            }
+        }
+    );
+    m_window->exec();
+    delete m_window;
+    return abort;
 }
 
 /// <summary>
@@ -1746,7 +1902,9 @@ void BatchItImage::EditAndSave()
 
     // TODO: if current preset settings are not saved, ask to save them now before editing images
     // Save Current, Save New, Cancel... all preset ui elements would need to trigger a "changed and not saved" flag
-    SavePreset();
+    bool abort = SavePresetDialog();
+    if (abort) return;
+    DEBUG("...Edit And Save...");
 
     for (int i = 0; i < current_file_metadata_list.size(); i++) {
         DEBUG(current_file_metadata_list.at(i).to_string());
@@ -1756,13 +1914,15 @@ void BatchItImage::EditAndSave()
 
         // Setup the image editor with a file path and all the edits to be done.
         ImageEditor* new_ie = new ImageEditor(current_file_metadata_list.at(i).path, img_p);
-        new_ie->width_modifier = preset_list.at(current_selected_preset).width_change_selection;
-        new_ie->width = preset_list.at(current_selected_preset).width_number;
-        new_ie->height_modifier = preset_list.at(current_selected_preset).height_change_selection;
-        new_ie->height = preset_list.at(current_selected_preset).height_number;
-        new_ie->keep_aspect_ratio = preset_list.at(current_selected_preset).keep_aspect_ratio;
-        new_ie->interpolation = preset_list.at(current_selected_preset).resampling_filter;
-        new_ie->rotate_degrees = preset_list.at(current_selected_preset).rotation_angle;
+        new_ie->width_modifier = ui.comboBox_WidthMod->currentIndex();
+        new_ie->width = ui.spinBox_WidthNumber->value();
+        new_ie->height_modifier = ui.comboBox_HeightMod->currentIndex();
+        new_ie->height = ui.spinBox_HeightNumber->value();
+        new_ie->keep_aspect_ratio = ui.checkBox_KeepAspectRatio->isChecked();
+        new_ie->interpolation = ui.comboBox_Resample->currentData().toInt();
+        new_ie->rotation_degrees = ui.dial_Rotation->value();
+        new_ie->increase_boundaries = ui.checkBox_IncreaseBounds->isChecked();
+        new_ie->flip_image = ui.checkBox_FlipImage->isChecked();
 
         // Start the image edit process on another thread
         std::future<uint> worker_thread = std::async(&ImageEditor::StartEditProcess, new_ie);
@@ -1829,13 +1989,13 @@ void BatchItImage::SaveImageFile(cv::Mat* image, uint image_edits_made, int imag
         if (save_option == SaveOption::RENAME_ORG or save_option == SaveOption::NEW_NAME) {
             std::string file_name_changes = preset_list.at(current_selected_preset).save_file_name_change;
 
-            std::string change_data[4] = {
+            std::string metadata_inserts[4] = {
                 org_file_path.stem().string(), // File Name
                 std::to_string(image_index + 1), // Counter
                 std::to_string(image_edited.cols), // Width
                 std::to_string(image_edited.rows) // Height
             };
-            file_name_changes = CreateNewFileName(file_name_changes, change_data);
+            file_name_changes = CreateNewFileName(file_name_changes, metadata_inserts);
 
             // TODO: if file already exists ask to overwrite?
             // TODO: how to handle permissions?
@@ -1847,7 +2007,7 @@ void BatchItImage::SaveImageFile(cv::Mat* image, uint image_edits_made, int imag
                 // TODO: If RENAME_ORG and an absolute or a relative path that isn't empty or just "\",
                 // Inform user that they are renaming original but not saving the new file with the same name/path, is this what they intended to do?
                 // Inform user before starting the edit process. (No need to rename org if not intending to overwrite it, or is there?)
-                new_file_path = std::filesystem::path(new_root_save_path / org_file_path.stem());// .generic_string();
+                new_file_path = std::filesystem::path(new_root_save_path / org_file_path.stem());
             }
             else if (save_option == SaveOption::NEW_NAME) {
                 new_file_path = std::filesystem::path(new_root_save_path / file_name_changes);
@@ -1861,29 +2021,24 @@ void BatchItImage::SaveImageFile(cv::Mat* image, uint image_edits_made, int imag
 
         //DEBUG2("Save File Path: ", new_file_path.generic_string());
 
-        // Add Extension and Get/Apply Format Specific Paramaters
+        // Add Extension and Get/Apply Format Specific Parameters
         std::vector<int> params;
         DEBUG2("Change Format: ", preset_list.at(current_selected_preset).format_change);
-        if (preset_list.at(current_selected_preset).format_change) {
+        if (ui.groupBox_ChangeFormat->isChecked()) {
 
-            std::string extension = std::get<std::string>(
-                image_formats[preset_list.at(current_selected_preset).format_extension].data
-            );
+            std::string extension = ui.comboBox_ImageFormat->currentData().toString().toStdString();
             new_file_path.replace_extension(extension);
-            
-            // TODO: Format Specific Paramaters
-            int format_flag = std::get<int>(
-                format_jpeg_subsamplings[preset_list.at(current_selected_preset).format_format_flag].data
-            );
+
+            int format_flag = ui.comboBox_FormatFlags->currentData().toInt();
             DEBUG(format_flag);
-            int quality = preset_list.at(current_selected_preset).format_quality;
-            bool optimize = preset_list.at(current_selected_preset).format_optimize;
-            bool progressive = preset_list.at(current_selected_preset).format_progressive;
-            int compression = preset_list.at(current_selected_preset).format_compression;
-            int extra1 = preset_list.at(current_selected_preset).format_extra1;
-            int extra2 = preset_list.at(current_selected_preset).format_extra2;
+            int quality = ui.horizontalSlider_Quality->value();
+            bool optimize = ui.checkBox_Optimize->isChecked();
+            bool progressive = ui.checkBox_Progressive->isChecked();
+            int compression = ui.spinBox_Compression->value();
+            int extra1 = ui.spinBox_ExtraSetting1->value();
+            int extra2 = ui.spinBox_ExtraSetting2->value();
             
-            ie->GetFormatParams(&params, extension, format_flag, quality, optimize, progressive, compression, extra1, extra2);
+            ie->GetFormatParameters(&params, extension, format_flag, quality, optimize, progressive, compression, extra1, extra2);
         }
         else {
             new_file_path.replace_extension(org_file_path.extension());
@@ -1917,19 +2072,20 @@ void BatchItImage::SaveImageFile(cv::Mat* image, uint image_edits_made, int imag
 /// Build a new file name from user entered text and which metadata to insert.
 /// </summary>
 /// <param name="file_name_changes">--Text from the preset file rename option including which type of metadata to insert.</param>
-/// <param name="change_data">--The file metadata to insert into new file name.</param>
+/// <param name="metadata_inserts">--The file metadata to insert into new file name.</param>
 /// <returns>--The new file name string.</returns>
-std::string BatchItImage::CreateNewFileName(std::string file_name_changes, std::string change_data[4])
+std::string BatchItImage::CreateNewFileName(std::string file_name_changes, std::string metadata_inserts[4])
 {
-    std::string change_selections[4] = { ADD_FILE_NAME, ADD_COUNTER, ADD_WIDTH, ADD_HEIGHT };
+    std::string metadata_selections[4] = { ADD_FILE_NAME, ADD_COUNTER, ADD_WIDTH, ADD_HEIGHT };
     for (int i = 0; i < 4; i++) {
-        int fn_index = file_name_changes.find(change_selections[i]);
-        if (fn_index != std::string::npos) {
-            file_name_changes.replace(fn_index, change_selections[i].length(), change_data[i]);
-        }
+        file_name_changes = ReplaceAll(file_name_changes, metadata_selections[i], metadata_inserts[i]);
     }
-
-    // TODO: clean up any illegal characters that got through, like extra <>.
+    // Clean up any illegal characters that got through. Only these should be possible: <>.
+    file_name_changes = ReplaceAll(file_name_changes, "<", "");
+    file_name_changes = ReplaceAll(file_name_changes, ">", "");
+    DEBUG(file_name_changes);
+    // TODO: I could retest for metadata_selections in case an illegal character was placed into a metadata by mistake.
+    // Or just let the user mistake happen? "<FIL<E_NAME>"
 
     return file_name_changes;
 }
@@ -2022,7 +2178,6 @@ void BatchItImage::BuildFileMetadataList(const QStringList file_list)
 
         if (IsFileInList(file_path_str, current_file_metadata_list) > -1) {
             UpdateProgressBar(function_ResizeFileTreeColumns, 3.0f);
-            DEBUG("File Already In List");
         }
         else {
             // TODO: Which is faster?
@@ -2086,7 +2241,7 @@ void BatchItImage::HandleFileMetadata(FileMetadata* file_metadata)
                 this
             );
             connect(m_window, &MessageWindow::ButtonClicked,
-                [=](QDialogButtonBox::StandardButton button) {
+                [this](QDialogButtonBox::StandardButton button) {
                     DEBUG2("Button: ", button);
                     m_window_shown = false;
                     delete m_window;
@@ -2342,7 +2497,7 @@ void BatchItImage::SortFileTreeByColumn(int index)
 }
 
 /// <summary>
-/// Convert bytes into a formated file size string -> KB -> MB -> GB -> TB.
+/// Convert bytes into a formatted file size string -> KB -> MB -> GB -> TB.
 /// </summary>
 /// <param name="bytes">--File size in bytes.</param>
 /// <returns>A Formatted String - Example: " 1.37 MB "</returns>
@@ -2832,7 +2987,7 @@ QString BatchItImage::GetLastExistingSavePath()
 /// <param name="str">--The text to search.</param>
 /// <param name="from">--Find this text.</param>
 /// <param name="to">--Replace with this text</param>
-/// <param name="no_really_all">--If set will include cases where "to" is a substring of "from".</param>
+/// <param name="no_really_all">--If true will include cases where "to" is a substring of "from". Default is false.</param>
 /// <returns>An edited string.</returns>
 std::string BatchItImage::ReplaceAll(std::string str, const std::string& from, const std::string& to, bool no_really_all) {
     size_t start_pos = 0;
