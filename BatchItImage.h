@@ -1,8 +1,12 @@
 #pragma once
+#ifndef   BATCHITIMAGE_H
+#define   BATCHITIMAGE_H
 
 #include "common.h"
+#include "EnhancedProgressBar.h"
 #include "EnhancedSlider.h"
 #include "ImageEditor.h"
+#include "ImageSaver.h"
 #include "ui_BatchItImage.h"
 #include "ui_DialogEditPresetDesc.h"
 #include "ui_MessageWindow.h"
@@ -79,17 +83,16 @@ public:
     void SavePreset(bool save_all = false);
     void LoadPreset(Preset);
     void LoadPresets();
-    static void AddPresetsToComboBox(std::vector<Preset>* preset_list, QComboBox* preset_cb[], uint count = 1);
     bool SavePresetDialog();
     void LoadFileIntoTree(int, int = -1);
     void BuildFileMetadataList(const QStringList file_list);
     std::string BytesToFileSizeString(std::uintmax_t);
-    std::string CreateNewFileName(std::string file_name_changes, std::string metadata_inserts[]);
     int GetCurrentFileTreeRow();
     int IsFileInList(std::string path, std::vector<FileMetadata> list);
     int IsFileInList(std::string path, std::vector<FileMetadata> list, const size_t search_range[2]);
     std::vector<FileMetadata>::iterator IsFileInListIterator(std::string path, std::vector<FileMetadata> list);
-    std::string ReplaceAll(std::string str, const std::string& from, const std::string& to, bool no_really_all = false);
+    static void AddPresetsToComboBox(std::vector<Preset>* preset_list, QComboBox* preset_cb[], uint count = 1);
+    static const std::string ReplaceAll(std::string str, const std::string& from, const std::string& to, bool no_really_all = false);
     
 public slots:
     void Test();
@@ -98,13 +101,13 @@ public slots:
     void LoadImageFiles();
     void AddNewFiles(QStringList file_list);
     void FileSelectionChange(bool checked);
+    void SortFileTreeByColumn(int index);
+    void RemoveFileFromTree(const QDialogButtonBox::StandardButton& role);
     void EditAndSave();
     void AddTextToFileName(); 
     void CheckRelativePath();
     void CheckAbsolutePath();
     QString GetSaveDirectoryPath();
-    void SortFileTreeByColumn(int index);
-    void RemoveFileFromTree(const QDialogButtonBox::StandardButton& role);
 
 private slots:
     void UpdateComboBoxToolTip();
@@ -116,8 +119,10 @@ private slots:
 signals:
     void valueChanged(int value);
     void currentIndexChanged(int index);
+    void progressMade(float multiplier = 1.0f);
 
 private:
+    QMainWindow* main_object;
     Ui::BatchItImageClass ui;
     QString preset_settings_file;
     MessageWindow* m_window;
@@ -130,18 +135,13 @@ private:
     };
     const struct SortOrder { enum { ASCENDING1, DESCENDING1, ASCENDING2, DESCENDING2 }; };
     const struct ActionMenu { enum { action_add, action_delete, action_clear, action_select, action_view, action_preview, COUNT }; };
-    const struct SaveOption { enum { OVERWRITE, RENAME_ORG, NEW_NAME }; };
     const struct FilePathOptions {
-        enum {
-            groupBox_FileRename, radioButton_Overwrite, radioButton_RenameOriginal, radioButton_NewFileName, label_Add,
-            groupBox_SaveDir, radioButton_RelativePath, radioButton_AbsolutePath, pushButton_AddBackOneDir, pushButton_FindAbsolutePath, COUNT
-        };
+        enum { groupBox_FileRename, radioButton_Overwrite, radioButton_RenameOriginal, radioButton_NewFileName, label_Add,
+            groupBox_SaveDir, radioButton_RelativePath, radioButton_AbsolutePath, pushButton_AddBackOneDir, pushButton_FindAbsolutePath, COUNT };
     };
     const struct FormatJpegOptions {
-        enum {
-            label_FormatFlags, label_Quality, checkBox_Optimize, checkBox_Progressive,
-            label_Compression, label_ExtraSetting1, label_ExtraSetting2, COUNT
-        };
+        enum { label_FormatFlags, label_Quality, checkBox_Optimize, checkBox_Progressive,
+            label_Compression, label_ExtraSetting1, label_ExtraSetting2, COUNT };
     };
     const struct FormatJp2Options { enum { label_Compression, COUNT }; };
     const struct FormatPngOptions { enum { label_FormatFlags, checkBox_Optimize, label_Compression, COUNT }; };
@@ -180,6 +180,7 @@ private:
     UIData width_selections[6];
     UIData height_selections[6];
     UIData resampling_selections[3];
+    UIData blur_filters[8];
     UIData file_name_creation[4];
     UIData image_formats[22];
     UIData format_jpeg_subsamplings[5];
@@ -191,11 +192,6 @@ private:
     UIData format_hdr_compression[2];
 
     QString supported_image_extensions_dialog_str = ""; // Built from image_formats    
-
-    const std::string ADD_FILE_NAME = "<FILE_NAME>";
-    const std::string ADD_COUNTER = "<COUNTER>";
-    const std::string ADD_WIDTH = "<WIDTH>";
-    const std::string ADD_HEIGHT = "<HEIGHT>";
 
     const QFont* font_serif = new QFont("Times", 10, QFont::Bold);
     const QFont* font_default = new QFont("Segoe UI", 9);
@@ -213,53 +209,42 @@ private:
 
     const std::filesystem::path default_path = std::filesystem::current_path();
     const QString qdefault_path = QString::fromStdString(default_path.string());
-    QString GetLastExistingSavePath();
-
     std::string last_existing_load_path;
     std::string last_existing_save_path;
     std::string last_selected_format;
 
-    //bool search_subdirs = true;
     std::vector<struct Preset> preset_list;
+    std::vector<struct FileMetadata> current_file_metadata_list;
+    std::vector<struct FileMetadata> deleted_file_metadata_list;
     int current_selected_preset = 0;
     bool unsaved_preset_settings = false; // TODO
     int current_file_column_sorted = -1;
     int current_file_sort_order = -1;
     float current_load_number = 0.0f;
     float load_interval  = 0.0f;
-
-    std::vector<struct FileMetadata> current_file_metadata_list;
-    std::vector<struct FileMetadata> deleted_file_metadata_list;
     int last_load_count = 0;
 
     void SetupFileTree();
     void AddUiObjectData(QObject* object, UIData* ui_data);
     void PopulateComboBox(QComboBox*, UIData*, int);
     void SetupFileTreeContextMenu();
-
     template<typename DirectoryIter>
     QStringList IterateDirectory(DirectoryIter iterator);
-
     void ToggleFileTreeContextMenuItems(bool enable);
     void ResizeFileTreeColumns();
     const std::function<void()> function_ResizeFileTreeColumns = std::bind(&BatchItImage::ResizeFileTreeColumns, this);
     void DeleteTreeItemObjects(QTreeWidget* tree, int row_index = -1);
-    
-    void SaveImageFile(cv::Mat* image, uint image_edits_made, int image_index, ImageEditor* ie);
-
-    void UpdateProgressBar(std::function<void()> func, float multiplier = 1.0f);
-    void UpdateProgressBar(float multiplier);
-    void UpdateProgressBar();
-    void InitiateProgressBar(int max_ticks, float multiplier);
-    void InitiateProgressBar(int max_ticks);
-
-    void DebugListPrint(int list);
+    void SaveImageFile(int image_index, ImageEditor* image_editor);
+    void UpdateLog(ImageEditor* edited_image, ImageSaver* saved_image);
+    QString GetLastExistingSavePath();
 
 protected:
     bool eventFilter(QObject* watched, QEvent* event) override;
-    void actionEvent(QActionEvent* event) override;
+    //void actionEvent(QActionEvent* event) override;
     void dropEvent(QDropEvent* event) override;
     void dragEnterEvent(QDragEnterEvent* event) override;
     void dragMoveEvent(QDragMoveEvent* event) override;
     void keyPressEvent(QKeyEvent* event) override;
 };
+
+#endif // BATCHITIMAGE_H
