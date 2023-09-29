@@ -1,8 +1,4 @@
-#ifndef    BATCHITIMAGE_H
-#define    BATCHITIMAGE_H
 #include "BatchItImage.h"
-#endif
-
 
 /*
 TODO: 
@@ -27,18 +23,18 @@ MessageWindow::MessageWindow(QString title, QString message, QFlags<QDialogButto
 }
 MessageWindow::~MessageWindow()
 {
-    DEBUG("MessageWindow Deconstructed");
+    qDebug() << "MessageWindow Deconstructed";
     //delete m_ui;
 }
 void MessageWindow::changeEvent(QEvent* event)
 {
-    //DEBUG("MessageWindow changeEvent");
+    //qDebug() << "MessageWindow changeEvent";
     QDialog::changeEvent(event);
 }
 void MessageWindow::closeEvent(QCloseEvent* event)
 {
     if (event->spontaneous()) {
-        DEBUG("The X-close button was clicked.");
+        qDebug() << "The X-close button was clicked.";
         emit ButtonClicked(QDialogButtonBox::Close);
     }
     QWidget::closeEvent(event);
@@ -46,7 +42,7 @@ void MessageWindow::closeEvent(QCloseEvent* event)
 void MessageWindow::ButtonBoxClicked(QAbstractButton* button)
 {
     QDialogButtonBox::StandardButton std_button = ui.buttonBox->standardButton(button);
-    DEBUG2("MessageWindow::ButtonBoxClicked: ", std_button);
+    qDebug() << "MessageWindow::ButtonBoxClicked: " << std_button;
     emit ButtonClicked(std_button);
     /*
     QDialogButtonBox::Ok	    0x00000400	An "OK" button defined with the AcceptRole.
@@ -87,23 +83,23 @@ DialogEditPresetDesc::DialogEditPresetDesc(QString title, QString message, std::
 }
 DialogEditPresetDesc::~DialogEditPresetDesc()
 {
-    DEBUG("DialogEditPresetDesc Deconstructed");
+    qDebug() << "DialogEditPresetDesc Deconstructed";
 }
 void DialogEditPresetDesc::PresetIndexChanged(int index)
 {
-    DEBUG2("PresetIndexChanged:", index);
+    qDebug() << "PresetIndexChanged:" << index;
     ui.lineEdit_PresetDesc->setText(preset_list->at(index).description);
     current_selected_preset = index;
 }
 void DialogEditPresetDesc::UpdateComboBox()
 {
-    DEBUG("UpdateComboBox");
+    qDebug() << "UpdateComboBox";
     BatchItImage::AddPresetsToComboBox(preset_list, &ui.comboBox_Preset_4);
 }
 void DialogEditPresetDesc::closeEvent(QCloseEvent* event)
 {
     if (event->spontaneous()) {
-        DEBUG("The X-close button was clicked.");
+        qDebug() << "The X-close button was clicked.";
         emit ButtonClicked(QDialogButtonBox::Close);
     }
     QWidget::closeEvent(event);
@@ -111,12 +107,12 @@ void DialogEditPresetDesc::closeEvent(QCloseEvent* event)
 void DialogEditPresetDesc::ButtonBoxClicked(QAbstractButton* button)
 {
     QDialogButtonBox::StandardButton std_button = ui.buttonBox->standardButton(button);
-    DEBUG2("DialogEditPresetDesc::ButtonBoxClicked: ", std_button);
+    qDebug() << "DialogEditPresetDesc::ButtonBoxClicked: " << std_button;
 
     if (QDialogButtonBox::Apply & std_button) {
         QString updated_description = ui.lineEdit_PresetDesc->text();
         preset_list->at(current_selected_preset).description = updated_description;
-        DEBUG(updated_description.toStdString());
+        qDebug() << updated_description.toStdString();
         UpdateComboBox();
     }
     else if (QDialogButtonBox::Reset & std_button) {
@@ -133,7 +129,7 @@ void DialogEditPresetDesc::ButtonBoxClicked(QAbstractButton* button)
 /// </summary>
 /// <param name="file_path">--A file path string.</param>
 /// <param name="load_order">--This file metadata should be added now on initialization.</param>
-/// <param name="parent">--The parent object that creates this</param>
+/// <param name="parent">--Parent QObject</param>
 FileMetadataWorker::FileMetadataWorker(std::string file_path, int load_order, QObject* parent)
 {
     FileMetadataWorker::file_path = file_path;
@@ -143,7 +139,7 @@ FileMetadataWorker::FileMetadataWorker(std::string file_path, int load_order, QO
 }
 void FileMetadataWorker::GetFileMetadata()
 {
-    DEBUG2("GetFileMetadata From: ", file_path);
+    qDebug() << "GetFileMetadata From: " <<  file_path;
 
     // Image File Dimensions
     cv::Mat file_image = cv::imread(file_path); // TODO: Find (is there?) another way to get width/height without reading/opening file. This is slow when adding 100+ files.
@@ -183,13 +179,15 @@ void FileMetadataWorker::GetFileMetadata()
 }
 FileMetadataWorker::~FileMetadataWorker()
 {
-    DEBUG("FileMetadataWorker Deconstructed");
+    qDebug() << "FileMetadataWorker Deconstructed";
 }
 
 
 BatchItImage::BatchItImage(QWidget* parent) : QMainWindow(parent)
 {
     DEBUG("Debug Build");
+
+    main_object = this;
 
     ui.setupUi(this);
     setAcceptDrops(true);
@@ -232,6 +230,7 @@ BatchItImage::BatchItImage(QWidget* parent) : QMainWindow(parent)
     PopulateComboBox(ui.comboBox_WidthMod, width_selections, sizeof(width_selections) / sizeof(UIData));
     PopulateComboBox(ui.comboBox_HeightMod, height_selections, sizeof(height_selections) / sizeof(UIData));
     PopulateComboBox(ui.comboBox_Resample, resampling_selections, sizeof(resampling_selections) / sizeof(UIData));
+    PopulateComboBox(ui.comboBox_BlurFilter, blur_filters, sizeof(blur_filters) / sizeof(UIData));
     PopulateComboBox(ui.comboBox_AddText, file_name_creation, sizeof(file_name_creation) / sizeof(UIData));
     PopulateComboBox(ui.comboBox_ImageFormat, image_formats, sizeof(image_formats) / sizeof(UIData));
     //PopulateComboBox(ui.comboBox_FormatFlags, format_jpeg_subsamplings, sizeof(format_jpeg_subsamplings) / sizeof(UIData));
@@ -240,10 +239,15 @@ BatchItImage::BatchItImage(QWidget* parent) : QMainWindow(parent)
         Prep UI Widgets, Etc
     ****************************/
 
-    ui.progressBar->setVisible(false);
     preset_list.reserve(10);
     current_file_metadata_list.reserve(30);
     deleted_file_metadata_list.reserve(10);
+    ui.enhancedProgressBar->setVisible(false);
+    ui.verticalSlider_BlurX1->forceSingleStepInterval(true);
+    ui.verticalSlider_BlurY1->forceSingleStepInterval(true);
+
+    ui.verticalSlider_BlurX2->setRange(0.0, 10.0);
+    ui.verticalSlider_BlurX2->setSingleStepDouble(0.1);
 
     ui.dial_Rotation->setInvertedAppearance(true);
     ui.dial_Rotation->setInvertedControls(true);
@@ -252,6 +256,7 @@ BatchItImage::BatchItImage(QWidget* parent) : QMainWindow(parent)
     //ui.checkBox_SearchSubDirs->setChecked(search_subdirs);
 
     SetupFileTree();
+    SetupFileTreeContextMenu();
     LoadPresets();
 
     // All characters allowed in file names or paths, plus <>. 
@@ -264,7 +269,7 @@ BatchItImage::BatchItImage(QWidget* parent) : QMainWindow(parent)
     ui.lineEdit_RelativePath->setValidator(file_path_validator);
     ui.lineEdit_AbsolutePath->setValidator(file_path_validator);
 
-    // Create image extension string for "file open dialog"
+    // Create image extension string for "open file dialog".
     supported_image_extensions_dialog_str.append("Images: (");
     for (const auto& ext : image_formats) {
         supported_image_extensions_dialog_str.append("*" + std::get<std::string>(ext.data) + " ");
@@ -277,52 +282,51 @@ BatchItImage::BatchItImage(QWidget* parent) : QMainWindow(parent)
         UI Events
     ****************************/
 
-    // Menu Actions
-    connect(ui.action_About, SIGNAL(triggered(bool)), this, SLOT(Test())); // TODO
-    //connect(ui.action_About, &QAbstractButton::pressed, this, &QApplication::aboutQt);
-    connect(aboutQtAct, &QAction::triggered, [this] { QApplication::aboutQt(); });
-    connect(ui.action_AddImages, SIGNAL(triggered(bool)), this, SLOT(LoadImageFiles()));
-    connect(ui.action_AddImageToCombine, SIGNAL(triggered(bool)), this, SLOT(Test())); // TODO
-    connect(ui.action_AddNewPreset, SIGNAL(triggered(bool)), this, SLOT(Test())); // TODO
-    connect(ui.action_ChangePresetDesc, SIGNAL(triggered(bool)), this, SLOT(ChangePresetDescription()));
-    connect(ui.action_Close, SIGNAL(triggered(bool)), this, SLOT(Test())); // TODO
-    connect(ui.action_RemovePreset, SIGNAL(triggered(bool)), this, SLOT(Test())); // TODO
-    connect(ui.action_SaveLogAs, SIGNAL(triggered(bool)), this, SLOT(Test())); // TODO
-    connect(ui.action_SavePresets, SIGNAL(triggered(bool)), this, SLOT(Test())); // TODO
+    // Main Window Menu
+    Q_ASSERT(connect(ui.action_About, SIGNAL(triggered(bool)), this, SLOT(Test()))); // TODO
+    Q_ASSERT(connect(aboutQtAct, &QAction::triggered, this, [this] { QApplication::aboutQt(); }));
+    Q_ASSERT(connect(ui.action_AddImages, SIGNAL(triggered(bool)), this, SLOT(LoadImageFiles())));
+    Q_ASSERT(connect(ui.action_AddImageToCombine, SIGNAL(triggered(bool)), this, SLOT(Test()))); // TODO
+    Q_ASSERT(connect(ui.action_AddNewPreset, SIGNAL(triggered(bool)), this, SLOT(Test()))); // TODO
+    Q_ASSERT(connect(ui.action_ChangePresetDesc, SIGNAL(triggered(bool)), this, SLOT(ChangePresetDescription())));
+    Q_ASSERT(connect(ui.action_Close, SIGNAL(triggered(bool)), this, SLOT(Test()))); // TODO
+    Q_ASSERT(connect(ui.action_RemovePreset, SIGNAL(triggered(bool)), this, SLOT(Test()))); // TODO
+    Q_ASSERT(connect(ui.action_SaveLogAs, SIGNAL(triggered(bool)), this, SLOT(Test()))); // TODO
+    Q_ASSERT(connect(ui.action_SavePresets, SIGNAL(triggered(bool)), this, SLOT(Test()))); // TODO
 
     // Image File Tree
-    connect(ui.treeWidget_FileInfo->header(), SIGNAL(sectionClicked(int)), this, SLOT(SortFileTreeByColumn(int)));
-    //connect(ui.checkBox_SearchSubDirs, &QCheckBox::stateChanged, [this] { search_subdirs = ui.checkBox_SearchSubDirs->isChecked(); });
-    SetupFileTreeContextMenu();
+    Q_ASSERT(connect(ui.treeWidget_FileInfo->header(), SIGNAL(sectionClicked(int)), this, SLOT(SortFileTreeByColumn(int))));
+    //connect(ui.checkBox_SearchSubDirs, &QCheckBox::stateChanged, this, [this] { search_subdirs = ui.checkBox_SearchSubDirs->isChecked(); });
 
     // Image Edit Widgets
-    connect(ui.comboBox_Preset_1, SIGNAL(currentIndexChanged(int)), this, SLOT(ChangePreset(int)));
+    Q_ASSERT(connect(ui.comboBox_Preset_1, SIGNAL(currentIndexChanged(int)), this, SLOT(ChangePreset(int))));
     //connect(ui.comboBox_Preset_1, SIGNAL(currentIndexChanged(int)), ui.comboBox_Preset_2, SLOT(ChangePresets(int))); // Done in the ui xml + 9 Others
-    connect(ui.comboBox_WidthMod, SIGNAL(currentIndexChanged(int)), this, SLOT(UpdateComboBoxToolTip()));
-    connect(ui.comboBox_HeightMod, SIGNAL(currentIndexChanged(int)), this, SLOT(UpdateComboBoxToolTip()));
-    connect(ui.comboBox_Resample, SIGNAL(currentIndexChanged(int)), this, SLOT(UpdateComboBoxToolTip()));
-    connect(ui.dial_Rotation, SIGNAL(valueChanged(int)), this, SLOT(Test())); // TODO
+    Q_ASSERT(connect(ui.comboBox_WidthMod, SIGNAL(currentIndexChanged(int)), this, SLOT(UpdateComboBoxToolTip())));
+    Q_ASSERT(connect(ui.comboBox_HeightMod, SIGNAL(currentIndexChanged(int)), this, SLOT(UpdateComboBoxToolTip())));
+    Q_ASSERT(connect(ui.comboBox_Resample, SIGNAL(currentIndexChanged(int)), this, SLOT(UpdateComboBoxToolTip())));
+    Q_ASSERT(connect(ui.comboBox_BlurFilter, SIGNAL(currentIndexChanged(int)), this, SLOT(UpdateComboBoxToolTip())));
+    Q_ASSERT(connect(ui.dial_Rotation, SIGNAL(valueChanged(int)), ui.lcdNumber_Rotation, SLOT(display(int))));
 
     // Image Save Widgets
-    connect(ui.pushButton_EditAndSave, SIGNAL(clicked(bool)), this, SLOT(EditAndSave()));
-    connect(ui.comboBox_AddText, SIGNAL(activated(int)), this, SLOT(AddTextToFileName()));
-    connect(ui.comboBox_AddText, SIGNAL(currentIndexChanged(int)), this, SLOT(UpdateComboBoxToolTip()));
-    connect(ui.lineEdit_RelativePath, SIGNAL(editingFinished()), this, SLOT(CheckRelativePath()));
-    connect(ui.pushButton_AddBackOneDir, &QAbstractButton::pressed,
+    Q_ASSERT(connect(ui.pushButton_EditAndSave, SIGNAL(clicked(bool)), this, SLOT(EditAndSave())));
+    Q_ASSERT(connect(ui.comboBox_AddText, SIGNAL(activated(int)), this, SLOT(AddTextToFileName())));
+    Q_ASSERT(connect(ui.comboBox_AddText, SIGNAL(currentIndexChanged(int)), this, SLOT(UpdateComboBoxToolTip())));
+    Q_ASSERT(connect(ui.lineEdit_RelativePath, SIGNAL(editingFinished()), this, SLOT(CheckRelativePath())));
+    Q_ASSERT(connect(ui.pushButton_AddBackOneDir, &QAbstractButton::pressed, this,
         [this] {
             ui.lineEdit_RelativePath->setText(ui.lineEdit_RelativePath->text().prepend("../"));
             CheckRelativePath();
-        });
-    connect(ui.lineEdit_AbsolutePath, SIGNAL(editingFinished()), this, SLOT(CheckAbsolutePath()));
-    connect(ui.pushButton_FindAbsolutePath, &QAbstractButton::pressed,
-        [this] { ui.lineEdit_AbsolutePath->setText(GetSaveDirectoryPath()); });
-    connect(ui.groupBox_ChangeFormat, SIGNAL(toggled(bool)), this, SLOT(EnableSpecificFormatOptions()));
-    connect(ui.comboBox_ImageFormat, &QComboBox::currentIndexChanged,
+        }));
+    Q_ASSERT(connect(ui.lineEdit_AbsolutePath, SIGNAL(editingFinished()), this, SLOT(CheckAbsolutePath())));
+    Q_ASSERT(connect(ui.pushButton_FindAbsolutePath, &QAbstractButton::pressed, this,
+        [this] { ui.lineEdit_AbsolutePath->setText(GetSaveDirectoryPath()); }));
+    Q_ASSERT(connect(ui.groupBox_ChangeFormat, SIGNAL(toggled(bool)), this, SLOT(EnableSpecificFormatOptions())));
+    Q_ASSERT(connect(ui.comboBox_ImageFormat, &QComboBox::currentIndexChanged, this,
         [this] {
             ui.comboBox_ImageFormat->setToolTip(ui.comboBox_ImageFormat->currentData(Qt::ToolTipRole).toString());
             EnableSpecificFormatOptions();
-        });
-    connect(ui.comboBox_FormatFlags, &QComboBox::currentIndexChanged,
+        }));
+    Q_ASSERT(connect(ui.comboBox_FormatFlags, &QComboBox::currentIndexChanged, this,
         [this] {
             ui.comboBox_FormatFlags->setToolTip(ui.comboBox_FormatFlags->currentData(Qt::ToolTipRole).toString());
             if (ui.comboBox_ImageFormat->currentData() == ".exr") {
@@ -338,7 +342,10 @@ BatchItImage::BatchItImage(QWidget* parent) : QMainWindow(parent)
                     ui.spinBox_Compression->setEnabled(false);
                 }
             }
-        });
+        }));
+    
+    // Other
+    Q_ASSERT(connect(this, SIGNAL(progressMade(float)), ui.enhancedProgressBar, SLOT(updateProgressBar(float))));
 
     /***************************
         Testing
@@ -357,7 +364,6 @@ BatchItImage::BatchItImage(QWidget* parent) : QMainWindow(parent)
     // TODO: Status Bar
     //QString status_message = "BatchItImage";
     //ui.statusbar->showMessage(status_message, -1);
-
 }
 
 BatchItImage::~BatchItImage() {}
@@ -468,11 +474,44 @@ void BatchItImage::LoadInUiData()
     height_selections[5].desc = "All images below entered height will be modified to that specific number.\n" \
         "All images already at or above that number will not be modified.";
 
-
     // TODO: create UIData for this as well as other edit image widgets
     ui.checkBox_KeepAspectRatio->setText("Keep Aspect Ratio");
     ui.checkBox_KeepAspectRatio->setToolTip("In order to keep aspect ratio, either width or height must be set to \"No Change\" or \"0\"");
 
+    blur_filters[0].data = ImageEditor::NO_FILTER;
+    blur_filters[0].name = "None";
+    blur_filters[0].desc = "Does not apply a blur filter.";
+    blur_filters[1].data = ImageEditor::BLUR_FILTER;
+    blur_filters[1].name = "Simple Blur Filter";
+    blur_filters[1].desc = "Blurs an image using the normalized box filter. Also known as homogeneous smoothing.";
+    blur_filters[2].data = ImageEditor::BOX_FILTER;
+    blur_filters[2].name = "Box Filter";
+    blur_filters[2].desc = "Blurs an image using the box filter. An unnormalized box filter is useful for computing\n" \
+                           "various integral characteristics over each pixel neighborhood, such as covariance\n" \
+                           "matrices of image derivatives (used in dense optical flow algorithms, and so on).";
+    blur_filters[3].data = ImageEditor::BILATERAL_FILTER;
+    blur_filters[3].name = "Bilateral Filter";
+    blur_filters[3].desc = "Applies the bilateral filter to an image, which can reduce unwanted noise very well while\n" \
+                           "keeping edges fairly sharp. However, it is very slow compared to most other filters.";
+    blur_filters[4].data = ImageEditor::GAUSSIAN_BLUR;
+    blur_filters[4].name = "Gaussian Blur Filter";
+    blur_filters[4].desc = "Applies the Gaussian blur filter to an image, which convolves the source image with the\n" \
+                           "specified Gaussian kernel.";
+    blur_filters[5].data = ImageEditor::MEDIAN_BLUR;
+    blur_filters[5].name = "Median Blur Filter";
+    blur_filters[5].desc = "Blurs an image using the median filter, which smooths an image with the x/y size aperture.\n" \
+                           "Each channel of a multi-channel image is processed independently.";
+    blur_filters[6].data = ImageEditor::PYR_DOWN_BLUR;
+    blur_filters[6].name = "PYR Down-Sample Blur";
+    blur_filters[6].desc = "Blurs an image and down-samples it. This performs the down-sampling step of the Gaussian\n" \
+                           "pyramid construction. First, it convolves the source image with the Gaussian kernel, then\n" \
+                           "down-samples the image by rejecting even rows and columns.";
+    blur_filters[7].data = ImageEditor::PYR_UP_BLUR;
+    blur_filters[7].name = "PYR Up-Sample Blur";
+    blur_filters[7].desc = "Up-samples an image and then blurs it. This performs the up-sampling step of the Gaussian\n" \
+                           "pyramid construction, though it can actually be used to construct the Laplacian pyramid.\n" \
+                           "First, it up-samples the source image by injecting even zero rows and columns and then\n" \
+                           "convolves the result with the same kernel as in \"PYR Down-Sample\" multiplied by 4.";
 
     file_path_options[FilePathOptions::groupBox_FileRename].data = 1;
     file_path_options[FilePathOptions::groupBox_FileRename].name = "Modify Image File Names:";
@@ -518,16 +557,16 @@ void BatchItImage::LoadInUiData()
     // TODO: add more Resampling Filters
 
     // comboBox_AddText
-    file_name_creation[0].data = ADD_FILE_NAME;
+    file_name_creation[0].data = ImageSaver::ADD_FILE_NAME;
     file_name_creation[0].name = "Original File Name";
     file_name_creation[0].desc = "Add the original file name into the creation of a new file name.";
-    file_name_creation[1].data = ADD_COUNTER;
+    file_name_creation[1].data = ImageSaver::ADD_COUNTER;
     file_name_creation[1].name = "Incrementing Counter";
     file_name_creation[1].desc = "Add an incrementing number into the creation of a new file name.";
-    file_name_creation[2].data = ADD_WIDTH;
+    file_name_creation[2].data = ImageSaver::ADD_WIDTH;
     file_name_creation[2].name = "Image Width";
     file_name_creation[2].desc = "Add the width of the modified image into the creation of a new file name.";
-    file_name_creation[3].data = ADD_HEIGHT;
+    file_name_creation[3].data = ImageSaver::ADD_HEIGHT;
     file_name_creation[3].name = "Image Height";
     file_name_creation[3].desc = "Add the height of the modified image into the creation of a new file name.";
 
@@ -989,7 +1028,7 @@ void BatchItImage::SetupFileTree()
 void BatchItImage::AddUiObjectData(QObject* object, UIData* object_data)
 {
     std::string object_class = object->metaObject()->className();
-    DEBUG2("AddUiObjectData: ", object_class);
+    //DEBUG2("AddUiObjectData: ", object_class);
     
     if ("QCheckBox" == object_class) {
         QCheckBox* cb = qobject_cast<QCheckBox*>(object);
@@ -1047,13 +1086,13 @@ void BatchItImage::PopulateComboBox(QComboBox* cb, UIData items[], int items_siz
                 QString::fromStdString(*data)
             );
         }
-        cb->setItemData( i,
+        cb->setItemData(i,
             QString::fromStdString(items[i].desc),
-            Qt::ToolTipRole
+            Qt::StatusTipRole
         );
         cb->setItemData( i,
             QString::fromStdString(items[i].desc),
-            Qt::StatusTipRole
+            Qt::ToolTipRole
         );
     }
     cb->setStatusTip(cb->currentData(Qt::StatusTipRole).toString());
@@ -1061,11 +1100,12 @@ void BatchItImage::PopulateComboBox(QComboBox* cb, UIData items[], int items_siz
 }
 
 /// <summary>
-/// Slot: Update a combo box tooltip when index changes.
+/// Slot: Update a combo box status and tool tip when index changes.
 /// </summary>
 void BatchItImage::UpdateComboBoxToolTip()
 {
     QComboBox* cb = qobject_cast<QComboBox*>(sender());
+    cb->setStatusTip(cb->currentData(Qt::StatusTipRole).toString());
     cb->setToolTip(cb->currentData(Qt::ToolTipRole).toString());
     //DEBUG2("UpdateComboBoxToolTip: ", cb->objectName().toStdString());
 }
@@ -1447,7 +1487,6 @@ void BatchItImage::SetupFileTreeContextMenu()
         });
 
 #ifdef DEBUG
-    DEBUG("Adding: action_debug_quick_load");
     QAction* action_debug_quick_load = new QAction("Debug Quick Load", this);
     QStringList testing_file_list;
     //testing_file_list.append(qdefault_path + R"(/test_images/01.jpg)"); // large file
@@ -1457,6 +1496,12 @@ void BatchItImage::SetupFileTreeContextMenu()
     testing_file_list.append(qdefault_path + R"(/test_images/AC02.png)");
     connect(action_debug_quick_load, &QAction::triggered, [this, testing_file_list] { AddNewFiles(testing_file_list); });
     ui.treeWidget_FileInfo->addAction(action_debug_quick_load);
+    
+    QAction* action_debug_large_load = new QAction("Debug Large Load", this);
+    QStringList testing_folder_list;
+    testing_folder_list.append(qdefault_path + R"(/test_images)");
+    connect(action_debug_large_load, &QAction::triggered, [this, testing_folder_list] { AddNewFiles(testing_folder_list); });
+    ui.treeWidget_FileInfo->addAction(action_debug_large_load);
 #endif // DEBUG
 }
 
@@ -1497,12 +1542,12 @@ void BatchItImage::ChangePreset(int index)
     ui.comboBox_Preset_2->blockSignals(true);
     ui.comboBox_Preset_3->blockSignals(true);
 
-    DEBUG2("current_selected_preset: ", current_selected_preset);
+    //DEBUG2("current_selected_preset: ", current_selected_preset);
     if (index != current_selected_preset) {
         // TODO: ask user before saving?
         SavePreset(); // Save previous preset before change
         current_selected_preset = index;
-        //DEBUG2("current_selected_preset: ", current_selected_preset);
+        DEBUG2("current_selected_preset: ", current_selected_preset);
         
         ui.comboBox_Preset_1->setCurrentIndex(current_selected_preset);
         ui.comboBox_Preset_2->setCurrentIndex(current_selected_preset);
@@ -1569,13 +1614,13 @@ void BatchItImage::SavePreset(bool save_all)
 
         int save_option;
         if (ui.radioButton_Overwrite->isChecked()) {
-            save_option = SaveOption::OVERWRITE;
+            save_option = ImageSaver::OVERWRITE;
         }
         else if (ui.radioButton_RenameOriginal->isChecked()) {
-            save_option = SaveOption::RENAME_ORG;
+            save_option = ImageSaver::RENAME_ORIGINAL;
         }
         else {
-            save_option = SaveOption::NEW_NAME;
+            save_option = ImageSaver::NEW_NAME;
         }
         bool relative_save_path = ui.radioButton_RelativePath->isChecked();
 
@@ -1665,10 +1710,10 @@ void BatchItImage::LoadPreset(Preset preset)
     ui.spinBox_ExtraSetting2->setValue(preset.format_extra2);
     ui.lineEdit_FileName->setText(QString::fromStdString(preset.save_file_name_change));
     int save_option = preset.save_file_policy_option;
-    if (save_option == SaveOption::OVERWRITE) {
+    if (save_option == ImageSaver::OVERWRITE) {
         ui.radioButton_Overwrite->setChecked(true);
     }
-    else if (save_option == SaveOption::RENAME_ORG) {
+    else if (save_option == ImageSaver::RENAME_ORIGINAL) {
         ui.radioButton_RenameOriginal->setChecked(true);
     }
     else { // save_option == NEW_NAME
@@ -1738,7 +1783,7 @@ void BatchItImage::LoadPresets()
     //preset2.format_compression = 0;
     //preset2.format_extra1 = -1;
     //preset2.format_extra2 = -1;
-    preset2.save_file_policy_option = SaveOption::RENAME_ORG;
+    preset2.save_file_policy_option = ImageSaver::RENAME_ORIGINAL;
     preset2.save_file_name_change = "<FILE_NAME>__org";
     //preset2.relative_save_path = true;
     //preset2.save_file_path_change = "";
@@ -1902,192 +1947,131 @@ void BatchItImage::EditAndSave()
 
     // TODO: if current preset settings are not saved, ask to save them now before editing images
     // Save Current, Save New, Cancel... all preset ui elements would need to trigger a "changed and not saved" flag
-    bool abort = SavePresetDialog();
-    if (abort) return;
-    DEBUG("...Edit And Save...");
+    if (SavePresetDialog()) {
+        DEBUG("Edit And Save... Aborted");
+        return;
+    }
+    int file_count = current_file_metadata_list.size();
+    ui.enhancedProgressBar->configure(file_count, 3.0f);
 
-    for (int i = 0; i < current_file_metadata_list.size(); i++) {
-        DEBUG(current_file_metadata_list.at(i).to_string());
-
-        // Create pointer to what will be the new edited image
-        cv::Mat* img_p = new cv::Mat();
+    for (int i = 0; i < file_count; i++) {
+        //DEBUG(current_file_metadata_list.at(i).to_string());
 
         // Setup the image editor with a file path and all the edits to be done.
-        ImageEditor* new_ie = new ImageEditor(current_file_metadata_list.at(i).path, img_p);
-        new_ie->width_modifier = ui.comboBox_WidthMod->currentIndex();
-        new_ie->width = ui.spinBox_WidthNumber->value();
-        new_ie->height_modifier = ui.comboBox_HeightMod->currentIndex();
-        new_ie->height = ui.spinBox_HeightNumber->value();
-        new_ie->keep_aspect_ratio = ui.checkBox_KeepAspectRatio->isChecked();
-        new_ie->interpolation = ui.comboBox_Resample->currentData().toInt();
-        new_ie->rotation_degrees = ui.dial_Rotation->value();
-        new_ie->increase_boundaries = ui.checkBox_IncreaseBounds->isChecked();
-        new_ie->flip_image = ui.checkBox_FlipImage->isChecked();
-
-        // Start the image edit process on another thread
-        std::future<uint> worker_thread = std::async(&ImageEditor::StartEditProcess, new_ie);
+        ImageEditor* new_ie = new ImageEditor(
+            current_file_metadata_list.at(i).path,
+            ui.comboBox_WidthMod->currentIndex(),
+            ui.spinBox_WidthNumber->value(),
+            ui.comboBox_HeightMod->currentIndex(),
+            ui.spinBox_HeightNumber->value(),
+            ui.checkBox_KeepAspectRatio->isChecked(),
+            ui.comboBox_Resample->currentData().toInt(),
+            ui.dial_Rotation->value(),
+            ui.checkBox_IncreaseBounds->isChecked(),
+            ui.checkBox_FlipImage->isChecked()
+        );
 
         // Add Callback function when edit finishes, send data to SaveImageFile()
-        new_ie->AddExitCallback(std::bind(&BatchItImage::SaveImageFile, this, std::placeholders::_1, std::placeholders::_2, i, new_ie));
+        //new_ie->AddFinishedCallback(std::bind(&BatchItImage::SaveImageFile, this, std::placeholders::_1, std::placeholders::_2, i, new_ie));
+        new_ie->AddFinishedCallback(std::bind(&BatchItImage::SaveImageFile, this, i, new_ie));
 
+        // Start the image edit process on another thread
+        //std::future<uint> worker_thread = std::async(&ImageEditor::StartEditProcess, new_ie);
+        auto worker_thread = std::thread(&ImageEditor::StartEditProcess, new_ie);
+ 
         //int image_edits_made = worker_thread.get();
         //DEBUG2("Done: ", image_edits_made);
+
+        emit progressMade();
+
+        worker_thread.detach();
     }
 }
 
 /// <summary>
-/// Save edited image file using current preset options.
+/// Save edited image file using the current ui options.
 /// </summary>
-/// <param name="image">--Pointer to edited image.</param>
-/// <param name="image_edits_made">--Edit code representing each edit made to image.</param>
-/// <param name="image_index">--Image index in current list of image to be edited.</param>
-/// <param name="ie">--Pointer to the ImageEditor used to edit image and must be deleted once finished.</param>
-void BatchItImage::SaveImageFile(cv::Mat* image, uint image_edits_made, int image_index, ImageEditor* ie)
+/// <param name="image_index">--Image index in current list of images to be edited.</param>
+/// <param name="image_editor">--Pointer to the ImageEditor used to edit image and must be deleted once finished.</param>
+//void BatchItImage::SaveImageFile(cv::Mat* image, uint image_edits_made, int image_index, ImageEditor* image_editor)
+void BatchItImage::SaveImageFile(int image_index, ImageEditor* image_editor)
 {
-    DEBUG4("SaveImageFile: ", image_index, ", Edit-Code: ", image_edits_made);
+    DEBUG4("SaveImageFile: ", image_index, ", Edit-Code: ", image_editor->GetImageEditsMade());
     
-    // Save new image only if edits were made.
-    if (image_edits_made) {
+    emit progressMade();
+    //QApplication::processEvents();
+    //QApplication::instance()->processEvents();
+    //qApp->processEvents();
 
-        cv::Mat image_edited = *image;
-
-        /*std::string windowName = "Image Window";
-        namedWindow(windowName);
-        imshow(windowName, *img_p);*/
-
-        // CREATE FILE NAME/PATH
-        int save_option = preset_list.at(current_selected_preset).save_file_policy_option;
-        std::filesystem::path org_file_path = std::filesystem::path(current_file_metadata_list.at(image_index).path);
-        std::filesystem::path new_file_path;
-
-        // Get the full root save path whether it's the relative or new or original absolute path.
-        std::filesystem::path new_root_save_path;
-        if (preset_list.at(current_selected_preset).relative_save_path) {
-            new_root_save_path = std::filesystem::weakly_canonical(
-                org_file_path.parent_path() / std::filesystem::path(preset_list.at(current_selected_preset).save_file_path_change)
-            );
-            try { // Create missing directories in path
-                std::filesystem::create_directories(new_root_save_path);
-            }
-            catch (const std::exception& err) {
-                DEBUG(err.what());
-                // TODO: log and show error message to user. [Ignore][Ignore All?][Retry][Abort]
-            }
-        }
-        else {
-            std::filesystem::path absolute_save_path = std::filesystem::path(preset_list.at(current_selected_preset).save_file_path_change);
-            try {
-                new_root_save_path = std::filesystem::canonical(absolute_save_path);
-            }
-            // Note: This should never be called because absolute paths are checked before adding them, but if it errors anyways...
-            catch (const std::exception& err) {
-                DEBUG(err.what());
-                // TODO: log and show error message to user, and maybe give option to create missing directories? [Yes][Abort]
-            }
-        }
-
-        if (save_option == SaveOption::RENAME_ORG or save_option == SaveOption::NEW_NAME) {
-            std::string file_name_changes = preset_list.at(current_selected_preset).save_file_name_change;
-
-            std::string metadata_inserts[4] = {
-                org_file_path.stem().string(), // File Name
-                std::to_string(image_index + 1), // Counter
-                std::to_string(image_edited.cols), // Width
-                std::to_string(image_edited.rows) // Height
-            };
-            file_name_changes = CreateNewFileName(file_name_changes, metadata_inserts);
-
-            // TODO: if file already exists ask to overwrite?
-            // TODO: how to handle permissions?
-            //if (std::filesystem::exists(file_path_rename))
-
-            if (save_option == SaveOption::RENAME_ORG) {
-                std::filesystem::path org_file_path_rename = org_file_path.parent_path() / file_name_changes;
-                std::filesystem::rename(org_file_path, org_file_path_rename);
-                // TODO: If RENAME_ORG and an absolute or a relative path that isn't empty or just "\",
-                // Inform user that they are renaming original but not saving the new file with the same name/path, is this what they intended to do?
-                // Inform user before starting the edit process. (No need to rename org if not intending to overwrite it, or is there?)
-                new_file_path = std::filesystem::path(new_root_save_path / org_file_path.stem());
-            }
-            else if (save_option == SaveOption::NEW_NAME) {
-                new_file_path = std::filesystem::path(new_root_save_path / file_name_changes);
-                //std::filesystem::path new_file_path_rename = new_root_save_path / file_name_changes;
-                //new_file_path = new_file_path_rename.generic_string();
-            }
-        }
-        else { // save_option == SaveOption::OVERWRITE
-            new_file_path = org_file_path.parent_path() / org_file_path.stem();
-        }
-
-        //DEBUG2("Save File Path: ", new_file_path.generic_string());
-
-        // Add Extension and Get/Apply Format Specific Parameters
-        std::vector<int> params;
-        DEBUG2("Change Format: ", preset_list.at(current_selected_preset).format_change);
-        if (ui.groupBox_ChangeFormat->isChecked()) {
-
-            std::string extension = ui.comboBox_ImageFormat->currentData().toString().toStdString();
-            new_file_path.replace_extension(extension);
-
-            int format_flag = ui.comboBox_FormatFlags->currentData().toInt();
-            DEBUG(format_flag);
-            int quality = ui.horizontalSlider_Quality->value();
-            bool optimize = ui.checkBox_Optimize->isChecked();
-            bool progressive = ui.checkBox_Progressive->isChecked();
-            int compression = ui.spinBox_Compression->value();
-            int extra1 = ui.spinBox_ExtraSetting1->value();
-            int extra2 = ui.spinBox_ExtraSetting2->value();
-            
-            ie->GetFormatParameters(&params, extension, format_flag, quality, optimize, progressive, compression, extra1, extra2);
-        }
-        else {
-            new_file_path.replace_extension(org_file_path.extension());
-        }
-
-        // SAVE IMAGE
-        bool image_saved = false;
-        try {
-            image_saved = imwrite(new_file_path.generic_string(), image_edited, params);
-        }
-        catch (const cv::Exception& err) {
-            DEBUG(":Exception:");
-            DEBUG_ERR(err.what());
-            // TODO: log
-        }
-        if (image_saved) {
-            DEBUG2("New edited image is successfully saved at: ", new_file_path.generic_string());
-        }
-        else {
-            DEBUG2("Failed to save the edited image: ", new_file_path.generic_string());
-        }
+    int save_file_option_flag = ImageSaver::OVERWRITE;
+    std::string save_file_path_change;
+    bool use_relative_save_path = ui.radioButton_RelativePath->isChecked();
+    std::string extension = "";
+    int format_flag = ui.comboBox_FormatFlags->currentData().toInt();
+    int quality = ui.horizontalSlider_Quality->value();
+    bool optimize = ui.checkBox_Optimize->isChecked();
+    bool progressive = ui.checkBox_Progressive->isChecked();
+    int compression = ui.spinBox_Compression->value();
+    int extra1 = ui.spinBox_ExtraSetting1->value();
+    int extra2 = ui.spinBox_ExtraSetting2->value();
+    
+    if (ui.radioButton_RenameOriginal->isChecked()) {
+        save_file_option_flag = ImageSaver::RENAME_ORIGINAL;
     }
-    delete image;
-    delete ie;
+    else if (ui.radioButton_NewFileName->isChecked()) {
+        save_file_option_flag = ImageSaver::NEW_NAME;
+    }
+    if (use_relative_save_path) {
+        save_file_path_change = ui.lineEdit_RelativePath->text().toStdString();
+    }
+    else {
+        save_file_path_change = ui.lineEdit_AbsolutePath->text().toStdString();
+    }
+    if (ui.groupBox_ChangeFormat->isChecked()) {
+        extension = ui.comboBox_ImageFormat->currentData().toString().toStdString();
+    }
+    
+    ImageSaver* image_saver = new ImageSaver(
+        image_editor->GetImage(),
+        current_file_metadata_list.at(image_index).path,
+        save_file_option_flag,
+        use_relative_save_path,
+        save_file_path_change,
+        ui.lineEdit_FileName->text().toStdString(),
+        extension,
+        image_index + 1
+    );
+    image_saver->PushFormatParameters(format_flag, quality, optimize, progressive, compression, extra1, extra2);
 
-    // TODO: update log
-    DEBUG("TODO: LOG");
+    // Add Callback function when saving finishes, send data to UpdateLog().
+    image_saver->AddFinishedCallback(std::bind(&BatchItImage::UpdateLog, this, image_editor, image_saver));
+
+    // Start the image saving process on another thread
+    //std::future<bool> worker_thread = std::async(&ImageSaver::SaveImageFile, image_saver);
+    auto worker_thread = std::thread(&ImageSaver::SaveImageFile, image_saver);
+    
+    worker_thread.detach();
 }
 
-/// <summary>
-/// Build a new file name from user entered text and which metadata to insert.
-/// </summary>
-/// <param name="file_name_changes">--Text from the preset file rename option including which type of metadata to insert.</param>
-/// <param name="metadata_inserts">--The file metadata to insert into new file name.</param>
-/// <returns>--The new file name string.</returns>
-std::string BatchItImage::CreateNewFileName(std::string file_name_changes, std::string metadata_inserts[4])
+void BatchItImage::UpdateLog(ImageEditor* edited_image, ImageSaver* saved_image)
 {
-    std::string metadata_selections[4] = { ADD_FILE_NAME, ADD_COUNTER, ADD_WIDTH, ADD_HEIGHT };
-    for (int i = 0; i < 4; i++) {
-        file_name_changes = ReplaceAll(file_name_changes, metadata_selections[i], metadata_inserts[i]);
-    }
-    // Clean up any illegal characters that got through. Only these should be possible: <>.
-    file_name_changes = ReplaceAll(file_name_changes, "<", "");
-    file_name_changes = ReplaceAll(file_name_changes, ">", "");
-    DEBUG(file_name_changes);
-    // TODO: I could retest for metadata_selections in case an illegal character was placed into a metadata by mistake.
-    // Or just let the user mistake happen? "<FIL<E_NAME>"
+    DEBUG("UpdateLog: TODO");
+    
+    std::vector<std::string>* edit_errors = edited_image->GetErrors();
+    if (not edit_errors->empty()) {
+        DEBUG(edit_errors->at(0));
 
-    return file_name_changes;
+    }
+
+    std::string save_error = saved_image->GetErrorMessage();
+    if (save_error != "") {
+        DEBUG(save_error);
+
+    }
+
+    emit progressMade();
+    delete edited_image;
+    delete saved_image;
 }
 
 /// <summary>
@@ -2167,7 +2151,8 @@ void BatchItImage::BuildFileMetadataList(const QStringList file_list)
     std::string file_path_str;
     int load_order = last_load_count; // Get highest load_order in all file lists. 
     int file_count = file_list.size();
-    InitiateProgressBar(file_count, 3.0f);
+
+    ui.enhancedProgressBar->configure(file_count, 3.0f, function_ResizeFileTreeColumns);
 
     //DEBUG2("file_list (count): ", file_list.count());
 
@@ -2177,7 +2162,7 @@ void BatchItImage::BuildFileMetadataList(const QStringList file_list)
         load_order += 1;
 
         if (IsFileInList(file_path_str, current_file_metadata_list) > -1) {
-            UpdateProgressBar(function_ResizeFileTreeColumns, 3.0f);
+            emit progressMade(3.0f);
         }
         else {
             // TODO: Which is faster?
@@ -2196,19 +2181,20 @@ void BatchItImage::BuildFileMetadataList(const QStringList file_list)
                 DEBUG("- Thread Worker Created -");
             }
             else {
-                // TODO: how to move back to main thread after callback? There's more work to be done after callback, and I can't use this until I figure that out.
-                //MetadataBuilder* mb = new MetadataBuilder(file_path_str);
+                // TODO: Test this
+                //MetadataBuilder* mb = new MetadataBuilder(file_path_str, load_order);
                 // Start the process on another thread and add a callback function when finished.
                 //std::future<void> worker_thread = std::async(&MetadataBuilder::GetFileMetadata, mb);
+                //auto worker_thread = std::thread(&MetadataBuilder::GetFileMetadata, mb);
                 //mb->AddExitCallback(std::bind(&BatchItImage::HandleFileMetadata, this, std::placeholders::_1));
             }
-            UpdateProgressBar();
+            emit progressMade();
         }
     }
 }
 
 /// <summary>
-/// A callback function that handles a file's metedata after it is made by adding it to the current list and then file tree.
+/// A callback function that handles a file's metadata after it is made by adding it to the current list and then file tree.
 /// </summary>
 /// <param name="file_metadata">--A pointer to the metadata.</param>
 void BatchItImage::HandleFileMetadata(FileMetadata* file_metadata)
@@ -2216,6 +2202,8 @@ void BatchItImage::HandleFileMetadata(FileMetadata* file_metadata)
     DEBUG2("HandleFileMetadata", file_metadata->to_string());
 
     if (file_metadata->load_order) {
+        emit progressMade();
+        
         int item_count = ui.treeWidget_FileInfo->topLevelItemCount();
         //DEBUG(item_count);
 
@@ -2229,7 +2217,7 @@ void BatchItImage::HandleFileMetadata(FileMetadata* file_metadata)
         LoadFileIntoTree(item_count);
     }
     else {
-        UpdateProgressBar(function_ResizeFileTreeColumns, 2.0f);
+        emit progressMade(2.0f);
         DEBUG("----> Bad/Non Image File");
 
         // TODO: return bad file path? then add to vector of bad files, show m_window for each or ignore all
@@ -2242,7 +2230,7 @@ void BatchItImage::HandleFileMetadata(FileMetadata* file_metadata)
             );
             connect(m_window, &MessageWindow::ButtonClicked,
                 [this](QDialogButtonBox::StandardButton button) {
-                    DEBUG2("Button: ", button);
+                    //DEBUG2("Button: ", button);
                     m_window_shown = false;
                     delete m_window;
                 });
@@ -2260,6 +2248,11 @@ void BatchItImage::HandleFileMetadata(FileMetadata* file_metadata)
     //DebugPrintList(current_file_metadata_list, "current_file_metadata_list");
     //DebugPrintList(deleted_file_metadata_list, "deleted_file_metadata_list");
 }
+//void BatchItImage::HandleFileMetadata(FileMetadata* file_metadata, MetadataBuilder* mb)
+//{
+//    HandleFileMetadata(file_metadata);
+//    delete mb;
+//}
 
 /// <summary>
 /// Insert a file into the tree widget from the list of file metadata.
@@ -2268,8 +2261,6 @@ void BatchItImage::HandleFileMetadata(FileMetadata* file_metadata)
 /// <param name="sorted_column">--The column index that was last sorted. Default value is -1/none.</param>
 void BatchItImage::LoadFileIntoTree(int file_index, int sorted_column)
 {
-    UpdateProgressBar();
-
     // TODO: Styles?
     //QTreeWidget::item{
     //    padding: 0px 25px 10px 22px;
@@ -2342,7 +2333,7 @@ void BatchItImage::LoadFileIntoTree(int file_index, int sorted_column)
     new_item->addChild(item_file_path);
     ui.treeWidget_FileInfo->addTopLevelItem(new_item);
 
-    UpdateProgressBar(function_ResizeFileTreeColumns);
+    emit progressMade();
 }
 
 /// <summary>
@@ -2388,7 +2379,7 @@ void BatchItImage::ResizeFileTreeColumns()
 void BatchItImage::SortFileTreeByColumn(int index)
 {
     DEBUG4("Column Clicked", index, ", Sort Order: ", current_file_sort_order);
-    InitiateProgressBar(ui.treeWidget_FileInfo->topLevelItemCount(), 2.0f);
+    ui.enhancedProgressBar->configure(ui.treeWidget_FileInfo->topLevelItemCount(), 2.0f, function_ResizeFileTreeColumns);
 
     Qt::SortOrder qsort_indicator = Qt::SortOrder::AscendingOrder;
     
@@ -2489,6 +2480,7 @@ void BatchItImage::SortFileTreeByColumn(int index)
     // Clear file tree and add back sorted files
     ui.treeWidget_FileInfo->clear();
     for (int i = 0; i < current_file_metadata_list.size(); i++) {
+        emit progressMade();
         LoadFileIntoTree(i, current_file_column_sorted);
     }
 
@@ -2581,14 +2573,6 @@ bool BatchItImage::eventFilter(QObject* watched, QEvent* event)
     }
     // Pass the event on to the parent class.
     return QWidget::eventFilter(watched, event);
-}
-
-
-// Unused
-void BatchItImage::actionEvent(QActionEvent* event)
-{
-    DEBUG2("actionEvent: ", event->type());
-    QWidget::actionEvent(event);
 }
 
 /// <summary>
@@ -2718,7 +2702,7 @@ std::vector<FileMetadata>::iterator BatchItImage::IsFileInListIterator(std::stri
 /// <summary>
 /// Remove one or more file rows from file tree.
 /// </summary>
-/// <param name="button_clicked">--Based on a clicked button's role delete one, mulitple, or all rows.</param>
+/// <param name="button_clicked">--Based on a clicked button's role delete one, multiple, or all rows.</param>
 void BatchItImage::RemoveFileFromTree(const QDialogButtonBox::StandardButton& button_clicked)
 {
     int current_file_tree_row = GetCurrentFileTreeRow(); // this should never be -1, if it is something is changing it between this and DeleteConfirmationPopup
@@ -2813,68 +2797,6 @@ void BatchItImage::DeleteTreeItemObjects(QTreeWidget* tree, int row_index)
 }
 
 /// <summary>
-/// Show progress bar in UI and set the amount of ticks to maximum load. This must be called before updating progress bar.
-/// </summary>
-/// <param name="max_ticks">--The amount of ticks to maximum load. Must be called before starting update progress.</param>
-void BatchItImage::InitiateProgressBar(int max_ticks) {
-    InitiateProgressBar(max_ticks, 1.0f);
-}
-
-/// <summary>
-/// Show progress bar in UI and set the amount of ticks to maximum load. This must be called before updating progress bar.
-/// </summary>
-/// <param name="max_ticks">--The amount of ticks to maximum load.Must be called before starting update progress.</param>
-/// <param name="multiplier">--Multiply the ticks when there are multiple UpdateProgressBar calls and some may be skipped. [Default: 1]</param>
-void BatchItImage::InitiateProgressBar(int max_ticks, float multiplier) {
-    current_load_number = 0.0f;
-    load_interval = float(ui.progressBar->maximum()) / float(max_ticks) / multiplier;
-    ui.progressBar->setVisible(true);
-    ui.progressBar->setValue(ui.progressBar->minimum());
-}
-
-/// <summary>
-/// Update progress bar in UI, hiding it when maximum load hit. InitiateProgressBar() must have been previously called before updating can proceed.
-/// </summary>
-void BatchItImage::UpdateProgressBar() {
-    UpdateProgressBar(0, 1.0f);
-}
-
-/// <summary>
-/// Update progress bar in UI, hiding it when maximum load hit. InitiateProgressBar() must have been previously called before updating can proceed.
-/// </summary>
-/// <param name="multiplier">--Multiply the ticks when there are multiple UpdateProgressBar calls and some may be skipped. [Default: 1]</param>
-void BatchItImage::UpdateProgressBar(float multiplier) {
-    UpdateProgressBar(0, multiplier);
-}
-
-/// <summary>
-/// Update progress bar in UI, hiding it when maximum load hit. InitiateProgressBar() must have been previously called before updating can proceed.
-/// Only use this overloaded function when adding a function to call when maximum load hit.
-/// </summary>
-/// <param name="func">--A function to call when maximum load hit. [Default: Null] - [Example: std::bind(class::function, this)]</param>
-/// <param name="multiplier">--Multiply the ticks when there are multiple UpdateProgressBar calls and some may be skipped. [Default: 1]</param>
-void BatchItImage::UpdateProgressBar(std::function<void()> func, float multiplier)
-{
-    if (ui.progressBar->isVisible() == false) {
-        DEBUG(current_load_number);
-        DEBUG_ERR("Progress Bar failed to update because \"InitiateProgressBar(max_ticks)\" has to be called first. Misuse of the \"multiplier\" parameter can also cause issues.");
-        current_load_number = 0.0f;
-        ui.progressBar->setValue(ui.progressBar->minimum());
-    }
-    else {
-        current_load_number += load_interval * multiplier;
-        ui.progressBar->setValue(current_load_number);
-        if (current_load_number >= float(ui.progressBar->maximum()) - 0.05) {
-            ui.progressBar->setVisible(false);
-            DEBUG2("Progress Bar Finished: ", current_load_number);
-            if (func != 0) func();
-            //(*func)();
-            //(this->*func)();
-        }
-    }
-}
-
-/// <summary>
 /// Add/insert special data from a combo box representing specific metadata to a line edit.
 /// </summary>
 void BatchItImage::AddTextToFileName()
@@ -2882,14 +2804,14 @@ void BatchItImage::AddTextToFileName()
     // Get Text
     QString cur_qtext = ui.lineEdit_FileName->text();
 
-    // Move currsor to an index right after <> if it is inbetween <>
-    DEBUG2("Cursor Posistion: ", ui.lineEdit_FileName->cursorPosition());
+    // Move cursor to an index right after <> if it is in-between <>
+    DEBUG2("Cursor Position: ", ui.lineEdit_FileName->cursorPosition());
     int rb_found = cur_qtext.indexOf(">", ui.lineEdit_FileName->cursorPosition());
     if (rb_found > -1) {
         int lb_found = cur_qtext.indexOf("<", ui.lineEdit_FileName->cursorPosition());
         if (lb_found == -1 or lb_found > rb_found) {
             ui.lineEdit_FileName->setCursorPosition(rb_found + 1);
-            DEBUG2("Cursor Posistion Moved: ", ui.lineEdit_FileName->cursorPosition());
+            DEBUG2("Cursor Position Moved: ", ui.lineEdit_FileName->cursorPosition());
         }
     }
 
@@ -2989,7 +2911,7 @@ QString BatchItImage::GetLastExistingSavePath()
 /// <param name="to">--Replace with this text</param>
 /// <param name="no_really_all">--If true will include cases where "to" is a substring of "from". Default is false.</param>
 /// <returns>An edited string.</returns>
-std::string BatchItImage::ReplaceAll(std::string str, const std::string& from, const std::string& to, bool no_really_all) {
+const std::string BatchItImage::ReplaceAll(std::string str, const std::string& from, const std::string& to, bool no_really_all) {
     size_t start_pos = 0;
     while ((start_pos = str.find(from, start_pos)) != std::string::npos) {
         str.replace(start_pos, from.length(), to);
