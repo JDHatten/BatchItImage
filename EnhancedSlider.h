@@ -175,6 +175,8 @@ private:
     double minimum_double = QSlider::minimum();
     double maximum_double = QSlider::maximum();
     double single_step_double = QSlider::singleStep();
+    uint round_step_multiplier = 1;
+    bool mismatch = false;
     /// <summary>
     /// Set the range of integer steps to equal the range of double steps. Necessary for double values to work.
     /// </summary>
