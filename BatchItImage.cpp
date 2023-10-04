@@ -13,13 +13,11 @@ TODO:
 MessageWindow::MessageWindow(QString title, QString message, QFlags<QDialogButtonBox::StandardButton> buttons, QWidget* parent)
     : QDialog(parent)//, m_ui(new Ui::Dialog_MessageWindow)
 {
-    //m_ui->setupUi(this);
     ui.setupUi(this);
-    //m_ui = &ui;
     setWindowTitle(title);
     ui.label_Message->setText(message);
     ui.buttonBox->setStandardButtons(buttons);
-    connect(ui.buttonBox, SIGNAL(clicked(QAbstractButton*)), this, SLOT(ButtonBoxClicked(QAbstractButton*)));
+    Q_ASSERT(connect(ui.buttonBox, SIGNAL(clicked(QAbstractButton*)), this, SLOT(buttonBoxClicked(QAbstractButton*))));
 }
 MessageWindow::~MessageWindow()
 {
@@ -28,22 +26,22 @@ MessageWindow::~MessageWindow()
 }
 void MessageWindow::changeEvent(QEvent* event)
 {
-    //qDebug() << "MessageWindow changeEvent";
+    //qDebug() << "MessageWindow::changeEvent";
     QDialog::changeEvent(event);
 }
 void MessageWindow::closeEvent(QCloseEvent* event)
 {
     if (event->spontaneous()) {
         qDebug() << "The X-close button was clicked.";
-        emit ButtonClicked(QDialogButtonBox::Close);
+        emit buttonClicked(QDialogButtonBox::Close);
     }
     QWidget::closeEvent(event);
 }
-void MessageWindow::ButtonBoxClicked(QAbstractButton* button)
+void MessageWindow::buttonBoxClicked(QAbstractButton* button)
 {
     QDialogButtonBox::StandardButton std_button = ui.buttonBox->standardButton(button);
-    qDebug() << "MessageWindow::ButtonBoxClicked: " << std_button;
-    emit ButtonClicked(std_button);
+    qDebug() << "MessageWindow::buttonBoxClicked: " << std_button;
+    emit buttonClicked(std_button);
     /*
     QDialogButtonBox::Ok	    0x00000400	An "OK" button defined with the AcceptRole.
     QDialogButtonBox::Open	    0x00002000	An "Open" button defined with the AcceptRole.
@@ -68,78 +66,74 @@ void MessageWindow::ButtonBoxClicked(QAbstractButton* button)
 }
 
 
-DialogEditPresetDesc::DialogEditPresetDesc(QString title, QString message, std::vector<Preset>* preset_list, uint current_selected_preset, QWidget* parent)
+DialogEditPresetDesc::DialogEditPresetDesc(QString title, QString message, std::vector<Preset>* preset_list, uint preset_index, QWidget* parent)
     : QDialog(parent)
 {
     ui.setupUi(this);
     setWindowTitle(title);
     ui.label_Message->setText(message);
     DialogEditPresetDesc::preset_list = preset_list;
-    DialogEditPresetDesc:: current_selected_preset = current_selected_preset;
-    UpdateComboBox();
-    PresetIndexChanged(current_selected_preset);
-    connect(ui.buttonBox, SIGNAL(clicked(QAbstractButton*)), this, SLOT(ButtonBoxClicked(QAbstractButton*)));
-    connect(ui.comboBox_Preset_4, SIGNAL(currentIndexChanged(int)), this, SLOT(PresetIndexChanged(int)));
+    DialogEditPresetDesc:: current_selected_preset = preset_index;
+    updateComboBox();
+    presetIndexChanged(preset_index);
+    ui.comboBox_Preset_4->setCurrentIndex(preset_index);
+    Q_ASSERT(connect(ui.buttonBox, SIGNAL(clicked(QAbstractButton*)), this, SLOT(buttonBoxClicked(QAbstractButton*))));
+    Q_ASSERT(connect(ui.comboBox_Preset_4, SIGNAL(currentIndexChanged(int)), this, SLOT(presetIndexChanged(int))));
 }
 DialogEditPresetDesc::~DialogEditPresetDesc()
 {
     qDebug() << "DialogEditPresetDesc Deconstructed";
 }
-void DialogEditPresetDesc::PresetIndexChanged(int index)
+void DialogEditPresetDesc::presetIndexChanged(int index)
 {
-    qDebug() << "PresetIndexChanged:" << index;
+    qDebug() << "presetIndexChanged:" << index;
     ui.lineEdit_PresetDesc->setText(preset_list->at(index).description);
     current_selected_preset = index;
 }
-void DialogEditPresetDesc::UpdateComboBox()
+void DialogEditPresetDesc::updateComboBox()
 {
-    qDebug() << "UpdateComboBox";
-    BatchItImage::AddPresetsToComboBox(preset_list, &ui.comboBox_Preset_4);
+    qDebug() << "updateComboBox";
+    BatchItImage::AddPresetsToComboBox(preset_list, std::vector<QComboBox*>{ ui.comboBox_Preset_4 });
+    ui.comboBox_Preset_4->setCurrentIndex(current_selected_preset);
 }
 void DialogEditPresetDesc::closeEvent(QCloseEvent* event)
 {
     if (event->spontaneous()) {
         qDebug() << "The X-close button was clicked.";
-        emit ButtonClicked(QDialogButtonBox::Close);
+        emit buttonClicked(QDialogButtonBox::Close);
     }
+    emit presetIndexSelected(current_selected_preset);
     QWidget::closeEvent(event);
 }
-void DialogEditPresetDesc::ButtonBoxClicked(QAbstractButton* button)
+void DialogEditPresetDesc::buttonBoxClicked(QAbstractButton* button)
 {
     QDialogButtonBox::StandardButton std_button = ui.buttonBox->standardButton(button);
-    qDebug() << "DialogEditPresetDesc::ButtonBoxClicked: " << std_button;
+    qDebug() << "DialogEditPresetDesc::buttonBoxClicked: " << std_button;
 
     if (QDialogButtonBox::Apply & std_button) {
         QString updated_description = ui.lineEdit_PresetDesc->text();
         preset_list->at(current_selected_preset).description = updated_description;
         qDebug() << updated_description.toStdString();
-        UpdateComboBox();
+        updateComboBox();
     }
     else if (QDialogButtonBox::Reset & std_button) {
-        PresetIndexChanged(current_selected_preset);
+        presetIndexChanged(current_selected_preset);
     }
-    emit ButtonClicked(std_button);
+    else if (QDialogButtonBox::Close & std_button) {
+        emit presetIndexSelected(current_selected_preset);
+    }
+    emit buttonClicked(std_button);
 }
 
 
-/// <summary>
-/// A QObject that will take a file path and build a struct with metadata.
-/// Intended to be ran in another thread as a "Worker".
-/// Slot -> GetFileMetadata() -> Signal -> FileMetadataReady(FileMetadata*)
-/// </summary>
-/// <param name="file_path">--A file path string.</param>
-/// <param name="load_order">--This file metadata should be added now on initialization.</param>
-/// <param name="parent">--Parent QObject</param>
 FileMetadataWorker::FileMetadataWorker(std::string file_path, int load_order, QObject* parent)
 {
     FileMetadataWorker::file_path = file_path;
     FileMetadataWorker::load_order = load_order;
-    //current_file_metadata_list = new std::vector<struct FileMetadata>;
-    //current_file_metadata_list->reserve(1);
 }
-void FileMetadataWorker::GetFileMetadata()
+void FileMetadataWorker::getFileMetadata()
 {
-    qDebug() << "GetFileMetadata From: " <<  file_path;
+    qDebug() << "getFileMetadata From: " <<  file_path;
 
     // Image File Dimensions
     cv::Mat file_image = cv::imread(file_path); // TODO: Find (is there?) another way to get width/height without reading/opening file. This is slow when adding 100+ files.
@@ -149,19 +143,6 @@ void FileMetadataWorker::GetFileMetadata()
         // Get File Metadata:
         struct stat t_stat;
         stat(file_path.data(), &t_stat);
-
-        //current_file_metadata_list->push_back(
-        //    {
-        //        load_order,         // Load Order Index
-        //        file_path,          // File Path String
-        //        t_stat.st_size,     // File Size in Bytes
-        //        file_image.cols,    // Width
-        //        file_image.rows,    // Height
-        //        t_stat.st_ctime,    // Unix Time Created
-        //        t_stat.st_mtime,    // Unix Time Modified
-        //        false               // Selected
-        //    });
-        //emit FileMetadataReady(*current_file_metadata_list);
 
         file_metadata->load_order = load_order;
         file_metadata->path = file_path;
@@ -175,7 +156,7 @@ void FileMetadataWorker::GetFileMetadata()
     else {
         file_metadata->path = file_path; // File that could not be read. Bad image / not an image / etc.
     }
-    emit FileMetadataReady(file_metadata);
+    emit fileMetadataReady(file_metadata);
 }
 FileMetadataWorker::~FileMetadataWorker()
 {
@@ -196,12 +177,12 @@ BatchItImage::BatchItImage(QWidget* parent) : QMainWindow(parent)
     DEBUG(preset_settings_file.toStdString());
 
     // Add QT About Menu Item
-    QAction* aboutQtAct = new QAction(this);
+    /*QAction* aboutQtAct = new QAction(this);
     aboutQtAct->setText("About QT");
-    ui.menuHelp->addAction(aboutQtAct);
+    ui.menuHelp->addAction(aboutQtAct);*/
 
     /***************************
-        UI Text/Data
+        Add UI Text/Data
     ****************************/
 
     LoadInUiData();
@@ -214,26 +195,41 @@ BatchItImage::BatchItImage(QWidget* parent) : QMainWindow(parent)
     ui.tabWidget->setTabText(OtherOptions::tab_3, QString::fromStdString(other_options[OtherOptions::tab_3].name));
     ui.tab_3->setToolTip(QString::fromStdString(other_options[OtherOptions::tab_3].desc));
 
-    AddUiObjectData(ui.groupBox_FileRename, &file_path_options[FilePathOptions::groupBox_FileRename]);
-    AddUiObjectData(ui.radioButton_Overwrite, &file_path_options[FilePathOptions::radioButton_Overwrite]);
-    AddUiObjectData(ui.radioButton_RenameOriginal, &file_path_options[FilePathOptions::radioButton_RenameOriginal]);
-    AddUiObjectData(ui.radioButton_NewFileName, &file_path_options[FilePathOptions::radioButton_NewFileName]);
-    AddUiObjectData(ui.label_Add, &file_path_options[FilePathOptions::label_Add]);
-    AddUiObjectData(ui.groupBox_SaveDir, &file_path_options[FilePathOptions::groupBox_SaveDir]);
-    AddUiObjectData(ui.radioButton_RelativePath, &file_path_options[FilePathOptions::radioButton_RelativePath]);
-    AddUiObjectData(ui.radioButton_AbsolutePath, &file_path_options[FilePathOptions::radioButton_AbsolutePath]);
-    AddUiObjectData(ui.pushButton_AddBackOneDir, &file_path_options[FilePathOptions::pushButton_AddBackOneDir]);
-    AddUiObjectData(ui.pushButton_FindAbsolutePath, &file_path_options[FilePathOptions::pushButton_FindAbsolutePath]);
-    AddUiObjectData(ui.checkBox_SearchSubDirs, &other_options[OtherOptions::checkBox_SearchSubDirs]);
-    AddUiObjectData(ui.pushButton_EditAndSave, &other_options[OtherOptions::pushButton_EditAndSave]);
+    AddUiDataTo(resize_options, std::vector<QWidget*>{
+        ui.groupBox_Resize, ui.checkBox_KeepAspectRatio });
+    AddUiDataTo(background_options, std::vector<QWidget*>{
+        ui.groupBox_Background, ui.pushButton_ColorPicker, ui.label_ColorPreview });
+    AddUiDataTo(blur_options, std::vector<QWidget*>{
+        ui.groupBox_Blur, ui.checkBox_BlurNormalize, ui.label_BlurX1, ui.label_BlurY1, ui.label_BlurX2, ui.label_BlurY2, ui.label_BlurD });
+    //AddUiDataTo(blur_depth_selections, std::vector<QWidget*>{ui.verticalSlider_BlurD}, 6);
+    AddUiDataTo(rotation_options, std::vector<QWidget*>{
+        ui.groupBox_Rotation, ui.checkBox_IncreaseBounds, ui.checkBox_FlipImage });
+    AddUiDataTo(ui.groupBox_FileRename, &file_path_options[FilePathOptions::groupBox_FileRename]);
+    AddUiDataTo(ui.radioButton_Overwrite, &file_path_options[FilePathOptions::radioButton_Overwrite]);
+    AddUiDataTo(ui.radioButton_RenameOriginal, &file_path_options[FilePathOptions::radioButton_RenameOriginal]);
+    AddUiDataTo(ui.radioButton_NewFileName, &file_path_options[FilePathOptions::radioButton_NewFileName]);
+    AddUiDataTo(ui.label_Add, &file_path_options[FilePathOptions::label_Add]);
+    AddUiDataTo(ui.groupBox_SaveDir, &file_path_options[FilePathOptions::groupBox_SaveDir]);
+    AddUiDataTo(ui.radioButton_RelativePath, &file_path_options[FilePathOptions::radioButton_RelativePath]);
+    AddUiDataTo(ui.radioButton_AbsolutePath, &file_path_options[FilePathOptions::radioButton_AbsolutePath]);
+    AddUiDataTo(ui.pushButton_AddBackOneDir, &file_path_options[FilePathOptions::pushButton_AddBackOneDir]);
+    AddUiDataTo(ui.pushButton_FindAbsolutePath, &file_path_options[FilePathOptions::pushButton_FindAbsolutePath]);
+    AddUiDataTo(ui.checkBox_SearchSubDirs, &other_options[OtherOptions::checkBox_SearchSubDirs]);
+    AddUiDataTo(ui.pushButton_EditAndSave, &other_options[OtherOptions::pushButton_EditAndSave]);
 
-    PopulateComboBox(ui.comboBox_WidthMod, width_selections, sizeof(width_selections) / sizeof(UIData));
+    //PopulateComboBox(ui.comboBox_WidthMod, width_selections, sizeof(width_selections) / sizeof(UIData));
+    PopulateComboBox(ui.comboBox_WidthMod, width_selections, 6);
     PopulateComboBox(ui.comboBox_HeightMod, height_selections, sizeof(height_selections) / sizeof(UIData));
     PopulateComboBox(ui.comboBox_Resample, resampling_selections, sizeof(resampling_selections) / sizeof(UIData));
+    PopulateComboBox(ui.comboBox_BorderType, border_types, sizeof(border_types) / sizeof(UIData));
     PopulateComboBox(ui.comboBox_BlurFilter, blur_filters, sizeof(blur_filters) / sizeof(UIData));
     PopulateComboBox(ui.comboBox_AddText, file_name_creation, sizeof(file_name_creation) / sizeof(UIData));
     PopulateComboBox(ui.comboBox_ImageFormat, image_formats, sizeof(image_formats) / sizeof(UIData));
     //PopulateComboBox(ui.comboBox_FormatFlags, format_jpeg_subsamplings, sizeof(format_jpeg_subsamplings) / sizeof(UIData));
+
+    // TODO: delete all arrays that will not be used after loading?
+    delete[] width_selections;
+
 
     /***************************
         Prep UI Widgets, Etc
@@ -242,12 +238,8 @@ BatchItImage::BatchItImage(QWidget* parent) : QMainWindow(parent)
     preset_list.reserve(10);
     current_file_metadata_list.reserve(30);
     deleted_file_metadata_list.reserve(10);
-    ui.enhancedProgressBar->setVisible(false);
-    ui.verticalSlider_BlurX1->forceSingleStepInterval(true);
-    ui.verticalSlider_BlurY1->forceSingleStepInterval(true);
 
-    ui.verticalSlider_BlurX2->setRange(0.0, 10.0);
-    ui.verticalSlider_BlurX2->setSingleStepDouble(0.1);
+    ui.enhancedProgressBar->setVisible(false);
 
     ui.dial_Rotation->setInvertedAppearance(true);
     ui.dial_Rotation->setInvertedControls(true);
@@ -283,16 +275,24 @@ BatchItImage::BatchItImage(QWidget* parent) : QMainWindow(parent)
     ****************************/
 
     // Main Window Menu
-    Q_ASSERT(connect(ui.action_About, SIGNAL(triggered(bool)), this, SLOT(Test()))); // TODO
-    Q_ASSERT(connect(aboutQtAct, &QAction::triggered, this, [this] { QApplication::aboutQt(); }));
     Q_ASSERT(connect(ui.action_AddImages, SIGNAL(triggered(bool)), this, SLOT(LoadImageFiles())));
-    Q_ASSERT(connect(ui.action_AddImageToCombine, SIGNAL(triggered(bool)), this, SLOT(Test()))); // TODO
-    Q_ASSERT(connect(ui.action_AddNewPreset, SIGNAL(triggered(bool)), this, SLOT(Test()))); // TODO
-    Q_ASSERT(connect(ui.action_ChangePresetDesc, SIGNAL(triggered(bool)), this, SLOT(ChangePresetDescription())));
-    Q_ASSERT(connect(ui.action_Close, SIGNAL(triggered(bool)), this, SLOT(Test()))); // TODO
-    Q_ASSERT(connect(ui.action_RemovePreset, SIGNAL(triggered(bool)), this, SLOT(Test()))); // TODO
     Q_ASSERT(connect(ui.action_SaveLogAs, SIGNAL(triggered(bool)), this, SLOT(Test()))); // TODO
+    Q_ASSERT(connect(ui.action_Close, SIGNAL(triggered(bool)), this, SLOT(Test()))); // TODO
+    Q_ASSERT(connect(ui.action_AddNewPreset, SIGNAL(triggered(bool)), this, SLOT(CreateNewPreset())));
+    Q_ASSERT(connect(ui.action_RemovePreset, SIGNAL(triggered(bool)), this, SLOT(Test()))); // TODO
     Q_ASSERT(connect(ui.action_SavePresets, SIGNAL(triggered(bool)), this, SLOT(Test()))); // TODO
+    Q_ASSERT(connect(ui.action_ChangePresetDesc, &QAction::triggered,
+        this, [this] { 
+            ChangePresetDescription(
+                CurrentSelectedPreset(),
+                "Change Preset Description",
+                "Change Title Description of Currently Selected Preset."
+            ); 
+        }));
+    //Q_ASSERT(connect(ui.action_AddImageToCombine, SIGNAL(triggered(bool)), this, SLOT(Test())));
+    Q_ASSERT(connect(ui.action_About, SIGNAL(triggered(bool)), this, SLOT(Test()))); // TODO
+    Q_ASSERT(connect(ui.action_AboutQt, &QAction::triggered, this, [this] { QApplication::aboutQt(); }));
+    Q_ASSERT(connect(ui.action_Help, &QAction::triggered, this, [this] { Test(); })); // TODO
 
     // Image File Tree
     Q_ASSERT(connect(ui.treeWidget_FileInfo->header(), SIGNAL(sectionClicked(int)), this, SLOT(SortFileTreeByColumn(int))));
@@ -301,34 +301,35 @@ BatchItImage::BatchItImage(QWidget* parent) : QMainWindow(parent)
     // Image Edit Widgets
     Q_ASSERT(connect(ui.comboBox_Preset_1, SIGNAL(currentIndexChanged(int)), this, SLOT(ChangePreset(int))));
     //connect(ui.comboBox_Preset_1, SIGNAL(currentIndexChanged(int)), ui.comboBox_Preset_2, SLOT(ChangePresets(int))); // Done in the ui xml + 9 Others
-    Q_ASSERT(connect(ui.comboBox_WidthMod, SIGNAL(currentIndexChanged(int)), this, SLOT(UpdateComboBoxToolTip())));
-    Q_ASSERT(connect(ui.comboBox_HeightMod, SIGNAL(currentIndexChanged(int)), this, SLOT(UpdateComboBoxToolTip())));
-    Q_ASSERT(connect(ui.comboBox_Resample, SIGNAL(currentIndexChanged(int)), this, SLOT(UpdateComboBoxToolTip())));
-    Q_ASSERT(connect(ui.comboBox_BlurFilter, SIGNAL(currentIndexChanged(int)), this, SLOT(UpdateComboBoxToolTip())));
+    Q_ASSERT(connect(ui.comboBox_WidthMod, SIGNAL(currentIndexChanged(int)), this, SLOT(UpdateComboBoxTextTips())));
+    Q_ASSERT(connect(ui.comboBox_HeightMod, SIGNAL(currentIndexChanged(int)), this, SLOT(UpdateComboBoxTextTips())));
+    Q_ASSERT(connect(ui.comboBox_Resample, SIGNAL(currentIndexChanged(int)), this, SLOT(UpdateComboBoxTextTips())));
+    Q_ASSERT(connect(ui.comboBox_BlurFilter, SIGNAL(currentIndexChanged(int)), this, SLOT(UpdateComboBoxTextTips())));
+    Q_ASSERT(connect(ui.comboBox_BlurFilter, SIGNAL(currentIndexChanged(int)), this, SLOT(EnableSpecificBlurOptions())));
     Q_ASSERT(connect(ui.dial_Rotation, SIGNAL(valueChanged(int)), ui.lcdNumber_Rotation, SLOT(display(int))));
 
     // Image Save Widgets
     Q_ASSERT(connect(ui.pushButton_EditAndSave, SIGNAL(clicked(bool)), this, SLOT(EditAndSave())));
     Q_ASSERT(connect(ui.comboBox_AddText, SIGNAL(activated(int)), this, SLOT(AddTextToFileName())));
-    Q_ASSERT(connect(ui.comboBox_AddText, SIGNAL(currentIndexChanged(int)), this, SLOT(UpdateComboBoxToolTip())));
+    Q_ASSERT(connect(ui.comboBox_AddText, SIGNAL(currentIndexChanged(int)), this, SLOT(UpdateComboBoxTextTips())));
     Q_ASSERT(connect(ui.lineEdit_RelativePath, SIGNAL(editingFinished()), this, SLOT(CheckRelativePath())));
-    Q_ASSERT(connect(ui.pushButton_AddBackOneDir, &QAbstractButton::pressed, this,
-        [this] {
+    Q_ASSERT(connect(ui.pushButton_AddBackOneDir, &QAbstractButton::pressed,
+        this, [this] {
             ui.lineEdit_RelativePath->setText(ui.lineEdit_RelativePath->text().prepend("../"));
             CheckRelativePath();
         }));
     Q_ASSERT(connect(ui.lineEdit_AbsolutePath, SIGNAL(editingFinished()), this, SLOT(CheckAbsolutePath())));
-    Q_ASSERT(connect(ui.pushButton_FindAbsolutePath, &QAbstractButton::pressed, this,
-        [this] { ui.lineEdit_AbsolutePath->setText(GetSaveDirectoryPath()); }));
+    Q_ASSERT(connect(ui.pushButton_FindAbsolutePath, &QAbstractButton::pressed,
+        this, [this] { ui.lineEdit_AbsolutePath->setText(GetSaveDirectoryPath()); }));
     Q_ASSERT(connect(ui.groupBox_ChangeFormat, SIGNAL(toggled(bool)), this, SLOT(EnableSpecificFormatOptions())));
-    Q_ASSERT(connect(ui.comboBox_ImageFormat, &QComboBox::currentIndexChanged, this,
-        [this] {
-            ui.comboBox_ImageFormat->setToolTip(ui.comboBox_ImageFormat->currentData(Qt::ToolTipRole).toString());
+    Q_ASSERT(connect(ui.comboBox_ImageFormat, &QComboBox::currentIndexChanged,
+        this, [this] {
+            UpdateComboBoxTextTips();
             EnableSpecificFormatOptions();
         }));
-    Q_ASSERT(connect(ui.comboBox_FormatFlags, &QComboBox::currentIndexChanged, this,
-        [this] {
-            ui.comboBox_FormatFlags->setToolTip(ui.comboBox_FormatFlags->currentData(Qt::ToolTipRole).toString());
+    Q_ASSERT(connect(ui.comboBox_FormatFlags, &QComboBox::currentIndexChanged,
+        this, [this] {
+            UpdateComboBoxTextTips();
             if (ui.comboBox_ImageFormat->currentData() == ".exr") {
                 if (ui.comboBox_FormatFlags->currentData() == cv::IMWRITE_EXR_COMPRESSION_DWAA or
                     ui.comboBox_FormatFlags->currentData() == cv::IMWRITE_EXR_COMPRESSION_DWAB) {
@@ -352,14 +353,12 @@ BatchItImage::BatchItImage(QWidget* parent) : QMainWindow(parent)
     ****************************/
 
     // TODO: Combine Tree
-    ui.treeWidget_Combine->clear();
-
+    /*ui.treeWidget_Combine->clear();
     QTreeWidgetItem* new_item = new QTreeWidgetItem(ui.treeWidget_Combine);
     QComboBox* comboBox = new QComboBox(this);
     comboBox->addItems(QStringList() << "item1" << "item2");
     ui.treeWidget_Combine->setItemWidget(new_item, 1, comboBox);
-
-    ui.treeWidget_Combine->addTopLevelItem(new_item);
+    ui.treeWidget_Combine->addTopLevelItem(new_item);*/
 
     // TODO: Status Bar
     //QString status_message = "BatchItImage";
@@ -367,7 +366,6 @@ BatchItImage::BatchItImage(QWidget* parent) : QMainWindow(parent)
 }
 
 BatchItImage::~BatchItImage() {}
-
 
 // Just for quick testing
 void BatchItImage::Test()
@@ -377,10 +375,6 @@ void BatchItImage::Test()
     DEBUG(obj->objectName().toStdString());
 }
 
-
-/// <summary>
-/// Load in all text and other ui data.
-/// </summary>
 void BatchItImage::LoadInUiData()
 {
     // treeWidget_FileInfo
@@ -430,7 +424,14 @@ void BatchItImage::LoadInUiData()
     file_tree_other_text[FileColumn::DATE_CREATED] = "Date File Created: ";
     file_tree_other_text[FileColumn::DATE_MODIFIED] = "Date File Modified: ";
 
-    // comboBox_WidthMod Item Selections
+    resize_options[ResizeOptions::groupBox_Resize].data = 0;
+    resize_options[ResizeOptions::groupBox_Resize].name = "Resize:";
+    resize_options[ResizeOptions::groupBox_Resize].desc = "Options to increase or decrease the dimensions of an image.";
+    resize_options[ResizeOptions::checkBox_KeepAspectRatio].data = 1;
+    resize_options[ResizeOptions::checkBox_KeepAspectRatio].name = "Keep Aspect Ratio";
+    resize_options[ResizeOptions::checkBox_KeepAspectRatio].desc = "In order to keep aspect ratio, either width or height must be set to \"No Change\" or \"0\".";
+
+    // comboBox_WidthMod
     width_selections[0].data = ImageEditor::NO_CHANGE;
     width_selections[0].name = "No Change";
     width_selections[0].desc = "Image widths may still be modified if 'keep aspect ratio' is checked.";
@@ -452,7 +453,7 @@ void BatchItImage::LoadInUiData()
     width_selections[5].desc = "All images below entered width will be modified to that specific number.\n" \
         "All images already at or above that number will not be modified.";
 
-    // comboBox_HeightMod Item Selections
+    // comboBox_HeightMod
     height_selections[0].data = ImageEditor::NO_CHANGE;
     height_selections[0].name = "No Change";
     height_selections[0].desc = "Image heights may still be modified if 'keep aspect ratio' is checked.";
@@ -474,44 +475,138 @@ void BatchItImage::LoadInUiData()
     height_selections[5].desc = "All images below entered height will be modified to that specific number.\n" \
         "All images already at or above that number will not be modified.";
 
-    // TODO: create UIData for this as well as other edit image widgets
-    ui.checkBox_KeepAspectRatio->setText("Keep Aspect Ratio");
-    ui.checkBox_KeepAspectRatio->setToolTip("In order to keep aspect ratio, either width or height must be set to \"No Change\" or \"0\"");
+    // comboBox_Resample
+    resampling_selections[0].data = cv::InterpolationFlags::INTER_NEAREST;
+    resampling_selections[0].name = "Resampling: Nearest";
+    resampling_selections[0].desc = "Nearest Neighbor Interpolation";
+    resampling_selections[1].data = cv::InterpolationFlags::INTER_LINEAR;
+    resampling_selections[1].name = "Resampling: Bilinear";
+    resampling_selections[1].desc = "Bilinear Interpolation";
+    resampling_selections[2].data = cv::InterpolationFlags::INTER_CUBIC;
+    resampling_selections[2].name = "Resampling: Bicubic";
+    resampling_selections[2].desc = "Bicubic Interpolation";
+    // TODO: add more Resampling Filters
 
+    background_options[BackgroundOptions::groupBox_Background].data = 0;
+    background_options[BackgroundOptions::groupBox_Background].name = "Border Type / Background Color:";
+    background_options[BackgroundOptions::groupBox_Background].desc = "";
+    background_options[BackgroundOptions::pushButton_ColorPicker].data = 0;
+    background_options[BackgroundOptions::pushButton_ColorPicker].name = "Background Color Picker";
+    background_options[BackgroundOptions::pushButton_ColorPicker].desc = "";
+    background_options[BackgroundOptions::label_ColorPreview].data = 0;
+    background_options[BackgroundOptions::label_ColorPreview].name = "Background Color Preview";
+    background_options[BackgroundOptions::label_ColorPreview].desc = "";
+
+    // comboBox_BorderType
+    border_types[0].data = cv::BORDER_CONSTANT;
+    border_types[0].name = "Constant Border (Default)";
+    border_types[0].desc = "[ iiiiii|abcdefgh|iiiiiii ] A consistent |border| that uses a selected background color (i).";
+    border_types[1].data = cv::BORDER_REPLICATE;
+    border_types[1].name = "Replicate Border";
+    border_types[1].desc = "[ aaaaaa|abcdefgh|hhhhhhh ] Replicates the |border| of an image.";
+    border_types[2].data = cv::BORDER_REFLECT;
+    border_types[2].name = "Reflect Border";
+    border_types[2].desc = "[ fedcba|abcdefgh|hgfedcb ] Reflects the |border| of an image.";
+    border_types[3].data = cv::BORDER_WRAP;
+    border_types[3].name = "Wrap Border";
+    border_types[3].desc = "[ cdefgh|abcdefgh|abcdefg ] Warp or uses the opposite |border| side of an image.";
+    border_types[4].data = cv::BORDER_REFLECT_101;
+    border_types[4].name = "Reflect Border 101";
+    border_types[4].desc = "[ gfedcb|abcdefgh|gfedcba ] Slightly different reflection of the |border| of an image.";
+    border_types[5].data = cv::BORDER_TRANSPARENT;
+    border_types[5].name = "[Not] Transparent Border";
+    border_types[5].desc = "[ uvwxyz|abcdefgh|ijklmno ] Not really transparent, but differing shades of light/dark colors.";
+    border_types[6].data = cv::BORDER_ISOLATED;
+    border_types[6].name = "Isolated Border";
+    border_types[6].desc = "Does not look outside of ROI |border|?";
+    
+    blur_options[BlurOptions::groupBox_Blur].data = 0;
+    blur_options[BlurOptions::groupBox_Blur].name = "Blur Filters:";
+    blur_options[BlurOptions::groupBox_Blur].desc = "";
+    blur_options[BlurOptions::checkBox_BlurNormalize].data = 0;
+    blur_options[BlurOptions::checkBox_BlurNormalize].name = "Normalize";
+    blur_options[BlurOptions::checkBox_BlurNormalize].desc = "";
+    blur_options[BlurOptions::label_BlurX1].data = 0;
+    blur_options[BlurOptions::label_BlurX1].name = "  X";
+    blur_options[BlurOptions::label_BlurX1].desc = "";
+    blur_options[BlurOptions::label_BlurY1].data = 0;
+    blur_options[BlurOptions::label_BlurY1].name = "  Y";
+    blur_options[BlurOptions::label_BlurY1].desc = "";
+    blur_options[BlurOptions::label_BlurX2].data = 0;
+    blur_options[BlurOptions::label_BlurX2].name = " sX";
+    blur_options[BlurOptions::label_BlurX2].desc = "";
+    blur_options[BlurOptions::label_BlurY2].data = 0;
+    blur_options[BlurOptions::label_BlurY2].name = " sY";
+    blur_options[BlurOptions::label_BlurY2].desc = "";
+    blur_options[BlurOptions::label_BlurD].data = 0;
+    blur_options[BlurOptions::label_BlurD].name = "  D";
+    blur_options[BlurOptions::label_BlurD].desc = "";
+
+    // comboBox_BlurFilter
     blur_filters[0].data = ImageEditor::NO_FILTER;
     blur_filters[0].name = "None";
     blur_filters[0].desc = "Does not apply a blur filter.";
-    blur_filters[1].data = ImageEditor::BLUR_FILTER;
-    blur_filters[1].name = "Simple Blur Filter";
-    blur_filters[1].desc = "Blurs an image using the normalized box filter. Also known as homogeneous smoothing.";
-    blur_filters[2].data = ImageEditor::BOX_FILTER;
-    blur_filters[2].name = "Box Filter";
-    blur_filters[2].desc = "Blurs an image using the box filter. An unnormalized box filter is useful for computing\n" \
+    //blur_filters[1].data = ImageEditor::BLUR_FILTER;
+    //blur_filters[1].name = "Simple Blur Filter";
+    //blur_filters[1].desc = "Blurs an image using the normalized box filter. Also known as homogeneous smoothing.";
+    blur_filters[1].data = ImageEditor::BOX_FILTER;
+    blur_filters[1].name = "Box Filter";
+    blur_filters[1].desc = "Blurs an image using the box filter. An unnormalized box filter is useful for computing\n" \
                            "various integral characteristics over each pixel neighborhood, such as covariance\n" \
                            "matrices of image derivatives (used in dense optical flow algorithms, and so on).";
-    blur_filters[3].data = ImageEditor::BILATERAL_FILTER;
-    blur_filters[3].name = "Bilateral Filter";
-    blur_filters[3].desc = "Applies the bilateral filter to an image, which can reduce unwanted noise very well while\n" \
+    blur_filters[2].data = ImageEditor::BILATERAL_FILTER;
+    blur_filters[2].name = "Bilateral Filter";
+    blur_filters[2].desc = "Applies the bilateral filter to an image, which can reduce unwanted noise very well while\n" \
                            "keeping edges fairly sharp. However, it is very slow compared to most other filters.";
-    blur_filters[4].data = ImageEditor::GAUSSIAN_BLUR;
-    blur_filters[4].name = "Gaussian Blur Filter";
-    blur_filters[4].desc = "Applies the Gaussian blur filter to an image, which convolves the source image with the\n" \
+    blur_filters[3].data = ImageEditor::GAUSSIAN_BLUR;
+    blur_filters[3].name = "Gaussian Blur Filter";
+    blur_filters[3].desc = "Applies the Gaussian blur filter to an image, which convolves the source image with the\n" \
                            "specified Gaussian kernel.";
-    blur_filters[5].data = ImageEditor::MEDIAN_BLUR;
-    blur_filters[5].name = "Median Blur Filter";
-    blur_filters[5].desc = "Blurs an image using the median filter, which smooths an image with the x/y size aperture.\n" \
+    blur_filters[4].data = ImageEditor::MEDIAN_BLUR;
+    blur_filters[4].name = "Median Blur Filter";
+    blur_filters[4].desc = "Blurs an image using the median filter, which smooths an image with the x/y size aperture.\n" \
                            "Each channel of a multi-channel image is processed independently.";
-    blur_filters[6].data = ImageEditor::PYR_DOWN_BLUR;
-    blur_filters[6].name = "PYR Down-Sample Blur";
-    blur_filters[6].desc = "Blurs an image and down-samples it. This performs the down-sampling step of the Gaussian\n" \
+    blur_filters[5].data = ImageEditor::PYR_DOWN_BLUR;
+    blur_filters[5].name = "PYR Down-Sample Blur";
+    blur_filters[5].desc = "Blurs an image and down-samples it. This performs the down-sampling step of the Gaussian\n" \
                            "pyramid construction. First, it convolves the source image with the Gaussian kernel, then\n" \
                            "down-samples the image by rejecting even rows and columns.";
-    blur_filters[7].data = ImageEditor::PYR_UP_BLUR;
-    blur_filters[7].name = "PYR Up-Sample Blur";
-    blur_filters[7].desc = "Up-samples an image and then blurs it. This performs the up-sampling step of the Gaussian\n" \
+    blur_filters[6].data = ImageEditor::PYR_UP_BLUR;
+    blur_filters[6].name = "PYR Up-Sample Blur";
+    blur_filters[6].desc = "Up-samples an image and then blurs it. This performs the up-sampling step of the Gaussian\n" \
                            "pyramid construction, though it can actually be used to construct the Laplacian pyramid.\n" \
                            "First, it up-samples the source image by injecting even zero rows and columns and then\n" \
                            "convolves the result with the same kernel as in \"PYR Down-Sample\" multiplied by 4.";
+    
+    // verticalSlider_BlurD
+    blur_depth_selections[0].data = -1;
+    blur_depth_selections[0].name = "Unchanged Bit Depth";
+    blur_depth_selections[0].desc = "";
+    blur_depth_selections[1].data = CV_8U;
+    blur_depth_selections[1].name = "Unsigned 8-bit Integer";
+    blur_depth_selections[1].desc = "";
+    blur_depth_selections[2].data = CV_16U;
+    blur_depth_selections[2].name = "Unsigned 16-bit Integer";
+    blur_depth_selections[2].desc = "";
+    blur_depth_selections[3].data = CV_16S;
+    blur_depth_selections[3].name = "Signed 16-bit Integer";
+    blur_depth_selections[3].desc = "";
+    blur_depth_selections[4].data = CV_32F;
+    blur_depth_selections[4].name = "32-bit Floating Point";
+    blur_depth_selections[4].desc = "";
+    blur_depth_selections[5].data = CV_64F;
+    blur_depth_selections[5].name = "64-bit Floating Point";
+    blur_depth_selections[5].desc = "";
+
+    rotation_options[RotationOptions::groupBox_Rotation].data = 0;
+    rotation_options[RotationOptions::groupBox_Rotation].name = "Rotation:";
+    rotation_options[RotationOptions::groupBox_Rotation].desc = "";
+    rotation_options[RotationOptions::checkBox_IncreaseBounds].data = 0;
+    rotation_options[RotationOptions::checkBox_IncreaseBounds].name = "Increase Image\nBoundaries";
+    rotation_options[RotationOptions::checkBox_IncreaseBounds].desc = "";
+    rotation_options[RotationOptions::checkBox_FlipImage].data = 0;
+    rotation_options[RotationOptions::checkBox_FlipImage].name = "Flip / Mirror";
+    rotation_options[RotationOptions::checkBox_FlipImage].desc = "";
 
     file_path_options[FilePathOptions::groupBox_FileRename].data = 1;
     file_path_options[FilePathOptions::groupBox_FileRename].name = "Modify Image File Names:";
@@ -543,18 +638,6 @@ void BatchItImage::LoadInUiData()
     file_path_options[FilePathOptions::pushButton_FindAbsolutePath].data = 0;
     file_path_options[FilePathOptions::pushButton_FindAbsolutePath].name = "Search For An Absolute Path";
     file_path_options[FilePathOptions::pushButton_FindAbsolutePath].desc = "Open dialog window to select a directory adding it to the absolute path text box.";
-
-    // comboBox_Resample Item Selections (Resampling Filters) 
-    resampling_selections[0].data = cv::InterpolationFlags::INTER_NEAREST;
-    resampling_selections[0].name = "Resampling: Nearest";
-    resampling_selections[0].desc = "Nearest Neighbor Interpolation";
-    resampling_selections[1].data = cv::InterpolationFlags::INTER_LINEAR;
-    resampling_selections[1].name = "Resampling: Bilinear";
-    resampling_selections[1].desc = "Bilinear Interpolation";
-    resampling_selections[2].data = cv::InterpolationFlags::INTER_CUBIC;
-    resampling_selections[2].name = "Resampling: Bicubic";
-    resampling_selections[2].desc = "Bicubic Interpolation";
-    // TODO: add more Resampling Filters
 
     // comboBox_AddText
     file_name_creation[0].data = ImageSaver::ADD_FILE_NAME;
@@ -1003,9 +1086,6 @@ void BatchItImage::LoadInUiData()
 
 }
 
-/// <summary>
-/// Setup file tree with initial settings and header titles.
-/// </summary>
 void BatchItImage::SetupFileTree()
 {
     ui.treeWidget_FileInfo->clear();
@@ -1020,56 +1100,68 @@ void BatchItImage::SetupFileTree()
     ui.treeWidget_FileInfo->setMouseTracking(true);
 }
 
-/// <summary>
-/// Add display text, tooltip descriptions, and other data to various ui objects/widgets.
-/// </summary>
-/// <param name="object">--Pointer to an object/widget.</param>
-/// <param name="object_data">--Pointer to a UIData.</param>
-void BatchItImage::AddUiObjectData(QObject* object, UIData* object_data)
+void BatchItImage::AddUiDataTo(UIData ui_data[], std::vector<QWidget*> objects, uint count)
 {
-    std::string object_class = object->metaObject()->className();
-    //DEBUG2("AddUiObjectData: ", object_class);
-    
-    if ("QCheckBox" == object_class) {
-        QCheckBox* cb = qobject_cast<QCheckBox*>(object);
-        cb->setChecked(std::get<int>(object_data->data));
-        cb->setText(QString::fromStdString(object_data->name));
-        cb->setStatusTip(QString::fromStdString(object_data->desc));
-        cb->setToolTip(QString::fromStdString(object_data->desc));
+    if (count == 0) {
+        for (uint i = 0; i < objects.size(); i++) {
+            AddUiDataTo(objects.at(i), &ui_data[i]);
+        }
     }
-    else if ("QGroupBox" == object_class) {
-        QGroupBox* gb = qobject_cast<QGroupBox*>(object);
-        gb->setChecked(std::get<int>(object_data->data));
-        gb->setTitle(QString::fromStdString(object_data->name));
-        gb->setStatusTip(QString::fromStdString(object_data->desc));
-        gb->setToolTip(QString::fromStdString(object_data->desc));
-    }else if ("QLabel" == object_class) {
-        QLabel* lbl = qobject_cast<QLabel*>(object);
-        lbl->setText(QString::fromStdString(object_data->name));
-        lbl->setStatusTip(QString::fromStdString(object_data->desc));
-        lbl->setToolTip(QString::fromStdString(object_data->desc));
-    }
-    else if ("QRadioButton" == object_class) {
-        QRadioButton* rb = qobject_cast<QRadioButton*>(object);
-        rb->setChecked(std::get<int>(object_data->data));
-        rb->setText(QString::fromStdString(object_data->name));
-        rb->setStatusTip(QString::fromStdString(object_data->desc));
-        rb->setToolTip(QString::fromStdString(object_data->desc));
-    }
-    else if ("QPushButton" == object_class) {
-        QPushButton* pb = qobject_cast<QPushButton*>(object);
-        pb->setText(QString::fromStdString(object_data->name));
-        pb->setStatusTip(QString::fromStdString(object_data->desc));
-        pb->setToolTip(QString::fromStdString(object_data->desc));
+    else {
+        for (uint i = 0; i < count; i++) {
+            AddUiDataTo(objects.at(0), &ui_data[i]);
+        }
     }
 }
 
-/// <summary>
-/// Add items to various combo boxes which include titles, tooltip descriptions, and other data.
-/// </summary>
-/// <param name="cb">--Pointer to a QComboBox.</param>
-/// <param name="items">--Data array to enter into a combo box.</param>
-/// <param name="items_size">--Size/length of item data array.</param>
+void BatchItImage::AddUiDataTo(QObject* object, UIData* ui_data)
+{
+    std::string object_class = object->metaObject()->className();
+    //DEBUG2("AddUiDataTo: ", object_class);
+    
+    if ("QCheckBox" == object_class) {
+        QCheckBox* cb = qobject_cast<QCheckBox*>(object);
+        cb->setChecked(std::get<int>(ui_data->data));
+        cb->setText(QString::fromStdString(ui_data->name));
+        cb->setStatusTip(QString::fromStdString(ui_data->desc));
+        cb->setToolTip(QString::fromStdString(ui_data->desc));
+    }
+    else if ("QGroupBox" == object_class) {
+        QGroupBox* gb = qobject_cast<QGroupBox*>(object);
+        gb->setChecked(std::get<int>(ui_data->data));
+        gb->setTitle(QString::fromStdString(ui_data->name));
+        gb->setStatusTip(QString::fromStdString(ui_data->desc));
+        gb->setToolTip(QString::fromStdString(ui_data->desc));
+    }else if ("QLabel" == object_class) {
+        QLabel* lbl = qobject_cast<QLabel*>(object);
+        lbl->setText(QString::fromStdString(ui_data->name));
+        lbl->setStatusTip(QString::fromStdString(ui_data->desc));
+        lbl->setToolTip(QString::fromStdString(ui_data->desc));
+    }
+    else if ("QRadioButton" == object_class) {
+        QRadioButton* rb = qobject_cast<QRadioButton*>(object);
+        rb->setChecked(std::get<int>(ui_data->data));
+        rb->setText(QString::fromStdString(ui_data->name));
+        rb->setStatusTip(QString::fromStdString(ui_data->desc));
+        rb->setToolTip(QString::fromStdString(ui_data->desc));
+    }
+    else if ("QPushButton" == object_class) {
+        QPushButton* pb = qobject_cast<QPushButton*>(object);
+        pb->setText(QString::fromStdString(ui_data->name));
+        pb->setStatusTip(QString::fromStdString(ui_data->desc));
+        pb->setToolTip(QString::fromStdString(ui_data->desc));
+    }
+    /*else if ("EnhancedSlider" == object_class) {
+        EnhancedSlider* es = qobject_cast<EnhancedSlider*>(object);
+        es->addTextTip(
+            std::get<int>(ui_data->data),
+            std::get<int>(ui_data->data),
+            QString::fromStdString(ui_data->name),
+            false
+        );
+    }*/
+}
+
 void BatchItImage::PopulateComboBox(QComboBox* cb, UIData items[], int items_size)
 {
     cb->clear();
@@ -1099,22 +1191,203 @@ void BatchItImage::PopulateComboBox(QComboBox* cb, UIData items[], int items_siz
     cb->setToolTip(cb->currentData(Qt::ToolTipRole).toString());
 }
 
-/// <summary>
-/// Slot: Update a combo box status and tool tip when index changes.
-/// </summary>
-void BatchItImage::UpdateComboBoxToolTip()
+void BatchItImage::UpdateComboBoxTextTips()
 {
     QComboBox* cb = qobject_cast<QComboBox*>(sender());
     cb->setStatusTip(cb->currentData(Qt::StatusTipRole).toString());
     cb->setToolTip(cb->currentData(Qt::ToolTipRole).toString());
-    //DEBUG2("UpdateComboBoxToolTip: ", cb->objectName().toStdString());
+    //DEBUG2("UpdateComboBoxTextTips: ", cb->objectName().toStdString());
 }
 
-/// <summary>
-/// Enable format specific ui options depending on which format change option is currently selected.
-/// Each format makes use of a different set of options.
-/// </summary>
-/// <param name="loading_preset">--If loading presets do not insert any default values. Default is false.</param>
+// Unused
+void BatchItImage::UpdateComboBoxTextTips(QComboBox* cb)
+{
+    cb->setStatusTip(cb->currentData(Qt::StatusTipRole).toString());
+    cb->setToolTip(cb->currentData(Qt::ToolTipRole).toString());
+}
+
+void BatchItImage::EnableSpecificBlurOptions(bool loading_preset)
+{
+    int blur_filter_selected = ui.comboBox_BlurFilter->currentData().toInt();
+    int NONE = 0;
+    int NORMALIZE = 1;
+    int X1 = 2;
+    int Y1 = 4;
+    int X2 = 8;
+    int Y2 = 16;
+    int DEPTH = 32;
+    auto enableOptions = [&](int options)
+        {
+            if (options & NORMALIZE) {
+                ui.checkBox_BlurNormalize->setEnabled(true);
+                ui.checkBox_BlurNormalize->setFont(*font_default);
+            }
+            else {
+                ui.checkBox_BlurNormalize->setToolTip("");
+                ui.checkBox_BlurNormalize->setEnabled(false);
+                ui.checkBox_BlurNormalize->setFont(*font_default_light);
+            }
+            if (options & X1) {
+                ui.label_BlurX1->setFont(*font_default);
+                ui.verticalSlider_BlurX1->setEnabled(true, true);
+            }
+            else {
+                ui.label_BlurX1->setStatusTip("");
+                ui.label_BlurX1->setToolTip("");
+                ui.label_BlurX1->setFont(*font_default_light);
+                ui.verticalSlider_BlurX1->setEnabled(false, true);
+            }
+            if (options & Y1) {
+                ui.label_BlurY1->setFont(*font_default);
+                ui.verticalSlider_BlurY1->setEnabled(true, true);
+            }
+            else {
+                ui.label_BlurY1->setStatusTip("");
+                ui.label_BlurY1->setToolTip("");
+                ui.label_BlurY1->setFont(*font_default_light);
+                ui.verticalSlider_BlurY1->setEnabled(false, true);
+            }
+            if (options & X2) {
+                ui.label_BlurX2->setFont(*font_default);
+                ui.verticalSlider_BlurX2->setEnabled(true, true);
+            }
+            else {
+                ui.label_BlurX2->setStatusTip("");
+                ui.label_BlurX2->setToolTip("");
+                ui.label_BlurX2->setFont(*font_default_light);
+                ui.verticalSlider_BlurX2->setEnabled(false, true);
+            }
+            if (options & Y2) {
+                ui.label_BlurY2->setFont(*font_default);
+                ui.verticalSlider_BlurY2->setEnabled(true, true);
+                ui.verticalSlider_BlurY2->forceSingleStepInterval(false);
+                ui.verticalSlider_BlurY2->setSingleStep(1);
+            }
+            else {
+                ui.label_BlurY2->setStatusTip("");
+                ui.label_BlurY2->setToolTip("");
+                ui.label_BlurY2->setFont(*font_default_light);
+                ui.verticalSlider_BlurY2->setEnabled(false, true);
+            }
+            if (options & DEPTH) {
+                ui.label_BlurD->setFont(*font_default);
+                ui.verticalSlider_BlurD->setEnabled(true, true);
+            }
+            else {
+                ui.label_BlurD->setStatusTip("");
+                ui.label_BlurD->setToolTip("");
+                ui.label_BlurD->setFont(*font_default_light);
+                ui.verticalSlider_BlurD->setEnabled(false, true);
+            }
+        };
+
+    if (blur_filter_selected == ImageEditor::BLUR_FILTER) {
+        // Unused, BOX_FILTER covers anything BLUR_FILTER can do.
+    }
+    else if (blur_filter_selected == ImageEditor::BOX_FILTER) {
+        enableOptions(NORMALIZE + X1 + Y1 + X2 + Y2 + DEPTH);
+        ui.verticalSlider_BlurX1->setRange(0, 100);
+        ui.verticalSlider_BlurY1->setRange(0, 100);
+        ui.verticalSlider_BlurX2->setRange(-20, 20);
+        ui.verticalSlider_BlurX2->addTextTip(-1, -1, " (Image Center)", true, EnhancedSlider::TextTipPlacement::ToTheRight);
+        ui.verticalSlider_BlurY2->setRange(-20, 20);
+        ui.verticalSlider_BlurY2->addTextTip(-1, -1, " (Image Center)", true, EnhancedSlider::TextTipPlacement::ToTheRight);
+        ui.verticalSlider_BlurD->setRange(-1, 6);
+        ui.verticalSlider_BlurD->addTextTip(
+            std::get<int>(blur_depth_selections[0].data), //-1
+            std::get<int>(blur_depth_selections[0].data),
+            QString::fromStdString(blur_depth_selections[0].name),
+            false
+        );
+        ui.verticalSlider_BlurD->addTextTip(
+            std::get<int>(blur_depth_selections[1].data), //0
+            std::get<int>(blur_depth_selections[1].data),
+            QString::fromStdString(blur_depth_selections[1].name),
+            false
+        );
+        ui.verticalSlider_BlurD->addTextTip(
+            std::get<int>(blur_depth_selections[2].data) - 1,
+            std::get<int>(blur_depth_selections[2].data), //2
+            QString::fromStdString(blur_depth_selections[2].name),
+            false
+        );
+        ui.verticalSlider_BlurD->addTextTip(
+            std::get<int>(blur_depth_selections[3].data), //3
+            std::get<int>(blur_depth_selections[3].data) + 1,
+            QString::fromStdString(blur_depth_selections[3].name),
+            false
+        );
+        ui.verticalSlider_BlurD->addTextTip(
+            std::get<int>(blur_depth_selections[4].data), //5
+            std::get<int>(blur_depth_selections[4].data),
+            QString::fromStdString(blur_depth_selections[4].name),
+            false
+        );
+        ui.verticalSlider_BlurD->addTextTip(
+            std::get<int>(blur_depth_selections[5].data), //6
+            std::get<int>(blur_depth_selections[5].data),
+            QString::fromStdString(blur_depth_selections[5].name),
+            false
+        );
+        if (not loading_preset) {
+            ui.checkBox_BlurNormalize->setChecked(true);
+            ui.verticalSlider_BlurX1->setValue(1);
+            ui.verticalSlider_BlurY1->setValue(1);
+            ui.verticalSlider_BlurX2->setValue(-1);
+            ui.verticalSlider_BlurY2->setValue(-1);
+            ui.verticalSlider_BlurD->setValue(-1);
+        }
+    }
+    else if (blur_filter_selected == ImageEditor::BILATERAL_FILTER) {
+        enableOptions(X1 + X2 + Y2);
+        ui.verticalSlider_BlurX1->setRange(0, 12);
+        ui.verticalSlider_BlurX2->setRange(0, 300);
+        ui.verticalSlider_BlurY2->setRange(0, 300);
+        if (not loading_preset) {
+            ui.verticalSlider_BlurX1->setValue(0);
+            ui.verticalSlider_BlurX2->setValue(0);
+            ui.verticalSlider_BlurY2->setValue(0);
+        }
+    }
+    else if (blur_filter_selected == ImageEditor::GAUSSIAN_BLUR) {
+        enableOptions(X1 + Y1 + X2 + Y2);
+        ui.verticalSlider_BlurX1->forceSingleStepInterval(true);
+        ui.verticalSlider_BlurX1->setRange(1, 99);
+        ui.verticalSlider_BlurX1->setSingleStep(2);
+        ui.verticalSlider_BlurY1->forceSingleStepInterval(true);
+        ui.verticalSlider_BlurY1->setRange(1, 99);
+        ui.verticalSlider_BlurY1->setSingleStep(2);
+        ui.verticalSlider_BlurX2->setRange(0.0, 10.0);
+        ui.verticalSlider_BlurX2->setSingleStep(0.1);
+        ui.verticalSlider_BlurY2->setRange(0.0, 10.0);
+        ui.verticalSlider_BlurY2->setSingleStep(0.1);
+        if (not loading_preset) {
+            ui.verticalSlider_BlurX1->setValue(1);
+            ui.verticalSlider_BlurY1->setValue(1);
+            ui.verticalSlider_BlurX2->setValue(0.0);
+            ui.verticalSlider_BlurY2->setValue(0.0);
+        }
+    }
+    else if (blur_filter_selected == ImageEditor::MEDIAN_BLUR) {
+        enableOptions(X1);
+        ui.verticalSlider_BlurX1->forceSingleStepInterval(true);
+        ui.verticalSlider_BlurX1->setRange(3, 99);
+        ui.verticalSlider_BlurX1->setSingleStep(2);
+        if (not loading_preset) {
+            ui.verticalSlider_BlurX1->setValue(3);
+        }
+    }
+    else if (blur_filter_selected == ImageEditor::PYR_DOWN_BLUR) {
+        enableOptions(NONE);
+    }
+    else if (blur_filter_selected == ImageEditor::PYR_UP_BLUR) {
+        enableOptions(NONE);
+    }
+    else {
+        enableOptions(NONE);
+    }
+}
+
 void BatchItImage::EnableSpecificFormatOptions(bool loading_preset)
 {
     DEBUG2("EnableSpecificFormatOptions: ", loading_preset);
@@ -1136,16 +1409,27 @@ void BatchItImage::EnableSpecificFormatOptions(bool loading_preset)
                 ui.comboBox_FormatFlags->setFont(*font_default);
             }
             else {
+                ui.label_FormatFlags->setText("");
+                ui.label_FormatFlags->setStatusTip("");
+                ui.label_FormatFlags->setToolTip("");
                 ui.label_FormatFlags->setFont(*font_default_light);
+                ui.comboBox_FormatFlags->setStatusTip("");
+                ui.comboBox_FormatFlags->setToolTip("");
                 ui.comboBox_FormatFlags->setEnabled(false);
                 ui.comboBox_FormatFlags->setFont(*font_default_light);
+                
             }
             if (options & QUALITY) {
                 ui.label_Quality->setFont(*font_default);
                 ui.horizontalSlider_Quality->setEnabled(true);
             }
             else {
+                ui.label_Quality->setText("");
+                ui.label_Quality->setStatusTip("");
+                ui.label_Quality->setToolTip("");
                 ui.label_Quality->setFont(*font_default_light);
+                ui.horizontalSlider_Quality->setStatusTip("");
+                ui.horizontalSlider_Quality->setToolTip("");
                 ui.horizontalSlider_Quality->setEnabled(false);
             }
             if (options & OPTIMIZE) {
@@ -1154,6 +1438,9 @@ void BatchItImage::EnableSpecificFormatOptions(bool loading_preset)
                 ui.checkBox_Optimize->setEnabled(true);
             }
             else {
+                ui.checkBox_Optimize->setText("");
+                ui.checkBox_Optimize->setStatusTip("");
+                ui.checkBox_Optimize->setToolTip("");
                 ui.checkBox_Optimize->setFont(*font_default_light);
                 ui.checkBox_Optimize->setEnabled(false);
             }
@@ -1163,6 +1450,9 @@ void BatchItImage::EnableSpecificFormatOptions(bool loading_preset)
                 ui.checkBox_Progressive->setEnabled(true);
             }
             else {
+                ui.checkBox_Progressive->setText("");
+                ui.checkBox_Progressive->setStatusTip("");
+                ui.checkBox_Progressive->setToolTip("");
                 ui.checkBox_Progressive->setFont(*font_default_light);
                 ui.checkBox_Progressive->setEnabled(false);
             }
@@ -1173,7 +1463,12 @@ void BatchItImage::EnableSpecificFormatOptions(bool loading_preset)
                 ui.spinBox_ExtraSetting1->setSingleStep(1);
             }
             else {
+                ui.label_Compression->setText("");
+                ui.label_Compression->setStatusTip("");
+                ui.label_Compression->setToolTip("");
                 ui.label_Compression->setFont(*font_default_light);
+                ui.spinBox_Compression->setStatusTip("");
+                ui.spinBox_Compression->setToolTip("");
                 ui.spinBox_Compression->setEnabled(false);
                 ui.spinBox_Compression->setFont(*font_default_light);
             }
@@ -1184,7 +1479,12 @@ void BatchItImage::EnableSpecificFormatOptions(bool loading_preset)
                 ui.spinBox_ExtraSetting1->setSingleStep(1);
             }
             else {
+                ui.label_ExtraSetting1->setText("");
+                ui.label_ExtraSetting1->setStatusTip("");
+                ui.label_ExtraSetting1->setToolTip("");
                 ui.label_ExtraSetting1->setFont(*font_default_light);
+                ui.spinBox_ExtraSetting1->setStatusTip("");
+                ui.spinBox_ExtraSetting1->setToolTip("");
                 ui.spinBox_ExtraSetting1->setEnabled(false);
                 ui.spinBox_ExtraSetting1->setFont(*font_default_light);
             }
@@ -1198,30 +1498,41 @@ void BatchItImage::EnableSpecificFormatOptions(bool loading_preset)
                 );
             }
             else {
+                ui.label_ExtraSetting2->setText("");
+                ui.label_ExtraSetting2->setStatusTip("");
+                ui.label_ExtraSetting2->setToolTip("");
                 ui.label_ExtraSetting2->setFont(*font_default_light);
+                ui.spinBox_ExtraSetting2->setStatusTip("");
+                ui.spinBox_ExtraSetting2->setToolTip("");
                 ui.spinBox_ExtraSetting2->setEnabled(false);
                 ui.spinBox_ExtraSetting2->setFont(*font_default_light);
             }
         };
 
-    // IMWRITE_JPEG_QUALITY  IMWRITE_JPEG_PROGRESSIVE  IMWRITE_JPEG_OPTIMIZE  IMWRITE_JPEG_RST_INTERVAL  IMWRITE_JPEG_LUMA_QUALITY  IMWRITE_JPEG_CHROMA_QUALITY  IMWRITE_JPEG_SAMPLING_FACTOR
     if (format == ".jpeg" or format == ".jpg" or format == ".jpe") { 
         
         enableOptions(FORMATFLAGS + QUALITY + OPTIMIZE + PROGRESSIVE + COMPRESSION + EXTRASETTING1 + EXTRASETTING2);
         
         ui.label_FormatFlags->setText(format_jpeg_options[FormatJpegOptions::label_FormatFlags].name.c_str());
+        ui.label_FormatFlags->setStatusTip(format_jpeg_options[FormatJpegOptions::label_FormatFlags].desc.c_str());
         ui.label_FormatFlags->setToolTip(format_jpeg_options[FormatJpegOptions::label_FormatFlags].desc.c_str());
         ui.label_Quality->setText(format_jpeg_options[FormatJpegOptions::label_Quality].name.c_str());
+        ui.label_Quality->setStatusTip(format_jpeg_options[FormatJpegOptions::label_Quality].desc.c_str());
         ui.label_Quality->setToolTip(format_jpeg_options[FormatJpegOptions::label_Quality].desc.c_str());
         ui.checkBox_Optimize->setText(format_jpeg_options[FormatJpegOptions::checkBox_Optimize].name.c_str());
+        ui.checkBox_Optimize->setStatusTip(format_jpeg_options[FormatJpegOptions::checkBox_Optimize].desc.c_str());
         ui.checkBox_Optimize->setToolTip(format_jpeg_options[FormatJpegOptions::checkBox_Optimize].desc.c_str());
         ui.checkBox_Progressive->setText(format_jpeg_options[FormatJpegOptions::checkBox_Progressive].name.c_str());
+        ui.checkBox_Progressive->setStatusTip(format_jpeg_options[FormatJpegOptions::checkBox_Progressive].desc.c_str());
         ui.checkBox_Progressive->setToolTip(format_jpeg_options[FormatJpegOptions::checkBox_Progressive].desc.c_str());
         ui.label_Compression->setText(format_jpeg_options[FormatJpegOptions::label_Compression].name.c_str());
+        ui.label_Compression->setStatusTip(format_jpeg_options[FormatJpegOptions::label_Compression].desc.c_str());
         ui.label_Compression->setToolTip(format_jpeg_options[FormatJpegOptions::label_Compression].desc.c_str());
         ui.label_ExtraSetting1->setText(format_jpeg_options[FormatJpegOptions::label_ExtraSetting1].name.c_str());
+        ui.label_ExtraSetting1->setStatusTip(format_jpeg_options[FormatJpegOptions::label_ExtraSetting1].desc.c_str());
         ui.label_ExtraSetting1->setToolTip(format_jpeg_options[FormatJpegOptions::label_ExtraSetting1].desc.c_str());
         ui.label_ExtraSetting2->setText(format_jpeg_options[FormatJpegOptions::label_ExtraSetting2].name.c_str());
+        ui.label_ExtraSetting2->setStatusTip(format_jpeg_options[FormatJpegOptions::label_ExtraSetting2].desc.c_str());
         ui.label_ExtraSetting2->setToolTip(format_jpeg_options[FormatJpegOptions::label_ExtraSetting2].desc.c_str());
 
         if (loading_preset)
@@ -1229,7 +1540,7 @@ void BatchItImage::EnableSpecificFormatOptions(bool loading_preset)
         
         int default_quality_value = std::get<int>(format_jpeg_options[FormatJpegOptions::label_Quality].data);
         ui.horizontalSlider_Quality->setRange(0, 100);
-        ui.horizontalSlider_Quality->addTextValue(default_quality_value, default_quality_value, "Default", true);
+        ui.horizontalSlider_Quality->addTextTip(default_quality_value, default_quality_value, " : Default", true);
         ui.spinBox_Compression->setRange(0, 65535);
         ui.spinBox_ExtraSetting1->setRange(-1, 100);
         ui.spinBox_ExtraSetting2->setRange(-1, 100);
@@ -1245,11 +1556,12 @@ void BatchItImage::EnableSpecificFormatOptions(bool loading_preset)
             ui.spinBox_ExtraSetting2->setValue(std::get<int>(format_jpeg_options[FormatJpegOptions::label_ExtraSetting2].data));
         }
     }
-    else if (format == ".jp2") { // cv::IMWRITE_JPEG2000_COMPRESSION_X1000
+    else if (format == ".jp2") {
         
         enableOptions(COMPRESSION);
 
         ui.label_Compression->setText(format_jp2_options[FormatJp2Options::label_Compression].name.c_str());
+        ui.label_Compression->setStatusTip(format_jp2_options[FormatJp2Options::label_Compression].desc.c_str());
         ui.label_Compression->setToolTip(format_jp2_options[FormatJp2Options::label_Compression].desc.c_str());
 
         ui.spinBox_Compression->setRange(0, 1000);
@@ -1258,15 +1570,18 @@ void BatchItImage::EnableSpecificFormatOptions(bool loading_preset)
             ui.spinBox_Compression->setValue(std::get<int>(format_jp2_options[FormatJp2Options::label_Compression].data));
         }
     }
-    else if (format == ".png") { // cv::IMWRITE_PNG_COMPRESSION  cv::IMWRITE_PNG_STRATEGY  cv::IMWRITE_PNG_BILEVEL
+    else if (format == ".png") {
         
         enableOptions(FORMATFLAGS + OPTIMIZE + COMPRESSION);
 
         ui.label_FormatFlags->setText(format_png_options[FormatPngOptions::label_FormatFlags].name.c_str());
+        ui.label_FormatFlags->setStatusTip(format_png_options[FormatPngOptions::label_FormatFlags].desc.c_str());
         ui.label_FormatFlags->setToolTip(format_png_options[FormatPngOptions::label_FormatFlags].desc.c_str());
         ui.checkBox_Optimize->setText(format_png_options[FormatPngOptions::checkBox_Optimize].name.c_str());
+        ui.checkBox_Optimize->setStatusTip(format_png_options[FormatPngOptions::checkBox_Optimize].desc.c_str());
         ui.checkBox_Optimize->setToolTip(format_png_options[FormatPngOptions::checkBox_Optimize].desc.c_str());
         ui.label_Compression->setText(format_png_options[FormatPngOptions::label_Compression].name.c_str());
+        ui.label_Compression->setStatusTip(format_png_options[FormatPngOptions::label_Compression].desc.c_str());
         ui.label_Compression->setToolTip(format_png_options[FormatPngOptions::label_Compression].desc.c_str());
 
         PopulateComboBox(ui.comboBox_FormatFlags, format_png_compression, sizeof(format_png_compression) / sizeof(UIData));
@@ -1278,45 +1593,49 @@ void BatchItImage::EnableSpecificFormatOptions(bool loading_preset)
             ui.spinBox_Compression->setValue(std::get<int>(format_png_options[FormatPngOptions::label_Compression].data));
         }
     }
-    else if (format == ".webp") { // cv::IMWRITE_WEBP_QUALITY 
+    else if (format == ".webp") { 
 
         enableOptions(QUALITY);
 
         ui.label_Quality->setText(format_webp_options[FormatWebpOptions::label_Quality].name.c_str());
+        ui.label_Quality->setStatusTip(format_webp_options[FormatWebpOptions::label_Quality].desc.c_str());
         ui.label_Quality->setToolTip(format_webp_options[FormatWebpOptions::label_Quality].desc.c_str());
 
         int default_quality_value = std::get<int>(format_webp_options[FormatWebpOptions::label_Quality].data);
         ui.horizontalSlider_Quality->setRange(1, 100);
-        ui.horizontalSlider_Quality->addTextValue(default_quality_value, default_quality_value, "Default", true);
+        ui.horizontalSlider_Quality->addTextTip(default_quality_value, default_quality_value, " : Default", true);
 
         if (not loading_preset and last_selected_format != ".webp") {
             ui.horizontalSlider_Quality->setValue(default_quality_value);
         }
     }
-    else if (format == ".avif") { // cv::IMWRITE_AVIF_QUALITY  cv::IMWRITE_AVIF_DEPTH  cv::IMWRITE_AVIF_SPEED   TODO: test  IMWRITE_JPEG_SAMPLING_FACTOR
+    else if (format == ".avif") { // TODO: test  IMWRITE_JPEG_SAMPLING_FACTOR
 
         enableOptions(QUALITY + COMPRESSION + EXTRASETTING2);
 
         //ui.label_FormatFlags->setText(":");
         ui.label_Quality->setText(format_avif_options[FormatAvifOptions::label_Quality].name.c_str());
+        ui.label_Quality->setStatusTip(format_avif_options[FormatAvifOptions::label_Quality].desc.c_str());
         ui.label_Quality->setToolTip(format_avif_options[FormatAvifOptions::label_Quality].desc.c_str());
         ui.label_Compression->setText(format_avif_options[FormatAvifOptions::label_Compression].name.c_str());
+        ui.label_Compression->setStatusTip(format_avif_options[FormatAvifOptions::label_Compression].desc.c_str());
         ui.label_Compression->setToolTip(format_avif_options[FormatAvifOptions::label_Compression].desc.c_str());
         ui.label_ExtraSetting2->setText(format_avif_options[FormatAvifOptions::label_ExtraSetting2].name.c_str());
+        ui.label_ExtraSetting2->setStatusTip(format_avif_options[FormatAvifOptions::label_ExtraSetting2].desc.c_str());
         ui.label_ExtraSetting2->setToolTip(format_avif_options[FormatAvifOptions::label_ExtraSetting2].desc.c_str());
 
         int default_quality_value = std::get<int>(format_avif_options[FormatAvifOptions::label_Quality].data);
         ui.horizontalSlider_Quality->setRange(0, 100);
-        ui.horizontalSlider_Quality->addTextValue(default_quality_value, default_quality_value, "Default", true);
+        ui.horizontalSlider_Quality->addTextTip(default_quality_value, default_quality_value, " : Default", true);
         ui.spinBox_Compression->setRange(0, 9);
         ui.spinBox_ExtraSetting2->setRange(8, 12);
-        ui.spinBox_ExtraSetting2->connect(ui.spinBox_ExtraSetting2, &QAbstractSpinBox::editingFinished, this,
+        Q_ASSERT(ui.spinBox_ExtraSetting2->connect(ui.spinBox_ExtraSetting2, &QAbstractSpinBox::editingFinished, this,
             [this] { // Only 8, 10, 12
                 int val = ui.spinBox_ExtraSetting2->value();
                 if (val == 9 or val == 11) {
                     ui.spinBox_ExtraSetting2->setValue(10);
                 }
-            });
+            }));
         ui.spinBox_ExtraSetting2->setSingleStep(2);
 
         if (not loading_preset and last_selected_format != ".avif") {
@@ -1326,22 +1645,24 @@ void BatchItImage::EnableSpecificFormatOptions(bool loading_preset)
             ui.spinBox_ExtraSetting2->setValue(std::get<int>(format_avif_options[FormatAvifOptions::label_ExtraSetting2].data));
         }
     }
-    else if (format == ".pbm" or format == ".pgm" or format == ".ppm") { // IMWRITE_PXM_BINARY
+    else if (format == ".pbm" or format == ".pgm" or format == ".ppm") {
 
         enableOptions(OPTIMIZE);
 
         ui.checkBox_Optimize->setText(format_pbm_options[FormatPbmOptions::checkBox_Optimize].name.c_str());
+        ui.checkBox_Optimize->setStatusTip(format_pbm_options[FormatPbmOptions::checkBox_Optimize].desc.c_str());
         ui.checkBox_Optimize->setToolTip(format_pbm_options[FormatPbmOptions::checkBox_Optimize].desc.c_str());
 
         if (not loading_preset and last_selected_format != ".pbm" and last_selected_format != ".pgm" and last_selected_format != ".ppm") {
             ui.checkBox_Optimize->setChecked(std::get<int>(format_pbm_options[FormatPbmOptions::checkBox_Optimize].data));
         }
     }
-    else if (format == ".pam") { // IMWRITE_PAM_TUPLETYPE
+    else if (format == ".pam") {
 
         enableOptions(FORMATFLAGS);
 
         ui.label_FormatFlags->setText(format_pam_options[FormatPamOptions::label_FormatFlags].name.c_str());
+        ui.label_FormatFlags->setStatusTip(format_pam_options[FormatPamOptions::label_FormatFlags].desc.c_str());
         ui.label_FormatFlags->setToolTip(format_pam_options[FormatPamOptions::label_FormatFlags].desc.c_str());
 
         PopulateComboBox(ui.comboBox_FormatFlags, format_pam_tupletype, sizeof(format_pam_tupletype) / sizeof(UIData));
@@ -1355,23 +1676,28 @@ void BatchItImage::EnableSpecificFormatOptions(bool loading_preset)
         enableOptions(FORMATFLAGS + QUALITY + EXTRASETTING1 + EXTRASETTING2);
 
         ui.label_FormatFlags->setText(format_tiff_options[FormatTiffOptions::label_FormatFlags].name.c_str());
+        ui.label_FormatFlags->setStatusTip(format_tiff_options[FormatTiffOptions::label_FormatFlags].desc.c_str());
         ui.label_FormatFlags->setToolTip(format_tiff_options[FormatTiffOptions::label_FormatFlags].desc.c_str());
         ui.label_Quality->setText(format_tiff_options[FormatTiffOptions::label_Quality].name.c_str());
+        ui.label_Quality->setStatusTip(format_tiff_options[FormatTiffOptions::label_Quality].desc.c_str());
         ui.label_Quality->setToolTip(format_tiff_options[FormatTiffOptions::label_Quality].desc.c_str());
         ui.label_ExtraSetting1->setText(format_tiff_options[FormatTiffOptions::label_ExtraSetting1].name.c_str());
+        ui.label_ExtraSetting1->setStatusTip(format_tiff_options[FormatTiffOptions::label_ExtraSetting1].desc.c_str());
         ui.label_ExtraSetting1->setToolTip(format_tiff_options[FormatTiffOptions::label_ExtraSetting1].desc.c_str());
         ui.label_ExtraSetting2->setText(format_tiff_options[FormatTiffOptions::label_ExtraSetting2].name.c_str());
+        ui.label_ExtraSetting2->setStatusTip(format_tiff_options[FormatTiffOptions::label_ExtraSetting2].desc.c_str());
         ui.label_ExtraSetting2->setToolTip(format_tiff_options[FormatTiffOptions::label_ExtraSetting2].desc.c_str());
 
         if (loading_preset)
             PopulateComboBox(ui.comboBox_FormatFlags, format_tiff_compression, sizeof(format_tiff_compression) / sizeof(UIData));
         ui.horizontalSlider_Quality->setRange(1, 3);
         for (auto& tiff_ru : format_tiff_resolution_unit) {
-            ui.horizontalSlider_Quality->addTextValue(
+            ui.horizontalSlider_Quality->addTextTip(
                 std::get<int>(tiff_ru.data),
                 std::get<int>(tiff_ru.data),
-                QString::fromStdString(tiff_ru.name + " " + tiff_ru.desc),
-                true
+                QString::fromStdString(" : " + tiff_ru.name + " " + tiff_ru.desc),
+                true,
+                EnhancedSlider::ToTheRight
             );
         }
         ui.spinBox_ExtraSetting1->setRange(0, INT_MAX);
@@ -1384,19 +1710,22 @@ void BatchItImage::EnableSpecificFormatOptions(bool loading_preset)
             ui.spinBox_ExtraSetting1->setValue(std::get<int>(format_tiff_options[FormatTiffOptions::label_ExtraSetting1].data));
             ui.spinBox_ExtraSetting2->setValue(std::get<int>(format_tiff_options[FormatTiffOptions::label_ExtraSetting2].data));
         }
-
     }
-    else if (format == ".exr") { // IMWRITE_EXR_TYPE  IMWRITE_EXR_COMPRESSION  IMWRITE_EXR_DWA_COMPRESSION_LEVEL
+    else if (format == ".exr") {
 
         enableOptions(FORMATFLAGS + OPTIMIZE + PROGRESSIVE + COMPRESSION);
 
         ui.label_FormatFlags->setText(format_exr_options[FormatExrOptions::label_FormatFlags].name.c_str());
+        ui.label_FormatFlags->setStatusTip(format_exr_options[FormatExrOptions::label_FormatFlags].desc.c_str());
         ui.label_FormatFlags->setToolTip(format_exr_options[FormatExrOptions::label_FormatFlags].desc.c_str());
         ui.checkBox_Optimize->setText(format_exr_options[FormatExrOptions::checkBox_Optimize].name.c_str());
+        ui.checkBox_Optimize->setStatusTip(format_exr_options[FormatExrOptions::checkBox_Optimize].desc.c_str());
         ui.checkBox_Optimize->setToolTip(format_exr_options[FormatExrOptions::checkBox_Optimize].desc.c_str());
         ui.checkBox_Progressive->setText(format_exr_options[FormatExrOptions::checkBox_Progressive].name.c_str());
+        ui.checkBox_Progressive->setStatusTip(format_exr_options[FormatExrOptions::checkBox_Progressive].desc.c_str());
         ui.checkBox_Progressive->setToolTip(format_exr_options[FormatExrOptions::checkBox_Progressive].desc.c_str());
         ui.label_Compression->setText(format_exr_options[FormatExrOptions::label_Compression].name.c_str());
+        ui.label_Compression->setStatusTip(format_exr_options[FormatExrOptions::label_Compression].desc.c_str());
         ui.label_Compression->setToolTip(format_exr_options[FormatExrOptions::label_Compression].desc.c_str());
 
         PopulateComboBox(ui.comboBox_FormatFlags, format_exr_compression, sizeof(format_exr_compression) / sizeof(UIData));
@@ -1411,11 +1740,12 @@ void BatchItImage::EnableSpecificFormatOptions(bool loading_preset)
         }
 
     }
-    else if (format == ".hdr" or format == ".pic") { // IMWRITE_HDR_COMPRESSION 
+    else if (format == ".hdr" or format == ".pic") { 
 
         enableOptions(FORMATFLAGS);
 
         ui.label_FormatFlags->setText(format_hdr_options[FormatHdrOptions::label_FormatFlags].name.c_str());
+        ui.label_FormatFlags->setStatusTip(format_hdr_options[FormatHdrOptions::label_FormatFlags].desc.c_str());
         ui.label_FormatFlags->setToolTip(format_hdr_options[FormatHdrOptions::label_FormatFlags].desc.c_str());
 
         if (loading_preset)
@@ -1437,9 +1767,6 @@ void BatchItImage::EnableSpecificFormatOptions(bool loading_preset)
         last_selected_format = format;
 }
 
-/// <summary>
-/// Build a "right click" context menu for the file tree.
-/// </summary>
 void BatchItImage::SetupFileTreeContextMenu()
 {
     action_add = new QAction(QString::fromStdString(file_tree_menu_items[ActionMenu::action_add].name), this);
@@ -1505,10 +1832,6 @@ void BatchItImage::SetupFileTreeContextMenu()
 #endif // DEBUG
 }
 
-/// <summary>
-/// Toggle usability of certain action context menu items.
-/// </summary>
-/// <param name="enable">--True enabled, false disabled</param>
 void BatchItImage::ToggleFileTreeContextMenuItems(bool enable)
 {
     action_delete->setEnabled(enable);
@@ -1532,10 +1855,6 @@ void BatchItImage::ToggleFileTreeContextMenuItems(bool enable)
     }
 }
 
-/// <summary>
-/// Change the currently selected preset.
-/// </summary>
-/// <param name="index">--The index of the preset.</param>
 void BatchItImage::ChangePreset(int index)
 {
     ui.comboBox_Preset_1->blockSignals(true);
@@ -1543,28 +1862,51 @@ void BatchItImage::ChangePreset(int index)
     ui.comboBox_Preset_3->blockSignals(true);
 
     //DEBUG2("current_selected_preset: ", current_selected_preset);
-    if (index != current_selected_preset) {
-        // TODO: ask user before saving?
-        SavePreset(); // Save previous preset before change
-        current_selected_preset = index;
-        DEBUG2("current_selected_preset: ", current_selected_preset);
-        
-        ui.comboBox_Preset_1->setCurrentIndex(current_selected_preset);
-        ui.comboBox_Preset_2->setCurrentIndex(current_selected_preset);
-        ui.comboBox_Preset_3->setCurrentIndex(current_selected_preset);
-        
-        LoadPreset(preset_list.at(current_selected_preset));
-    }
+    //if (index != current_selected_preset) {
+    // TODO: ask user before saving?
+    //SavePreset(); // Save previous preset before change
+    current_selected_preset = index;
+    DEBUG2("current_selected_preset: ", current_selected_preset);
+
+    ui.comboBox_Preset_1->setCurrentIndex(current_selected_preset);
+    ui.comboBox_Preset_2->setCurrentIndex(current_selected_preset);
+    ui.comboBox_Preset_3->setCurrentIndex(current_selected_preset);
+
+    LoadPreset(preset_list.at(current_selected_preset));
+    //}
 
     ui.comboBox_Preset_1->blockSignals(false);
     ui.comboBox_Preset_2->blockSignals(false);
     ui.comboBox_Preset_3->blockSignals(false);
 }
 
-/// <summary>
-/// Save current (or all) preset to the preset list and to the user settings file.
-/// </summary>
-/// <param name="save_all">--Save all presets to settings file.</param>
+void BatchItImage::ChangePresetDescription(int selected_preset_index, QString title, QString message)
+{
+    int* preset_index = new int(selected_preset_index);
+    qDebug() << "ChangePresetDescription: " << *preset_index;
+    
+    DialogEditPresetDesc* change_preset_desc_dialog = new DialogEditPresetDesc(
+        title,
+        message,
+        &preset_list,
+        *preset_index,
+        this
+    );
+    Q_ASSERT(connect(change_preset_desc_dialog, &DialogEditPresetDesc::presetIndexSelected,
+        this, [=](int index) { *preset_index = index; }));
+    Q_ASSERT(connect(change_preset_desc_dialog, &DialogEditPresetDesc::presetIndexSelected,
+        change_preset_desc_dialog, &DialogEditPresetDesc::deleteLater));
+
+    change_preset_desc_dialog->exec();
+
+    AddPresetsToComboBox(&preset_list, std::vector<QComboBox*>{
+        ui.comboBox_Preset_1, ui.comboBox_Preset_2, ui.comboBox_Preset_3
+    });
+    ChangePreset(*preset_index);
+    SavePreset(true);
+    delete preset_index;
+}
+
 void BatchItImage::SavePreset(bool save_all)
 {
     DEBUG2("SavePresets->current_selected_preset: ", current_selected_preset);
@@ -1580,33 +1922,8 @@ void BatchItImage::SavePreset(bool save_all)
 
     if (save_all) {
         DEBUG("Saving All Settings Presets (Defaults)");
-
         for (int i = 0; i < preset_list.size(); i++) {
-            settings.beginGroup("Preset" + std::to_string(i));
-            settings.setValue("description", preset_list.at(i).description);
-            settings.setValue("width_change_selection", preset_list.at(i).width_change_selection);
-            settings.setValue("width_number", preset_list.at(i).width_number);
-            settings.setValue("height_change_selection", preset_list.at(i).height_change_selection);
-            settings.setValue("height_number", preset_list.at(i).height_number);
-            settings.setValue("keep_aspect_ratio", preset_list.at(i).keep_aspect_ratio);
-            settings.setValue("resampling_filter", preset_list.at(i).resampling_filter);
-            settings.setValue("rotation_degrees", preset_list.at(i).rotation_degrees);
-            settings.setValue("increase_boundaries", preset_list.at(i).increase_boundaries);
-            settings.setValue("flip_image", preset_list.at(i).flip_image);
-            settings.setValue("format_change", preset_list.at(i).format_change);
-            settings.setValue("format", preset_list.at(i).format_extension);
-            settings.setValue("format_format_flag", preset_list.at(i).format_format_flag);
-            settings.setValue("format_optimize", preset_list.at(i).format_optimize);
-            settings.setValue("format_progressive", preset_list.at(i).format_progressive);
-            settings.setValue("format_quality", preset_list.at(i).format_quality);
-            settings.setValue("format_compression", preset_list.at(i).format_compression);
-            settings.setValue("format_extra1", preset_list.at(i).format_extra1);
-            settings.setValue("format_extra2", preset_list.at(i).format_extra2);
-            settings.setValue("save_file_policy_option", preset_list.at(i).save_file_policy_option);
-            settings.setValue("save_file_name_change", preset_list.at(i).save_file_name_change.c_str());
-            settings.setValue("relative_save_path", preset_list.at(i).relative_save_path);
-            settings.setValue("save_file_path_change", preset_list.at(i).save_file_path_change.c_str());
-            settings.endGroup();
+            SavePresetToSettingsFile(i);
         }
     }
     else {
@@ -1633,6 +1950,23 @@ void BatchItImage::SavePreset(bool save_all)
         preset_list.at(current_selected_preset).height_number = ui.spinBox_HeightNumber->value();
         preset_list.at(current_selected_preset).keep_aspect_ratio = ui.checkBox_KeepAspectRatio->isChecked();
         preset_list.at(current_selected_preset).resampling_filter = ui.comboBox_Resample->currentIndex();
+        preset_list.at(current_selected_preset).border_type = ui.comboBox_BorderType->currentIndex();
+
+        // TODO: 
+        //ui.label_ColorPreview->;
+        //QColor background_color = QColor(0, 0, 0, 0);
+        /*preset_list.at(current_selected_preset).background_color_blue;
+        preset_list.at(current_selected_preset).background_color_green;
+        preset_list.at(current_selected_preset).background_color_red;
+        preset_list.at(current_selected_preset).background_color_alpha;*/
+
+        preset_list.at(current_selected_preset).blur_filter = ui.comboBox_BlurFilter->currentIndex();
+        preset_list.at(current_selected_preset).blur_normalize = ui.checkBox_BlurNormalize->isChecked();
+        preset_list.at(current_selected_preset).blur_x = ui.verticalSlider_BlurX1->value();
+        preset_list.at(current_selected_preset).blur_y = ui.verticalSlider_BlurY1->value();
+        preset_list.at(current_selected_preset).blur_sx = ui.verticalSlider_BlurX2->value();
+        preset_list.at(current_selected_preset).blur_sy = ui.verticalSlider_BlurY2->value();
+        preset_list.at(current_selected_preset).blur_depth = ui.verticalSlider_BlurD->value();
         preset_list.at(current_selected_preset).rotation_degrees = ui.dial_Rotation->value();
         preset_list.at(current_selected_preset).increase_boundaries = ui.checkBox_IncreaseBounds->isChecked();
         preset_list.at(current_selected_preset).flip_image = ui.checkBox_FlipImage->isChecked();
@@ -1653,38 +1987,56 @@ void BatchItImage::SavePreset(bool save_all)
         else
             preset_list.at(current_selected_preset).save_file_path_change = ui.lineEdit_AbsolutePath->text().toStdString();
 
-        settings.beginGroup("Preset" + std::to_string(current_selected_preset));
-        settings.setValue("description", preset_list.at(current_selected_preset).description);
-        settings.setValue("width_change_selection", preset_list.at(current_selected_preset).width_change_selection);
-        settings.setValue("width_number", preset_list.at(current_selected_preset).width_number);
-        settings.setValue("height_change_selection", preset_list.at(current_selected_preset).height_change_selection);
-        settings.setValue("height_number", preset_list.at(current_selected_preset).height_number);
-        settings.setValue("keep_aspect_ratio", preset_list.at(current_selected_preset).keep_aspect_ratio);
-        settings.setValue("resampling_filter", preset_list.at(current_selected_preset).resampling_filter);
-        settings.setValue("rotation_degrees", preset_list.at(current_selected_preset).rotation_degrees);
-        settings.setValue("increase_boundaries", preset_list.at(current_selected_preset).increase_boundaries);
-        settings.setValue("flip_image", preset_list.at(current_selected_preset).flip_image);
-        settings.setValue("format_change", preset_list.at(current_selected_preset).format_change);
-        settings.setValue("format_extension", preset_list.at(current_selected_preset).format_extension);
-        settings.setValue("format_format_flag", preset_list.at(current_selected_preset).format_format_flag);
-        settings.setValue("format_optimize", preset_list.at(current_selected_preset).format_optimize);
-        settings.setValue("format_progressive", preset_list.at(current_selected_preset).format_progressive);
-        settings.setValue("format_quality", preset_list.at(current_selected_preset).format_quality);
-        settings.setValue("format_compression", preset_list.at(current_selected_preset).format_compression);
-        settings.setValue("format_extra1", preset_list.at(current_selected_preset).format_extra1);
-        settings.setValue("format_extra2", preset_list.at(current_selected_preset).format_extra2);
-        settings.setValue("save_file_policy_option", preset_list.at(current_selected_preset).save_file_policy_option);
-        settings.setValue("save_file_name_change", preset_list.at(current_selected_preset).save_file_name_change.c_str());
-        settings.setValue("relative_save_path", preset_list.at(current_selected_preset).relative_save_path);
-        settings.setValue("save_file_path_change", preset_list.at(current_selected_preset).save_file_path_change.c_str());
-        settings.endGroup();
+        SavePresetToSettingsFile(current_selected_preset);
     }
 }
 
-/// <summary>
-/// Load a preset's data into various UI elements.
-/// </summary>
-/// <param name="preset">--A preset with all image edits to be made.</param>
+void BatchItImage::SavePresetToSettingsFile(int index)
+{
+    QSettings settings(preset_settings_file, QSettings::IniFormat);
+
+    settings.beginGroup("Preset" + std::to_string(index));
+    settings.setValue("description", preset_list.at(index).description);
+    settings.setValue("width_change_selection", preset_list.at(index).width_change_selection);
+    settings.setValue("width_number", preset_list.at(index).width_number);
+    settings.setValue("height_change_selection", preset_list.at(index).height_change_selection);
+    settings.setValue("height_number", preset_list.at(index).height_number);
+    settings.setValue("keep_aspect_ratio", preset_list.at(index).keep_aspect_ratio);
+    settings.setValue("resampling_filter", preset_list.at(index).resampling_filter);
+    settings.setValue("border_type", preset_list.at(index).border_type);
+
+    // TODO
+    //settings.setValue("", preset_list.at(index).background_color_blue);
+    //settings.setValue("", preset_list.at(index).background_color_green);
+    //settings.setValue("", preset_list.at(index).background_color_red);
+    //settings.setValue("", preset_list.at(index).background_color_alpha);
+
+    settings.setValue("blur_filter", preset_list.at(index).blur_filter);
+    settings.setValue("blur_normalize", preset_list.at(index).blur_normalize);
+    settings.setValue("blur_x", preset_list.at(index).blur_x);
+    settings.setValue("blur_y", preset_list.at(index).blur_y);
+    settings.setValue("blur_sx", preset_list.at(index).blur_sx);
+    settings.setValue("blur_sy", preset_list.at(index).blur_sy);
+    settings.setValue("blur_depth", preset_list.at(index).blur_depth);
+    settings.setValue("rotation_degrees", preset_list.at(index).rotation_degrees);
+    settings.setValue("increase_boundaries", preset_list.at(index).increase_boundaries);
+    settings.setValue("flip_image", preset_list.at(index).flip_image);
+    settings.setValue("format_change", preset_list.at(index).format_change);
+    settings.setValue("format_extension", preset_list.at(index).format_extension);
+    settings.setValue("format_format_flag", preset_list.at(index).format_format_flag);
+    settings.setValue("format_optimize", preset_list.at(index).format_optimize);
+    settings.setValue("format_progressive", preset_list.at(index).format_progressive);
+    settings.setValue("format_quality", preset_list.at(index).format_quality);
+    settings.setValue("format_compression", preset_list.at(index).format_compression);
+    settings.setValue("format_extra1", preset_list.at(index).format_extra1);
+    settings.setValue("format_extra2", preset_list.at(index).format_extra2);
+    settings.setValue("save_file_policy_option", preset_list.at(index).save_file_policy_option);
+    settings.setValue("save_file_name_change", preset_list.at(index).save_file_name_change.c_str());
+    settings.setValue("relative_save_path", preset_list.at(index).relative_save_path);
+    settings.setValue("save_file_path_change", preset_list.at(index).save_file_path_change.c_str());
+    settings.endGroup();
+}
+
 void BatchItImage::LoadPreset(Preset preset)
 {
     // TODO: load "ALL" selected preset settings into ui
@@ -1695,6 +2047,19 @@ void BatchItImage::LoadPreset(Preset preset)
     ui.spinBox_HeightNumber->setValue(preset.height_number);
     ui.comboBox_Resample->setCurrentIndex(preset.resampling_filter);
     ui.checkBox_KeepAspectRatio->setChecked(preset.keep_aspect_ratio);
+    ui.comboBox_BorderType->setCurrentIndex(preset.border_type);
+
+    // TODO: 
+    //ui.label_ColorPreview->setCurrentIndex(preset.border_type);
+    //QColor background_color = QColor(0, 0, 0, 0);
+
+    ui.comboBox_BlurFilter->setCurrentIndex(preset.blur_filter);
+    ui.checkBox_BlurNormalize->setChecked(preset.blur_normalize);
+    ui.verticalSlider_BlurX1->setValue(preset.blur_x);
+    ui.verticalSlider_BlurY1->setValue(preset.blur_y);
+    ui.verticalSlider_BlurX2->setValue(preset.blur_sx);
+    ui.verticalSlider_BlurY2->setValue(preset.blur_sy);
+    ui.verticalSlider_BlurD->setValue(preset.blur_depth);
     ui.dial_Rotation->setValue(preset.rotation_degrees);
     ui.lcdNumber_Rotation->display(preset.rotation_degrees);
     ui.checkBox_IncreaseBounds->setChecked(preset.increase_boundaries);
@@ -1727,12 +2092,10 @@ void BatchItImage::LoadPreset(Preset preset)
     else
         ui.lineEdit_AbsolutePath->setText(QString::fromStdString(preset.save_file_path_change));
 
+    EnableSpecificBlurOptions(true);
     EnableSpecificFormatOptions(true);
 }
 
-/// <summary>
-/// Load presets from settings file or get defaults if none found.
-/// </summary>
 void BatchItImage::LoadPresets()
 {
     QSettings settings(preset_settings_file, QSettings::IniFormat);
@@ -1802,8 +2165,21 @@ void BatchItImage::LoadPresets()
             preset.width_number = settings.value("width_number").toInt();
             preset.height_change_selection = settings.value("height_change_selection").toInt();
             preset.height_number = settings.value("height_number").toInt();
-            preset.keep_aspect_ratio = settings.value("keep_aspect_ratio").toBool();
             preset.resampling_filter = settings.value("resampling_filter").toInt();
+            preset.keep_aspect_ratio = settings.value("keep_aspect_ratio").toBool();
+            preset.border_type = settings.value("border_type").toInt();
+            //TODO:
+            /*preset.background_color_blue = settings.value("background_color_blue").toInt();
+            preset.background_color_green = settings.value("background_color_green").toInt();
+            preset.background_color_red = settings.value("background_color_red").toInt();
+            preset.background_color_alpha = settings.value("background_color_alpha").toInt();*/
+            preset.blur_filter = settings.value("blur_filter").toInt();
+            preset.blur_normalize = settings.value("blur_normalize").toBool();
+            preset.blur_x = settings.value("blur_x").toInt();
+            preset.blur_y = settings.value("blur_y").toInt();
+            preset.blur_sx = settings.value("blur_sx").toInt();
+            preset.blur_sx = settings.value("blur_sx").toInt();
+            preset.blur_depth = settings.value("blur_depth").toInt();
             preset.rotation_degrees = settings.value("rotation_degrees").toInt();
             preset.increase_boundaries = settings.value("increase_boundaries").toBool();
             preset.flip_image = settings.value("flip_image").toBool();
@@ -1843,77 +2219,29 @@ void BatchItImage::LoadPresets()
     }
 
     // Add preset titles into all preset combo boxes.
-    QComboBox* preset_comboboxes[]{ ui.comboBox_Preset_1, ui.comboBox_Preset_2, ui.comboBox_Preset_3 };
-    AddPresetsToComboBox(&preset_list, preset_comboboxes, 3);
-    //AddPresetsToComboBox(&preset_list, &ui.comboBox_Preset_1);
+    AddPresetsToComboBox(&preset_list, std::vector<QComboBox*>{ ui.comboBox_Preset_1, ui.comboBox_Preset_2, ui.comboBox_Preset_3 });
     ChangePreset(cspi);
 
     // Load selected preset data into ui.
     LoadPreset(preset_list.at(current_selected_preset));
 }
 
-/// <summary>
-/// Open dialog allowing user to change any preset description.
-/// </summary>
-void BatchItImage::ChangePresetDescription()
+void BatchItImage::CreateNewPreset()
 {
-    DEBUG("ChangePresetDescription");
-    DialogEditPresetDesc* epc_window = new DialogEditPresetDesc(
-        "Change Preset Description",
-        "Change Title Description of Currently Selected Preset.",
-        &preset_list,
-        current_selected_preset,
-        this
-    );
-    epc_window->exec();
-    QComboBox* preset_comboboxes[]{ ui.comboBox_Preset_1, ui.comboBox_Preset_2, ui.comboBox_Preset_3 };
-    AddPresetsToComboBox(&preset_list, preset_comboboxes, 3);
-    SavePreset(true);
-    delete epc_window;
+    int new_preset_index = preset_list.size();
+    qDebug() << "CreateNewPreset: " << new_preset_index;
+    
+    Preset new_preset;
+    new_preset.index = new_preset_index;
+    new_preset.description = "New Preset";
+    preset_list.push_back({ new_preset });
+
+    ChangePresetDescription(new_preset_index, "Add New Preset", "Add Description for New Preset."); // TODO: text -> UIData
 }
 
-/// <summary>
-/// [Static] Add preset descriptions to one or more combo boxes.
-/// </summary>
-/// <param name="preset_list">--Pointer to the preset list.</param>
-/// <param name="preset_cb">--Pointer to one or more combo boxes.</param>
-/// <param name="count">--The amount of combo boxes.</param>
-void BatchItImage::AddPresetsToComboBox(std::vector<Preset>* preset_list, QComboBox* preset_cb[], uint count)
-{
-    for (uint x = 0; x < count; x++) {
-        preset_cb[x]->blockSignals(true);
-        preset_cb[x]->clear();
-
-        for (int i = 0; i < preset_list->size(); i++) {
-
-            QString preset_text = "[Preset #" + QVariant(i + 1).toString() + "] "; // TODO: add to UI Text/Data?
-
-            preset_cb[x]->insertItem(i,
-                preset_text + preset_list->at(i).description,
-                QString::fromStdString("Preset" + std::to_string(i))
-            );
-            preset_cb[x]->setItemData(i,
-                preset_list->at(i).description,
-                Qt::ToolTipRole
-            );
-            preset_cb[x]->setItemData(i,
-                preset_list->at(i).description,
-                Qt::StatusTipRole
-            );
-        }
-        preset_cb[x]->setStatusTip(preset_cb[x]->currentData(Qt::StatusTipRole).toString());
-        preset_cb[x]->setToolTip(preset_cb[x]->currentData(Qt::ToolTipRole).toString());
-        preset_cb[x]->blockSignals(false);
-    }
-}
-
-/// <summary>
-/// Dialog asking user to save or discard any changes made to current preset before editing images.
-/// </summary>
-/// <returns>True if editing of images aborted by user.</returns>
 bool BatchItImage::SavePresetDialog()
 {
-    m_window = new MessageWindow(
+    m_window = new MessageWindow( // TODO: text -> UIData
         "Save Current Preset",
         "Before editing any images, with the current settings, would you like to \"Save/Discard\" those settings to the currently selected preset?\nYou may also choose to \"Abort\" the editing of images.",
         QDialogButtonBox::Save | QDialogButtonBox::Discard | QDialogButtonBox::Abort,
@@ -1921,7 +2249,7 @@ bool BatchItImage::SavePresetDialog()
     );
     bool abort = false;
     bool* abort_p = &abort;
-    connect(m_window, &MessageWindow::ButtonClicked, 
+    Q_ASSERT(connect(m_window, &MessageWindow::buttonClicked,
         [=](QDialogButtonBox::StandardButton button_clicked) {
             if (QDialogButtonBox::Save & button_clicked)
                 SavePreset();
@@ -1932,19 +2260,50 @@ bool BatchItImage::SavePresetDialog()
                 *abort_p = abort;
             }
         }
-    );
+    ));
     m_window->exec();
     delete m_window;
     return abort;
 }
 
-/// <summary>
-/// Start editing and saving images in file tree (in another thread).
-/// </summary>
+void BatchItImage::AddPresetsToComboBox(std::vector<Preset>* preset_list, std::vector<QComboBox*> preset_cb) // Static
+{
+    for (uint x = 0; x < preset_cb.size(); x++) {
+        preset_cb.at(x)->blockSignals(true);
+        preset_cb.at(x)->clear();
+
+        for (int i = 0; i < preset_list->size(); i++) {
+
+            QString preset_text = "[Preset #" + QVariant(i + 1).toString() + "] ";
+
+            preset_cb.at(x)->insertItem(i,
+                preset_text + preset_list->at(i).description,
+                QString::fromStdString("Preset" + std::to_string(i))
+            );
+            preset_cb.at(x)->setItemData(i,
+                preset_list->at(i).description,
+                Qt::ToolTipRole
+            );
+            preset_cb.at(x)->setItemData(i,
+                preset_list->at(i).description,
+                Qt::StatusTipRole
+            );
+        }
+        preset_cb.at(x)->setStatusTip(preset_cb.at(x)->currentData(Qt::StatusTipRole).toString());
+        preset_cb.at(x)->setToolTip(preset_cb.at(x)->currentData(Qt::ToolTipRole).toString());
+        preset_cb.at(x)->blockSignals(false);
+    }
+}
+
+uint BatchItImage::CurrentSelectedPreset()
+{
+    return current_selected_preset;
+}
+
 void BatchItImage::EditAndSave()
 {
     DEBUG("Edit And Save...");
-
+    
     // TODO: if current preset settings are not saved, ask to save them now before editing images
     // Save Current, Save New, Cancel... all preset ui elements would need to trigger a "changed and not saved" flag
     if (SavePresetDialog()) {
@@ -1968,7 +2327,16 @@ void BatchItImage::EditAndSave()
             ui.comboBox_Resample->currentData().toInt(),
             ui.dial_Rotation->value(),
             ui.checkBox_IncreaseBounds->isChecked(),
-            ui.checkBox_FlipImage->isChecked()
+            ui.checkBox_FlipImage->isChecked(),
+            ui.comboBox_BorderType->currentData().toInt(),
+            // TODO: background color
+            ui.comboBox_BlurFilter->currentData().toInt(),
+            ui.checkBox_BlurNormalize->isChecked(),
+            ui.verticalSlider_BlurX1->value(),
+            ui.verticalSlider_BlurY1->value(),
+            ui.verticalSlider_BlurX2->value(),
+            ui.verticalSlider_BlurY2->value(),
+            ui.verticalSlider_BlurD->value()
         );
 
         // Add Callback function when edit finishes, send data to SaveImageFile()
@@ -1988,12 +2356,6 @@ void BatchItImage::EditAndSave()
     }
 }
 
-/// <summary>
-/// Save edited image file using the current ui options.
-/// </summary>
-/// <param name="image_index">--Image index in current list of images to be edited.</param>
-/// <param name="image_editor">--Pointer to the ImageEditor used to edit image and must be deleted once finished.</param>
-//void BatchItImage::SaveImageFile(cv::Mat* image, uint image_edits_made, int image_index, ImageEditor* image_editor)
 void BatchItImage::SaveImageFile(int image_index, ImageEditor* image_editor)
 {
     DEBUG4("SaveImageFile: ", image_index, ", Edit-Code: ", image_editor->GetImageEditsMade());
@@ -2030,7 +2392,6 @@ void BatchItImage::SaveImageFile(int image_index, ImageEditor* image_editor)
     if (ui.groupBox_ChangeFormat->isChecked()) {
         extension = ui.comboBox_ImageFormat->currentData().toString().toStdString();
     }
-    
     ImageSaver* image_saver = new ImageSaver(
         image_editor->GetImage(),
         current_file_metadata_list.at(image_index).path,
@@ -2074,10 +2435,19 @@ void BatchItImage::UpdateLog(ImageEditor* edited_image, ImageSaver* saved_image)
     delete saved_image;
 }
 
-/// <summary>
-/// Check for any directories and add any files found to the list before sending it too BuildFileMetadataList(). 
-/// </summary>
-/// <param name="file_list">--List of file and/or directory paths.</param>
+void BatchItImage::LoadImageFiles()
+{
+    QStringList files = QFileDialog::getOpenFileNames(
+        this,
+        "Select one or more image files to load",
+        qdefault_path, // TODO: Default config setting, "recent"
+        supported_image_extensions_dialog_str
+    );
+    if (not files.empty()) {
+        AddNewFiles(files);
+    }
+}
+
 void BatchItImage::AddNewFiles(QStringList file_list)
 {
     // Create new updated file list from files found in directories.
@@ -2106,12 +2476,6 @@ void BatchItImage::AddNewFiles(QStringList file_list)
     //DebugPrintList(current_file_metadata_list, "current_file_metadata_list");
 }
 
-/// <summary>
-/// Iterate over a directory and append every supported image file found to a list.
-/// </summary>
-/// <typeparam name="DirectoryIter"></typeparam>
-/// <param name="iterator">--"directory_iterator" or "recursive_directory_iterator"</param>
-/// <returns>QStringList of file paths.</returns>
 template<typename DirectoryIter>QStringList BatchItImage::IterateDirectory(DirectoryIter iterator)
 {
     QStringList updated_file_list;
@@ -2127,13 +2491,6 @@ template<typename DirectoryIter>QStringList BatchItImage::IterateDirectory(Direc
                     break;
                 }
             }
-            /*if (std::find(supported_images.begin(), supported_images.end(), file_ext) != supported_images.end()) {
-                QString file = QString::fromStdString(dir_entry.path().string());
-                updated_file_list.append(file);
-            }
-            else {
-                DEBUG4("-> ", file_ext, " files not supported: ", dir_entry);
-            }*/
         }
         else {
             DEBUG2("Not a file: ", dir_entry);
@@ -2142,10 +2499,6 @@ template<typename DirectoryIter>QStringList BatchItImage::IterateDirectory(Direc
     return updated_file_list;
 }
 
-/// <summary>
-/// Build a list of files with it's metadata each on another thread. Results will be sent to HandleFileMetadata().
-/// </summary>
-/// <param name="file_list">--List of file paths.</param>
 void BatchItImage::BuildFileMetadataList(const QStringList file_list)
 {
     std::string file_path_str;
@@ -2171,21 +2524,21 @@ void BatchItImage::BuildFileMetadataList(const QStringList file_list)
                 // Start a new thread to build a file's metadata. Results will be sent to HandleFileMetadata(). https://wiki.qt.io/QThreads_general_usage
                 FileMetadataWorker* new_fm_worker = new FileMetadataWorker(file_path_str, load_order, this);
                 QThread* thread = new QThread();
-                connect(new_fm_worker, &FileMetadataWorker::FileMetadataReady, new_fm_worker, &FileMetadataWorker::deleteLater);
-                connect(new_fm_worker, &FileMetadataWorker::FileMetadataReady, thread, &QThread::quit); // (thread, &QThread::finished,...) could maybe work too
-                connect(thread, SIGNAL(started()), new_fm_worker, SLOT(GetFileMetadata()));
-                //connect(new_fm_worker, SIGNAL(FileMetadataReady(std::vector<struct FileMetadata>)), this, SLOT(HandleFileMetadata(std::vector<struct FileMetadata>)));
-                connect(new_fm_worker, SIGNAL(FileMetadataReady(FileMetadata*)), this, SLOT(HandleFileMetadata(FileMetadata*)));
+                Q_ASSERT(connect(new_fm_worker, &FileMetadataWorker::fileMetadataReady, new_fm_worker, &FileMetadataWorker::deleteLater));
+                Q_ASSERT(connect(new_fm_worker, &FileMetadataWorker::fileMetadataReady, thread, &QThread::quit)); // (thread, &QThread::finished,...) could maybe work too
+                Q_ASSERT(connect(thread, SIGNAL(started()), new_fm_worker, SLOT(getFileMetadata())));
+                //connect(new_fm_worker, SIGNAL(fileMetadataReady(std::vector<struct FileMetadata>)), this, SLOT(HandleFileMetadata(std::vector<struct FileMetadata>)));
+                Q_ASSERT(connect(new_fm_worker, SIGNAL(fileMetadataReady(FileMetadata*)), this, SLOT(HandleFileMetadata(FileMetadata*))));
                 new_fm_worker->moveToThread(thread);
                 thread->start();
-                DEBUG("- Thread Worker Created -");
+                DEBUG("- QThread Worker Created -");
             }
             else {
                 // TODO: Test this
                 //MetadataBuilder* mb = new MetadataBuilder(file_path_str, load_order);
                 // Start the process on another thread and add a callback function when finished.
-                //std::future<void> worker_thread = std::async(&MetadataBuilder::GetFileMetadata, mb);
-                //auto worker_thread = std::thread(&MetadataBuilder::GetFileMetadata, mb);
+                //std::future<void> worker_thread = std::async(&MetadataBuilder::getFileMetadata, mb);
+                //auto worker_thread = std::thread(&MetadataBuilder::getFileMetadata, mb);
                 //mb->AddExitCallback(std::bind(&BatchItImage::HandleFileMetadata, this, std::placeholders::_1));
             }
             emit progressMade();
@@ -2193,10 +2546,6 @@ void BatchItImage::BuildFileMetadataList(const QStringList file_list)
     }
 }
 
-/// <summary>
-/// A callback function that handles a file's metadata after it is made by adding it to the current list and then file tree.
-/// </summary>
-/// <param name="file_metadata">--A pointer to the metadata.</param>
 void BatchItImage::HandleFileMetadata(FileMetadata* file_metadata)
 {
     DEBUG2("HandleFileMetadata", file_metadata->to_string());
@@ -2228,12 +2577,12 @@ void BatchItImage::HandleFileMetadata(FileMetadata* file_metadata)
                 QDialogButtonBox::Ignore,
                 this
             );
-            connect(m_window, &MessageWindow::ButtonClicked,
+            Q_ASSERT(connect(m_window, &MessageWindow::buttonClicked,
                 [this](QDialogButtonBox::StandardButton button) {
                     //DEBUG2("Button: ", button);
                     m_window_shown = false;
                     delete m_window;
-                });
+                }));
             m_window->show();
             m_window_shown = true;
         }
@@ -2254,11 +2603,6 @@ void BatchItImage::HandleFileMetadata(FileMetadata* file_metadata)
 //    delete mb;
 //}
 
-/// <summary>
-/// Insert a file into the tree widget from the list of file metadata.
-/// </summary>
-/// <param name="file_index">--An index from "current_file_metadata_list"</param>
-/// <param name="sorted_column">--The column index that was last sorted. Default value is -1/none.</param>
 void BatchItImage::LoadFileIntoTree(int file_index, int sorted_column)
 {
     // TODO: Styles?
@@ -2336,10 +2680,6 @@ void BatchItImage::LoadFileIntoTree(int file_index, int sorted_column)
     emit progressMade();
 }
 
-/// <summary>
-/// Get the top level index of the current row highlighted in the file tree.
-/// </summary>
-/// <returns>Only the index of the top level row is returned.</returns>
 int BatchItImage::GetCurrentFileTreeRow()
 {
     int current_file_tree_row = ui.treeWidget_FileInfo->currentIndex().row();
@@ -2349,10 +2689,6 @@ int BatchItImage::GetCurrentFileTreeRow()
     return current_file_tree_row;
 }
 
-/// <summary>
-/// Slot event called when file tree check box changed.
-/// </summary>
-/// <param name="checked">--Check box toggle.</param>
 void BatchItImage::FileSelectionChange(bool checked)
 {
     int current_file_tree_row = ui.treeWidget_FileInfo->currentIndex().row();
@@ -2360,9 +2696,6 @@ void BatchItImage::FileSelectionChange(bool checked)
     current_file_metadata_list.at(current_file_tree_row).selected = checked;
 }
 
-/// <summary>
-/// Resize all columns to fit content in file tree.
-/// </summary>
 void BatchItImage::ResizeFileTreeColumns()
 {
     DEBUG("ResizeFileTreeColumns");
@@ -2372,10 +2705,6 @@ void BatchItImage::ResizeFileTreeColumns()
     }
 }
 
-/// <summary>
-/// Sort a column in the file tree widget by sorting the list of file metadata then reinserting it back into the file tree.
-/// </summary>
-/// <param name="index">--The selected column index.</param>
 void BatchItImage::SortFileTreeByColumn(int index)
 {
     DEBUG4("Column Clicked", index, ", Sort Order: ", current_file_sort_order);
@@ -2488,73 +2817,6 @@ void BatchItImage::SortFileTreeByColumn(int index)
     ui.treeWidget_FileInfo->header()->setSortIndicatorShown(true);
 }
 
-/// <summary>
-/// Convert bytes into a formatted file size string -> KB -> MB -> GB -> TB.
-/// </summary>
-/// <param name="bytes">--File size in bytes.</param>
-/// <returns>A Formatted String - Example: " 1.37 MB "</returns>
-std::string BatchItImage::BytesToFileSizeString(std::uintmax_t bytes)
-{
-    std::string file_size_str;
-    unsigned int kb = 1024;
-    unsigned int mb = 1048576;
-    unsigned int gb = 1073741824;
-    unsigned long long tb = 1099511627776;
-
-    auto removeTrailingZeros = [&](std::string suffix = "")
-        {
-            file_size_str.erase(file_size_str.find_last_not_of('0') + 1, std::string::npos);
-            file_size_str.erase(file_size_str.find_last_not_of('.') + 1, std::string::npos);
-            //size_t last = file_size_str.find_last_not_of("0");
-            //file_size_str = file_size_str.substr(0, (last + 1));
-            file_size_str += suffix;
-        };
-
-    if (bytes > tb) {
-        file_size_str = std::to_string(round(static_cast<double>(bytes) / tb * 100) / 100);
-        removeTrailingZeros(" TB ");
-    }
-    else if (bytes > gb) {
-        file_size_str = std::to_string(round(static_cast<double>(bytes) / gb * 100) / 100);
-        removeTrailingZeros(" GB ");
-    }
-    else if (bytes > mb) {
-        file_size_str = std::to_string(round(static_cast<double>(bytes) / mb * 100) / 100);
-        removeTrailingZeros(" MB ");
-    }
-    else if (bytes > kb) {
-        file_size_str = std::to_string(round(static_cast<double>(bytes) / kb * 100) / 100);
-        removeTrailingZeros(" KB ");
-    }
-    else {
-        file_size_str = std::to_string(bytes) + " B. ";
-    }
-
-    return " " + file_size_str;
-}
-
-/// <summary>
-/// Show open file dialog allowing user to load one or more image files.
-/// </summary>
-void BatchItImage::LoadImageFiles()
-{
-    QStringList files = QFileDialog::getOpenFileNames(
-        this,
-        "Select one or more image files to load",
-        qdefault_path, // TODO: Default config setting, "recent"
-        supported_image_extensions_dialog_str
-    );
-    if (not files.empty()) {
-        AddNewFiles(files);
-    }
-}
-
-/// <summary>
-/// Overridden protected function that watches an objects events.
-/// </summary>
-/// <param name="watched">--Widget</param>
-/// <param name="event"></param>
-/// <returns>If true the event has been intercepted, no pass-through.</returns>
 bool BatchItImage::eventFilter(QObject* watched, QEvent* event) 
 {
     //DEBUG4("Object Watched: ", watched->objectName().toStdString(), ", eventFilter'd: ", event->type());
@@ -2575,15 +2837,8 @@ bool BatchItImage::eventFilter(QObject* watched, QEvent* event)
     return QWidget::eventFilter(watched, event);
 }
 
-/// <summary>
-/// Overridden protected function that intercepts file urls dropped.
-/// </summary>
-/// <param name="event"></param>
 void BatchItImage::dropEvent(QDropEvent* event)
 {
-    //qDebug() << "dropEvent" << event;
-    //event->acceptProposedAction();
-
     if (event->mimeData()->hasUrls()) {
         QStringList file_list;
         QList<QUrl> urls;
@@ -2591,11 +2846,7 @@ void BatchItImage::dropEvent(QDropEvent* event)
         urls = event->mimeData()->urls();
         for (it = urls.begin(); it != urls.end(); ++it) {
             // TODO: check if file is of a supported image format/extension or just let opencv detect image later?
-            //DEBUG2("File Dropped (local): ", it->toLocalFile().toStdString());
-            //DEBUG2("File Dropped (path): ", it->path().toStdString());
-            //DEBUG2("File Dropped (display): ", it->toDisplayString().toStdString());
             file_list.append(it->toLocalFile());
-            //file_list.append(it->toDisplayString());
         }
         AddNewFiles(file_list);
     }
@@ -2609,10 +2860,6 @@ void BatchItImage::dragMoveEvent(QDragMoveEvent* event)
     event->acceptProposedAction();
 }
 
-/// <summary>
-/// Overridden protected function that can intercept keyboard key presses.
-/// </summary>
-/// <param name="event"></param>
 void BatchItImage::keyPressEvent(QKeyEvent* event)
 {
     if (event->key() == Qt::Key_Delete) {
@@ -2621,10 +2868,6 @@ void BatchItImage::keyPressEvent(QKeyEvent* event)
     }
 }
 
-/// <summary>
-/// Confirmation popup asking user how to handle the deleting of files in file tree.
-/// </summary>
-/// <param name="clear_all">--If true will clear file list entirely, else deletes are selective.</param>
 void BatchItImage::DeleteConfirmationPopup(bool clear_all)
 {
     if (ui.treeWidget_FileInfo->hasFocus()) {
@@ -2647,7 +2890,7 @@ void BatchItImage::DeleteConfirmationPopup(bool clear_all)
                     this
                 );
             }
-            connect(m_window, SIGNAL(ButtonClicked(QDialogButtonBox::StandardButton)), this, SLOT(RemoveFileFromTree(QDialogButtonBox::StandardButton)));
+            connect(m_window, SIGNAL(buttonClicked(QDialogButtonBox::StandardButton)), this, SLOT(RemoveFileFromTree(QDialogButtonBox::StandardButton)));
             m_window->setModal(true); // Block parent window inputs. exec() = auto modal.
             //DEBUG(m_window->exec()); //QDialog::Accepted ?
             m_window->show();
@@ -2655,12 +2898,6 @@ void BatchItImage::DeleteConfirmationPopup(bool clear_all)
     }
 }
 
-/// <summary>
-/// Check if file path is already in a file list.
-/// </summary>
-/// <param name="path">--File path</param>
-/// <param name="list">--List of file metadata</param>
-/// <returns>Index pointing to where the path was found in list.</returns>
 int BatchItImage::IsFileInList(std::string path, std::vector<FileMetadata> list)
 {
     const auto it = std::find_if(list.begin(), list.end(),
@@ -2670,13 +2907,7 @@ int BatchItImage::IsFileInList(std::string path, std::vector<FileMetadata> list)
     }
     return -1;
 }
-/// <summary>
-/// Check if file path is already in a file list.
-/// </summary>
-/// <param name="path">--File path</param>
-/// <param name="list">--List of file metadata</param>
-/// <param name="search_range">--A range to search, {start, end}.</param>
-/// <returns>Index pointing to where the path was found in list.</returns>
+
 int BatchItImage::IsFileInList(std::string path, std::vector<FileMetadata> list, const size_t search_range[2])
 {
     const auto it = std::find_if(list.begin() + search_range[0], list.begin() + search_range[1],
@@ -2686,12 +2917,7 @@ int BatchItImage::IsFileInList(std::string path, std::vector<FileMetadata> list,
     }
     return -1;
 }
-/// <summary>
-/// Check if file path is already in a file list.
-/// </summary>
-/// <param name="path">--File path</param>
-/// <param name="list">--List of file metadata</param>
-/// <returns>Iterator where the path was found in list.</returns>
+
 std::vector<FileMetadata>::iterator BatchItImage::IsFileInListIterator(std::string path, std::vector<FileMetadata> list)
 {
     const auto it = std::find_if(list.begin(), list.end(),
@@ -2699,10 +2925,6 @@ std::vector<FileMetadata>::iterator BatchItImage::IsFileInListIterator(std::stri
     return it;
 }
 
-/// <summary>
-/// Remove one or more file rows from file tree.
-/// </summary>
-/// <param name="button_clicked">--Based on a clicked button's role delete one, multiple, or all rows.</param>
 void BatchItImage::RemoveFileFromTree(const QDialogButtonBox::StandardButton& button_clicked)
 {
     int current_file_tree_row = GetCurrentFileTreeRow(); // this should never be -1, if it is something is changing it between this and DeleteConfirmationPopup
@@ -2768,11 +2990,6 @@ void BatchItImage::RemoveFileFromTree(const QDialogButtonBox::StandardButton& bu
     //DebugPrintList(deleted_file_metadata_list, "deleted_file_metadata_list");
 }
 
-/// <summary>
-/// Delete all widget objects in a widget tree's row or every row if "row_index" is not set.
-/// </summary>
-/// <param name="tree">--The tree widget</param>
-/// <param name="row_index">--The row to delete. Default all rows.</param>
 void BatchItImage::DeleteTreeItemObjects(QTreeWidget* tree, int row_index)
 {
     if (row_index > -1) {
@@ -2796,9 +3013,46 @@ void BatchItImage::DeleteTreeItemObjects(QTreeWidget* tree, int row_index)
     }
 }
 
-/// <summary>
-/// Add/insert special data from a combo box representing specific metadata to a line edit.
-/// </summary>
+std::string BatchItImage::BytesToFileSizeString(std::uintmax_t bytes)
+{
+    std::string file_size_str;
+    unsigned int kb = 1024;
+    unsigned int mb = 1048576;
+    unsigned int gb = 1073741824;
+    unsigned long long tb = 1099511627776;
+
+    auto removeTrailingZeros = [&](std::string suffix = "")
+        {
+            file_size_str.erase(file_size_str.find_last_not_of('0') + 1, std::string::npos);
+            file_size_str.erase(file_size_str.find_last_not_of('.') + 1, std::string::npos);
+            //size_t last = file_size_str.find_last_not_of("0");
+            //file_size_str = file_size_str.substr(0, (last + 1));
+            file_size_str += suffix;
+        };
+
+    if (bytes > tb) {
+        file_size_str = std::to_string(round(static_cast<double>(bytes) / tb * 100) / 100);
+        removeTrailingZeros(" TB ");
+    }
+    else if (bytes > gb) {
+        file_size_str = std::to_string(round(static_cast<double>(bytes) / gb * 100) / 100);
+        removeTrailingZeros(" GB ");
+    }
+    else if (bytes > mb) {
+        file_size_str = std::to_string(round(static_cast<double>(bytes) / mb * 100) / 100);
+        removeTrailingZeros(" MB ");
+    }
+    else if (bytes > kb) {
+        file_size_str = std::to_string(round(static_cast<double>(bytes) / kb * 100) / 100);
+        removeTrailingZeros(" KB ");
+    }
+    else {
+        file_size_str = std::to_string(bytes) + " B. ";
+    }
+
+    return " " + file_size_str;
+}
+
 void BatchItImage::AddTextToFileName()
 {
     // Get Text
@@ -2825,9 +3079,6 @@ void BatchItImage::AddTextToFileName()
     ui.lineEdit_FileName->setText(cur_qtext);
 }
 
-/// <summary>
-/// Makes sure ui lineEdit_RelativePath uses platform specific slashes, converting all in current text. 
-/// </summary>
 void BatchItImage::CheckRelativePath()
 {
     QString existing_text = ui.lineEdit_RelativePath->text();
@@ -2842,9 +3093,6 @@ void BatchItImage::CheckRelativePath()
     ui.lineEdit_RelativePath->setText(QString::fromStdString(new_rel_path));
 }
 
-/// <summary>
-/// Check if path from ui lineEdit_AbsolutePath exists and if it doesn't, replace text with last existing path or a default path.
-/// </summary>
 void BatchItImage::CheckAbsolutePath()
 {
     std::string path = ui.lineEdit_AbsolutePath->text().toStdString();
@@ -2868,10 +3116,6 @@ void BatchItImage::CheckAbsolutePath()
     }
 }
 
-/// <summary>
-/// Opens a directory dialog to obtain an existing directory path.
-/// </summary>
-/// <returns>A QString directory path.</returns>
 QString BatchItImage::GetSaveDirectoryPath()
 {
     QString qpath = GetLastExistingSavePath();
@@ -2891,10 +3135,6 @@ QString BatchItImage::GetSaveDirectoryPath()
     }
 }
 
-/// <summary>
-/// Get the last existing directory path or a default path if none.
-/// </summary>
-/// <returns>A QString directory path.</returns>
 QString BatchItImage::GetLastExistingSavePath()
 {
     if (last_existing_save_path.empty())
@@ -2903,15 +3143,7 @@ QString BatchItImage::GetLastExistingSavePath()
         return QString::fromStdString(last_existing_save_path);
 }
 
-/// <summary>
-/// Find and replace all matched text.
-/// </summary>
-/// <param name="str">--The text to search.</param>
-/// <param name="from">--Find this text.</param>
-/// <param name="to">--Replace with this text</param>
-/// <param name="no_really_all">--If true will include cases where "to" is a substring of "from". Default is false.</param>
-/// <returns>An edited string.</returns>
-const std::string BatchItImage::ReplaceAll(std::string str, const std::string& from, const std::string& to, bool no_really_all) {
+const std::string BatchItImage::ReplaceAll(std::string str, const std::string& from, const std::string& to, bool no_really_all) { // Static
     size_t start_pos = 0;
     while ((start_pos = str.find(from, start_pos)) != std::string::npos) {
         str.replace(start_pos, from.length(), to);
