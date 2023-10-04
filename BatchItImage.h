@@ -12,25 +12,6 @@
 #include "ui_MessageWindow.h"
 
 
-class FileMetadataWorker : public QObject
-{
-    Q_OBJECT
-public:
-    FileMetadataWorker(std::string file, int load_order = 0, QObject* parent = nullptr);
-    ~FileMetadataWorker();
-private:
-    std::string file_path;
-    std::vector<struct FileMetadata>* current_file_metadata_list;
-    FileMetadata* file_metadata = new FileMetadata{ 0, "", 0, 0, 0, 0, 0, false };
-    int load_order = 0;
-private slots:
-    void GetFileMetadata();
-signals:
-    //void FileMetadataReady(const std::vector<struct FileMetadata> &file_list);
-    void FileMetadataReady(FileMetadata* file_metadata);
-};
-
-
 class MessageWindow : public QDialog 
 {
     Q_OBJECT
@@ -54,11 +35,12 @@ class DialogEditPresetDesc : public QDialog
 {
     Q_OBJECT
 public:
-    DialogEditPresetDesc(QString title, QString message, std::vector<Preset>* preset_list, uint current_selected_preset, QWidget* parent = nullptr);
+    DialogEditPresetDesc(QString title, QString message, std::vector<Preset>* preset_list, uint preset_index, QWidget* parent = nullptr);
     ~DialogEditPresetDesc();
     Ui::Dialog_EditPresetDesc ui;
 signals:
     void ButtonClicked(const QDialogButtonBox::StandardButton&);
+    void presetIndexSelected(int);
 private slots:
     void ButtonBoxClicked(QAbstractButton* button);
     void PresetIndexChanged(int index);
@@ -71,6 +53,33 @@ private:
 };
 
 
+/// <summary>
+/// A QObject that will take a file path and build a struct with metadata.
+/// Intended to be ran in another thread as a "Worker".
+/// Slot -> GetFileMetadata() -> Signal -> FileMetadataReady(FileMetadata*)
+/// </summary>
+/// <param name="file_path">--A file path string.</param>
+/// <param name="load_order">--This file metadata should be added now on initialization.</param>
+/// <param name="parent">--Parent QObject</param>
+class FileMetadataWorker : public QObject
+{
+    Q_OBJECT
+public:
+    FileMetadataWorker(std::string file, int load_order = 0, QObject* parent = nullptr);
+    ~FileMetadataWorker();
+private:
+    std::string file_path;
+    std::vector<struct FileMetadata>* current_file_metadata_list;
+    FileMetadata* file_metadata = new FileMetadata{ 0, "", 0, 0, 0, 0, 0, false };
+    int load_order = 0;
+private slots:
+    void GetFileMetadata();
+signals:
+    //void FileMetadataReady(const std::vector<struct FileMetadata> &file_list);
+    void FileMetadataReady(FileMetadata* file_metadata);
+};
+
+
 class BatchItImage : public QMainWindow
 {
     Q_OBJECT
@@ -79,42 +88,190 @@ public:
     BatchItImage(QWidget *parent = nullptr);
     ~BatchItImage();
 
-    void LoadInUiData();
+    /// <summary>
+    /// Save current (or all) preset to the preset list and to the user settings file.
+    /// </summary>
+    /// <param name="save_all">--Save all presets to settings file.</param>
     void SavePreset(bool save_all = false);
+    /// <summary>
+    /// Save a single preset to the settings file.
+    /// </summary>
+    /// <param name="checked">--The index of a preset in preset_list.</param>
+    void SavePresetToSettingsFile(int index);
+    /// <summary>
+    /// Load a preset's data into various UI elements.
+    /// </summary>
+    /// <param name="preset">--A preset with all image edits to be made.</param>
     void LoadPreset(Preset);
+    /// <summary>
+    /// Load presets from settings file or get defaults if none found.
+    /// </summary>
     void LoadPresets();
+    /// <summary>
+    /// Dialog asking user to save or discard any changes made to current preset before editing images.
+    /// </summary>
+    /// <returns>True if editing of images aborted by user.</returns>
     bool SavePresetDialog();
+    /// <summary>
+    /// [Static] Add preset descriptions to one or more combo boxes.
+    /// </summary>
+    /// <param name="preset_list">--Pointer to the preset list.</param>
+    /// <param name="preset_cb">--Vector of combo box pointers.</param>
+    static void AddPresetsToComboBox(std::vector<Preset>* preset_list, std::vector<QComboBox*> preset_cb);
+    /// <summary>
+    /// Insert a file into the tree widget from the list of file metadata.
+    /// </summary>
+    /// <param name="file_index">--An index from "current_file_metadata_list"</param>
+    /// <param name="sorted_column">--The column index that was last sorted. Default value is -1/none.</param>
     void LoadFileIntoTree(int, int = -1);
-    void BuildFileMetadataList(const QStringList file_list);
-    std::string BytesToFileSizeString(std::uintmax_t);
+    /// <summary>
+    /// Get the top level index of the current row highlighted in the file tree.
+    /// </summary>
+    /// <returns>Only the index of the top level row is returned.</returns>
     int GetCurrentFileTreeRow();
+    /// <summary>
+    /// Check if file path is already in a file list.
+    /// </summary>
+    /// <param name="path">--File path</param>
+    /// <param name="list">--List of file metadata</param>
+    /// <returns>Index pointing to where the path was found in list.</returns>
     int IsFileInList(std::string path, std::vector<FileMetadata> list);
+    /// <summary>
+    /// Check if file path is already in a file list.
+    /// </summary>
+    /// <param name="path">--File path</param>
+    /// <param name="list">--List of file metadata</param>
+    /// <param name="search_range">--A range to search, {start, end}.</param>
+    /// <returns>Index pointing to where the path was found in list.</returns>
     int IsFileInList(std::string path, std::vector<FileMetadata> list, const size_t search_range[2]);
+    /// <summary>
+    /// Check if file path is already in a file list.
+    /// </summary>
+    /// <param name="path">--File path</param>
+    /// <param name="list">--List of file metadata</param>
+    /// <returns>Iterator where the path was found in list.</returns>
     std::vector<FileMetadata>::iterator IsFileInListIterator(std::string path, std::vector<FileMetadata> list);
-    static void AddPresetsToComboBox(std::vector<Preset>* preset_list, QComboBox* preset_cb[], uint count = 1);
+    /// <summary>
+    /// [Static] Find and replace all matched text.
+    /// </summary>
+    /// <param name="str">--The text to search.</param>
+    /// <param name="from">--Find this text.</param>
+    /// <param name="to">--Replace with this text</param>
+    /// <param name="no_really_all">--If true will include cases where "to" is a substring of "from". Default is false.</param>
+    /// <returns>An edited string.</returns>
     static const std::string ReplaceAll(std::string str, const std::string& from, const std::string& to, bool no_really_all = false);
     
 public slots:
     void Test();
+    /// <summary>
+    /// Change the currently selected preset.
+    /// </summary>
+    /// <param name="index">--The index of the preset.</param>
     void ChangePreset(int index);
-    void ChangePresetDescription();
-    void LoadImageFiles();
-    void AddNewFiles(QStringList file_list);
-    void FileSelectionChange(bool checked);
-    void SortFileTreeByColumn(int index);
-    void RemoveFileFromTree(const QDialogButtonBox::StandardButton& role);
+    /// <summary>
+    /// Open dialog allowing user to change any preset description.
+    /// </summary>
+    /// <param name="selected_preset_index">--Index of preset to be edited.</param>
+    /// <param name="title">--Title of dialog window.</param>
+    /// <param name="message">--Label message of dialog window.</param>
+    void ChangePresetDescription(int selected_preset_index, QString title, QString message);
+    /// <summary>
+    /// Create a new preset and open a dialog to name it.
+    /// </summary>
+    void CreateNewPreset();
+    /// <summary>
+    /// Start editing and saving images in file tree (in another thread).
+    /// </summary>
     void EditAndSave();
+    /// <summary>
+    /// Show open file dialog allowing user to load one or more image files.
+    /// </summary>
+    void LoadImageFiles();
+    /// <summary>
+    /// Check for any directories and add any files found to the list before sending it too BuildFileMetadataList(). 
+    /// </summary>
+    /// <param name="file_list">--List of file and/or directory paths.</param>
+    void AddNewFiles(QStringList file_list);
+    /// <summary>
+    /// Slot event called when file tree check box changed.
+    /// </summary>
+    /// <param name="checked">--Check box toggle.</param>
+    void FileSelectionChange(bool checked);
+    /// <summary>
+    /// Sort a column in the file tree widget by sorting the list of file metadata then reinserting it back into the file tree.
+    /// </summary>
+    /// <param name="index">--The selected column index.</param>
+    void SortFileTreeByColumn(int index);
+    /// <summary>
+    /// Remove one or more file rows from file tree.
+    /// </summary>
+    /// <param name="button_clicked">--Based on a clicked button's role delete one, multiple, or all rows.</param>
+    void RemoveFileFromTree(const QDialogButtonBox::StandardButton& role);
+    /// <summary>
+    /// Add/insert special data from a combo box representing specific metadata to a line edit.
+    /// </summary>
     void AddTextToFileName(); 
+    /// <summary>
+    /// Makes sure ui lineEdit_RelativePath uses platform specific slashes, converting all in current text. 
+    /// </summary>
     void CheckRelativePath();
-    void CheckAbsolutePath();
+    /// <summary>
+    /// Opens a directory dialog to obtain an existing directory path.
+    /// </summary>
+    /// <returns>A QString directory path.</returns>
     QString GetSaveDirectoryPath();
 
 private slots:
-    void UpdateComboBoxToolTip();
+    /// <summary>
+    /// [Slot Only] Update the sender combo box status and tool tip when signal sent.
+    /// </summary>
+    void UpdateComboBoxTextTips();
+    /// <summary>
+    /// Enable specific ui options depending on which blur filter option is currently selected.
+    /// </summary>
+    /// <param name="loading_preset">--If loading presets do not insert any default values. Default is false.</param>
+    void EnableSpecificBlurOptions(bool loading_preset = false);
+    /// <summary>
+    /// Enable format specific ui options depending on which format change option is currently selected.
+    /// Each format makes use of a different set of options.
+    /// </summary>
+    /// <param name="loading_preset">--If loading presets do not insert any default values. Default is false.</param>
     void EnableSpecificFormatOptions(bool loading_preset = false);
+    /// <summary>
+    /// Build a list of files with it's metadata each on another thread. Results will be sent to HandleFileMetadata().
+    /// </summary>
+    /// <param name="file_list">--List of file paths.</param>
+    void BuildFileMetadataList(const QStringList file_list);
+    /// <summary>
+    /// A callback function that handles a file's metadata after it is made by adding it to the current list and then file tree.
+    /// </summary>
+    /// <param name="file_metadata">--A pointer to the metadata.</param>
     void HandleFileMetadata(FileMetadata* file_metadata);
-    //void HandleFileMetadata(const std::vector<struct FileMetadata> &file_metadata);
+    /// <summary>
+    /// Save edited image file using the current ui options.
+    /// </summary>
+    /// <param name="image_index">--Image index in current list of images to be edited.</param>
+    /// <param name="image_editor">--Pointer to the ImageEditor used to edit image.</param>
+    void SaveImageFile(int image_index, ImageEditor* image_editor);
+    /// <summary>
+    /// Update log with all the image edits made and file saving details.
+    /// </summary>
+    /// <param name="image_editor">--Pointer to the ImageEditor used to edit image.</param>
+    /// <param name="saved_image">--Pointer the the ImageSaver used to save image.</param>
+    void UpdateLog(ImageEditor* edited_image, ImageSaver* saved_image);
+    /// <summary>
+    /// Resize all columns to fit content in file tree.
+    /// </summary>
+    void ResizeFileTreeColumns();
+    /// <summary>
+    /// Confirmation popup asking user how to handle the deleting of files in file tree.
+    /// </summary>
+    /// <param name="clear_all">--If true will clear file list entirely, else deletes are selective.</param>
     void DeleteConfirmationPopup(bool clear_all = false);
+    /// <summary>
+    /// Check if path from ui lineEdit_AbsolutePath exists and if it doesn't, replace text with last existing path or a default path.
+    /// </summary>
+    void CheckAbsolutePath();
 
 signals:
     void valueChanged(int value);
@@ -135,9 +292,16 @@ private:
     };
     const struct SortOrder { enum { ASCENDING1, DESCENDING1, ASCENDING2, DESCENDING2 }; };
     const struct ActionMenu { enum { action_add, action_delete, action_clear, action_select, action_view, action_preview, COUNT }; };
+    const struct ResizeOptions { enum { groupBox_Resize, checkBox_KeepAspectRatio, COUNT }; };
+    const struct BackgroundOptions { enum { groupBox_Background, pushButton_ColorPicker, label_ColorPreview, COUNT }; };
+    const struct BlurOptions {
+        enum { groupBox_Blur, checkBox_BlurNormalize, label_BlurX1, label_BlurY1, label_BlurX2, label_BlurY2, label_BlurD, COUNT };
+    };
+    const struct RotationOptions { enum { groupBox_Rotation, checkBox_IncreaseBounds, checkBox_FlipImage, COUNT }; };
     const struct FilePathOptions {
-        enum { groupBox_FileRename, radioButton_Overwrite, radioButton_RenameOriginal, radioButton_NewFileName, label_Add,
-            groupBox_SaveDir, radioButton_RelativePath, radioButton_AbsolutePath, pushButton_AddBackOneDir, pushButton_FindAbsolutePath, COUNT };
+        enum { groupBox_FileRename, radioButton_Overwrite, radioButton_RenameOriginal, radioButton_NewFileName,
+            label_Add, groupBox_SaveDir, radioButton_RelativePath, radioButton_AbsolutePath, pushButton_AddBackOneDir, 
+            pushButton_FindAbsolutePath, COUNT };
     };
     const struct FormatJpegOptions {
         enum { label_FormatFlags, label_Quality, checkBox_Optimize, checkBox_Progressive,
@@ -153,10 +317,8 @@ private:
     const struct FormatExrOptions { enum { label_FormatFlags, checkBox_Optimize, checkBox_Progressive, label_Compression, COUNT }; };
     const struct FormatHdrOptions { enum { label_FormatFlags, COUNT }; };
     const struct OtherOptions { enum { tab_1, tab_2, tab_3, checkBox_SearchSubDirs, pushButton_EditAndSave, COUNT }; };
-    const struct DialogMessages { enum { action_delete, action_clear, SavePresetDialog, HandleFileMetadata, CheckAbsolutePath, COUNT }; }; // TODO
-    
-    UIData dialog_messages[DialogMessages::COUNT]; // TODO
-    
+    const struct DialogMessages { enum { action_delete, action_clear, SavePresetDialog, HandleFileMetadata, CheckAbsolutePath, COUNT }; };
+        
     // Tree Data
     UIData file_tree_headers[FileColumn::COUNT];
     UIData file_tree_menu_items[ActionMenu::COUNT];
@@ -164,6 +326,10 @@ private:
 
     // Tab, Label, Check Box, and Button Data
     UIData file_path_options[FilePathOptions::COUNT];
+    UIData resize_options[ResizeOptions::COUNT];
+    UIData background_options[BackgroundOptions::COUNT]; // TODO: desc
+    UIData blur_options[BlurOptions::COUNT]; // TODO: desc
+    UIData rotation_options[RotationOptions::COUNT]; // TODO: desc
     UIData format_jpeg_options[FormatJpegOptions::COUNT];
     UIData format_jp2_options[FormatJp2Options::COUNT];
     UIData format_png_options[FormatPngOptions::COUNT];
@@ -177,10 +343,11 @@ private:
     UIData other_options[OtherOptions::COUNT];
 
     // Combo Box Data
-    UIData width_selections[6];
+    UIData* width_selections = new UIData[6];
     UIData height_selections[6];
-    UIData resampling_selections[3];
-    UIData blur_filters[8];
+    UIData resampling_selections[3]; // TODO: add more Resampling Filters
+    UIData border_types[7];
+    UIData blur_filters[7];
     UIData file_name_creation[4];
     UIData image_formats[22];
     UIData format_jpeg_subsamplings[5];
@@ -191,6 +358,11 @@ private:
     UIData format_exr_compression[10];
     UIData format_hdr_compression[2];
 
+    // Other Data
+    UIData dialog_messages[DialogMessages::COUNT]; // TODO
+    UIData blur_depth_selections[6];
+    //UIData* blur_depth_selections = new UIData[6];
+
     QString supported_image_extensions_dialog_str = ""; // Built from image_formats    
 
     const QFont* font_serif = new QFont("Times", 10, QFont::Bold);
@@ -200,6 +372,7 @@ private:
     const QFont* font_mono = new QFont("New Courier", 9);
     const QFont* font_mono_bold = new QFont("New Courier", 9, QFont::Bold);
 
+    // Right Click Menu Items
     QAction* action_add;
     QAction* action_delete;
     QAction* action_clear;
@@ -207,43 +380,113 @@ private:
     QAction* action_view;
     QAction* action_preview;
 
+    // File Paths
     const std::filesystem::path default_path = std::filesystem::current_path();
     const QString qdefault_path = QString::fromStdString(default_path.string());
     std::string last_existing_load_path;
     std::string last_existing_save_path;
     std::string last_selected_format;
 
+    // Presets
     std::vector<struct Preset> preset_list;
     std::vector<struct FileMetadata> current_file_metadata_list;
     std::vector<struct FileMetadata> deleted_file_metadata_list;
     int current_selected_preset = 0;
     bool unsaved_preset_settings = false; // TODO
+
     int current_file_column_sorted = -1;
     int current_file_sort_order = -1;
     float current_load_number = 0.0f;
     float load_interval  = 0.0f;
     int last_load_count = 0;
 
-    void SetupFileTree();
-    void AddUiObjectData(QObject* object, UIData* ui_data);
-    void PopulateComboBox(QComboBox*, UIData*, int);
-    void SetupFileTreeContextMenu();
-    template<typename DirectoryIter>
-    QStringList IterateDirectory(DirectoryIter iterator);
-    void ToggleFileTreeContextMenuItems(bool enable);
-    void ResizeFileTreeColumns();
     const std::function<void()> function_ResizeFileTreeColumns = std::bind(&BatchItImage::ResizeFileTreeColumns, this);
+
+    /// <summary>
+    /// Load in all text and other ui data.
+    /// </summary>
+    void LoadInUiData();
+    /// <summary>
+    /// Setup file tree with initial settings and header titles.
+    /// </summary>
+    void SetupFileTree();
+    /// <summary>
+    /// Add display text, tooltip descriptions, and other data to various types of ui objects/widgets.
+    /// </summary>
+    /// <param name="ui_data">--An array of UIData.</param>
+    /// <param name="objects">--A list of pointers to objects/widgets.</param>
+    /// 
+    void AddUiDataTo(UIData ui_data[], std::vector<QWidget*> objects, uint count = 0);
+    /// <summary>
+    /// Add display text, tooltip descriptions, and other data to various types of ui objects/widgets.
+    /// </summary>
+    /// <param name="object">--Pointer to an object/widget.</param>
+    /// <param name="ui_data">--Pointer to a UIData.</param>
+    void AddUiDataTo(QObject* object, UIData* ui_data);
+    /// <summary>
+    /// Add items to various combo boxes which include titles, tooltip descriptions, and other data.
+    /// </summary>
+    /// <param name="cb">--Pointer to a QComboBox.</param>
+    /// <param name="items">--Data array to enter into a combo box.</param>
+    /// <param name="items_size">--Size/length of item data array.</param>
+    void PopulateComboBox(QComboBox*, UIData*, int);
+    /// <summary>
+    /// Update the a combo box status and tool tip.
+    /// </summary>
+    void UpdateComboBoxTextTips(QComboBox* cb); // unused
+    /// <summary>
+    /// Build a "right click" context menu for the file tree.
+    /// </summary>
+    void SetupFileTreeContextMenu();
+    /// <summary>
+    /// Toggle usability of certain action context menu items.
+    /// </summary>
+    /// <param name="enable">--True enabled, false disabled</param>
+    void ToggleFileTreeContextMenuItems(bool enable);
+    /// <summary>
+    /// Iterate over a directory and append every supported image file found to a list.
+    /// </summary>
+    /// <typeparam name="DirectoryIter"></typeparam>
+    /// <param name="iterator">--"directory_iterator" or "recursive_directory_iterator"</param>
+    /// <returns>QStringList of file paths.</returns>
+    template<typename DirectoryIter>QStringList IterateDirectory(DirectoryIter iterator);
+    /// <summary>
+    /// Delete all widget objects in a widget tree's row or every row if "row_index" is not set.
+    /// </summary>
+    /// <param name="tree">--The tree widget</param>
+    /// <param name="row_index">--The row to delete. Default all rows.</param>
     void DeleteTreeItemObjects(QTreeWidget* tree, int row_index = -1);
-    void SaveImageFile(int image_index, ImageEditor* image_editor);
-    void UpdateLog(ImageEditor* edited_image, ImageSaver* saved_image);
+    /// <summary>
+    /// Convert bytes into a formatted file size string -> KB -> MB -> GB -> TB.
+    /// </summary>
+    /// <param name="bytes">--File size in bytes.</param>
+    /// <returns>A Formatted String - Example: " 1.37 MB "</returns>
+    std::string BytesToFileSizeString(std::uintmax_t);
+    /// <summary>
+    /// Get the last existing directory path or a default path if none.
+    /// </summary>
+    /// <returns>A QString directory path.</returns>
     QString GetLastExistingSavePath();
 
 protected:
+    /// <summary>
+    /// Overridden protected function that watches an objects events.
+    /// </summary>
+    /// <param name="watched">--Widget</param>
+    /// <param name="event"></param>
+    /// <returns>If true the event has been intercepted, no pass-through.</returns>
     bool eventFilter(QObject* watched, QEvent* event) override;
-    //void actionEvent(QActionEvent* event) override;
+    /// <summary>
+    /// Overridden protected function that intercepts file urls dropped.
+    /// </summary>
+    /// <param name="event"></param>
     void dropEvent(QDropEvent* event) override;
     void dragEnterEvent(QDragEnterEvent* event) override;
     void dragMoveEvent(QDragMoveEvent* event) override;
+    /// <summary>
+    /// Overridden protected function that can intercept keyboard key presses.
+    /// </summary>
+    /// <param name="event"></param>
     void keyPressEvent(QKeyEvent* event) override;
 };
 
