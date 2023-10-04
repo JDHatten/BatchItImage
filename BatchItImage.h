@@ -20,9 +20,9 @@ public:
     ~MessageWindow();
     Ui::Dialog_MessageWindow ui;
 signals:
-    void ButtonClicked(const QDialogButtonBox::StandardButton&);
+    void buttonClicked(const QDialogButtonBox::StandardButton&);
 public slots:
-    void ButtonBoxClicked(QAbstractButton* button);
+    void buttonBoxClicked(QAbstractButton* button);
 protected:
     void changeEvent(QEvent* event);
     void closeEvent(QCloseEvent* event) override;
@@ -39,24 +39,24 @@ public:
     ~DialogEditPresetDesc();
     Ui::Dialog_EditPresetDesc ui;
 signals:
-    void ButtonClicked(const QDialogButtonBox::StandardButton&);
+    void buttonClicked(const QDialogButtonBox::StandardButton&);
     void presetIndexSelected(int);
 private slots:
-    void ButtonBoxClicked(QAbstractButton* button);
-    void PresetIndexChanged(int index);
+    void buttonBoxClicked(QAbstractButton* button);
+    void presetIndexChanged(int index);
 protected:
     void closeEvent(QCloseEvent* event) override;
 private:
     std::vector<Preset>* preset_list;
     uint current_selected_preset;
-    void UpdateComboBox();
+    void updateComboBox();
 };
 
 
 /// <summary>
 /// A QObject that will take a file path and build a struct with metadata.
 /// Intended to be ran in another thread as a "Worker".
-/// Slot -> GetFileMetadata() -> Signal -> FileMetadataReady(FileMetadata*)
+/// Slot -> getFileMetadata() -> Signal -> fileMetadataReady(FileMetadata*)
 /// </summary>
 /// <param name="file_path">--A file path string.</param>
 /// <param name="load_order">--This file metadata should be added now on initialization.</param>
@@ -73,10 +73,9 @@ private:
     FileMetadata* file_metadata = new FileMetadata{ 0, "", 0, 0, 0, 0, 0, false };
     int load_order = 0;
 private slots:
-    void GetFileMetadata();
+    void getFileMetadata();
 signals:
-    //void FileMetadataReady(const std::vector<struct FileMetadata> &file_list);
-    void FileMetadataReady(FileMetadata* file_metadata);
+    void fileMetadataReady(FileMetadata* file_metadata);
 };
 
 
@@ -118,6 +117,11 @@ public:
     /// <param name="preset_list">--Pointer to the preset list.</param>
     /// <param name="preset_cb">--Vector of combo box pointers.</param>
     static void AddPresetsToComboBox(std::vector<Preset>* preset_list, std::vector<QComboBox*> preset_cb);
+    /// <summary>
+    /// Returns the index of the currently selected preset.
+    /// </summary>
+    /// <returns></returns>
+    uint CurrentSelectedPreset();
     /// <summary>
     /// Insert a file into the tree widget from the list of file metadata.
     /// </summary>
@@ -391,7 +395,7 @@ private:
     std::vector<struct Preset> preset_list;
     std::vector<struct FileMetadata> current_file_metadata_list;
     std::vector<struct FileMetadata> deleted_file_metadata_list;
-    int current_selected_preset = 0;
+    uint current_selected_preset = 0;
     bool unsaved_preset_settings = false; // TODO
 
     int current_file_column_sorted = -1;
