@@ -283,11 +283,128 @@ signals:
     void progressMade(float multiplier = 1.0f);
 
 private:
-    QMainWindow* main_object;
+    //QMainWindow* main_object;
     Ui::BatchItImageClass ui;
     QString preset_settings_file;
     MessageWindow* m_window;
     bool m_window_shown = false;
+
+    // Tracks preset options changed in the ui.
+    struct OptionTracker {
+        ulong i = 1;
+        const uint NoChange = 0;
+
+        // Image Edit
+        const uint comboBox_WidthMod = i;
+        const uint spinBox_WidthNumber = iPlus(i);
+        const uint comboBox_HeightMod = iPlus(i);
+        const uint spinBox_HeightNumber = iPlus(i);
+        const uint comboBox_Resample = iPlus(i);
+        const uint checkBox_KeepAspectRatio = iPlus(i);
+
+        const uint comboBox_BorderType = iPlus(i);
+        const uint pushButton_ColorPicker = iPlus(i);
+
+        const uint comboBox_BlurFilter = iPlus(i);
+        const uint checkBox_BlurNormalize = iPlus(i);
+        const uint verticalSlider_BlurX1 = iPlus(i);
+        const uint verticalSlider_BlurY1 = iPlus(i);
+        const uint verticalSlider_BlurX2 = iPlus(i);
+        const uint verticalSlider_BlurY2 = iPlus(i);
+        const uint verticalSlider_BlurD = iPlus(i);
+
+        const uint dial_Rotation = iPlus(i);
+        const uint checkBox_IncreaseBounds = iPlus(i);
+        const uint checkBox_FlipImage = iPlus(i);
+
+        const uint groupBox_Watermark = iPlus(i);
+        const uint lineEdit_WatermarkPath = iPlus(i);
+        const uint comboBox_WatermarkLocation = iPlus(i);
+        const uint spinBox_WatermarkTransparency = iPlus(i);
+        const uint spinBox_WatermarkOffset = iPlus(i);
+
+        // Image Save
+        const uint radioButton_Overwrite = reset();
+        const uint radioButton_RenameOriginal = iPlus(i);
+        const uint radioButton_NewFileName = iPlus(i);
+        const uint lineEdit_FileName = iPlus(i);
+
+        const uint radioButton_RelativePath = iPlus(i);
+        const uint lineEdit_RelativePath = iPlus(i);
+        const uint radioButton_AbsolutePath = iPlus(i);
+        const uint lineEdit_AbsolutePath = iPlus(i);
+
+        const uint groupBox_ChangeFormat = iPlus(i);
+        const uint comboBox_ImageFormat = iPlus(i);
+        const uint comboBox_FormatFlags = iPlus(i);
+        const uint horizontalSlider_Quality = iPlus(i);
+        const uint checkBox_Optimize = iPlus(i);
+        const uint checkBox_Progressive = iPlus(i);
+        const uint spinBox_Compression = iPlus(i);
+        const uint spinBox_ExtraSetting1 = iPlus(i);
+        const uint spinBox_ExtraSetting2 = iPlus(i);
+
+        uint iPlus(uint next) {
+            return i = i + next;
+        }
+        uint reset() {
+            return i = 1;
+        }
+        std::string printAllTrackers() const {
+            return
+                "\n  NoChange:                      " + std::to_string(NoChange) +
+                "\n  comboBox_WidthMod:             " + std::to_string(comboBox_WidthMod) +
+                "\n  spinBox_WidthNumber:           " + std::to_string(spinBox_WidthNumber) +
+                "\n  comboBox_HeightMod:            " + std::to_string(comboBox_HeightMod) +
+                "\n  spinBox_HeightNumber:          " + std::to_string(spinBox_HeightNumber) +
+                "\n  comboBox_Resample:             " + std::to_string(comboBox_Resample) +
+                "\n  checkBox_KeepAspectRatio:      " + std::to_string(checkBox_KeepAspectRatio) +
+
+                "\n  comboBox_BorderType:           " + std::to_string(comboBox_BorderType) +
+                "\n  pushButton_ColorPicker:        " + std::to_string(pushButton_ColorPicker) +
+
+                "\n  comboBox_BlurFilter:           " + std::to_string(comboBox_BlurFilter) +
+                "\n  checkBox_BlurNormalize:        " + std::to_string(checkBox_BlurNormalize) +
+                "\n  verticalSlider_BlurX1:         " + std::to_string(verticalSlider_BlurX1) +
+                "\n  verticalSlider_BlurY1:         " + std::to_string(verticalSlider_BlurY1) +
+                "\n  verticalSlider_BlurX2:         " + std::to_string(verticalSlider_BlurX2) +
+                "\n  verticalSlider_BlurY2:         " + std::to_string(verticalSlider_BlurY2) +
+                "\n  verticalSlider_BlurD:          " + std::to_string(verticalSlider_BlurD) +
+
+                "\n  dial_Rotation:                 " + std::to_string(dial_Rotation) +
+                "\n  checkBox_IncreaseBounds:       " + std::to_string(checkBox_IncreaseBounds) +
+                "\n  checkBox_FlipImage:            " + std::to_string(checkBox_FlipImage) +
+
+                "\n  groupBox_Watermark:            " + std::to_string(groupBox_Watermark) +
+                "\n  lineEdit_WatermarkPath:        " + std::to_string(lineEdit_WatermarkPath) +
+                "\n  comboBox_WatermarkLocation:    " + std::to_string(comboBox_WatermarkLocation) +
+                "\n  spinBox_WatermarkTransparency: " + std::to_string(spinBox_WatermarkTransparency) +
+                "\n  spinBox_WatermarkOffset:       " + std::to_string(spinBox_WatermarkOffset) +
+
+                "\n  radioButton_Overwrite:         " + std::to_string(radioButton_Overwrite) +
+                "\n  radioButton_RenameOriginal:    " + std::to_string(radioButton_RenameOriginal) +
+                "\n  radioButton_NewFileName:       " + std::to_string(radioButton_NewFileName) +
+                "\n  lineEdit_FileName:             " + std::to_string(lineEdit_FileName) +
+
+                "\n  radioButton_RelativePath:      " + std::to_string(radioButton_RelativePath) +
+                "\n  lineEdit_RelativePath:         " + std::to_string(lineEdit_RelativePath) +
+                "\n  radioButton_AbsolutePath:      " + std::to_string(radioButton_AbsolutePath) +
+                "\n  lineEdit_AbsolutePath:         " + std::to_string(lineEdit_AbsolutePath) +
+
+                "\n  groupBox_ChangeFormat:         " + std::to_string(groupBox_ChangeFormat) +
+                "\n  comboBox_ImageFormat:          " + std::to_string(comboBox_ImageFormat) +
+                "\n  comboBox_FormatFlags:          " + std::to_string(comboBox_FormatFlags) +
+                "\n  horizontalSlider_Quality:      " + std::to_string(horizontalSlider_Quality) +
+                "\n  checkBox_Optimize:             " + std::to_string(checkBox_Optimize) +
+                "\n  checkBox_Progressive:          " + std::to_string(checkBox_Progressive) +
+                "\n  spinBox_Compression:           " + std::to_string(spinBox_Compression) +
+                "\n  spinBox_ExtraSetting1:         " + std::to_string(spinBox_ExtraSetting1) +
+                "\n  spinBox_ExtraSetting2:         " + std::to_string(spinBox_ExtraSetting2) +
+                "\n";
+        }
+    } Option;
+    ulong edit_options_changed = 0;
+    ulong save_options_changed = 0;
 
     // Enums of named objects, widgets or methods
     const struct FileColumn {
@@ -323,49 +440,50 @@ private:
     const struct OtherOptions { enum { tab_1, tab_2, tab_3, checkBox_SearchSubDirs, pushButton_EditAndSave, COUNT }; };
     const struct DialogMessages { enum { action_delete, action_clear, SavePresetDialog, HandleFileMetadata, CheckAbsolutePath, COUNT }; };
         
-    // Tree Data
-    UIData file_tree_headers[FileColumn::COUNT];
-    UIData file_tree_menu_items[ActionMenu::COUNT];
-    std::string file_tree_other_text[FileColumn::COUNT];
+    // Tree UIData (Arrays placed on the heap will be deleted after use.)
+    std::array<UIData, FileColumn::COUNT>* file_tree_headers = new std::array<UIData, FileColumn::COUNT>;
+    std::array<UIData, ActionMenu::COUNT>* file_tree_menu_items = new std::array<UIData, ActionMenu::COUNT>;
+    std::array<std::string, FileColumn::COUNT> file_tree_other_text;
 
-    // Tab, Label, Check Box, and Button Data
-    UIData file_path_options[FilePathOptions::COUNT];
-    UIData resize_options[ResizeOptions::COUNT];
-    UIData background_options[BackgroundOptions::COUNT]; // TODO: desc
-    UIData blur_options[BlurOptions::COUNT]; // TODO: desc
-    UIData rotation_options[RotationOptions::COUNT]; // TODO: desc
-    UIData format_jpeg_options[FormatJpegOptions::COUNT];
-    UIData format_jp2_options[FormatJp2Options::COUNT];
-    UIData format_png_options[FormatPngOptions::COUNT];
-    UIData format_webp_options[FormatPngOptions::COUNT];
-    UIData format_avif_options[FormatAvifOptions::COUNT];
-    UIData format_pbm_options[FormatPbmOptions::COUNT];
-    UIData format_pam_options[FormatPamOptions::COUNT];
-    UIData format_tiff_options[FormatTiffOptions::COUNT];
-    UIData format_exr_options[FormatExrOptions::COUNT];
-    UIData format_hdr_options[FormatHdrOptions::COUNT];
-    UIData other_options[OtherOptions::COUNT];
+    // Tab, Label, Check Box, and Button UIData
+    std::array<UIData, FilePathOptions::COUNT>* file_path_options = new std::array<UIData, FilePathOptions::COUNT>;
+    std::array<UIData, ResizeOptions::COUNT>* resize_options = new std::array<UIData, ResizeOptions::COUNT>;
+    std::array<UIData, BackgroundOptions::COUNT>* background_options = new std::array<UIData, BackgroundOptions::COUNT>; // TODO: desc
+    std::array<UIData, BlurOptions::COUNT>* blur_options = new std::array<UIData, BlurOptions::COUNT>; // TODO: desc
+    std::array<UIData, RotationOptions::COUNT>* rotation_options = new std::array<UIData, RotationOptions::COUNT>; // TODO: desc
 
-    // Combo Box Data
-    UIData* width_selections = new UIData[6];
-    UIData height_selections[6];
-    UIData resampling_selections[3]; // TODO: add more Resampling Filters
-    UIData border_types[7];
-    UIData blur_filters[7];
-    UIData file_name_creation[4];
-    UIData image_formats[22];
-    UIData format_jpeg_subsamplings[5];
-    UIData format_png_compression[5];
-    UIData format_pam_tupletype[6];
-    UIData format_tiff_compression[24];
-    UIData format_tiff_resolution_unit[3];
-    UIData format_exr_compression[10];
-    UIData format_hdr_compression[2];
+    std::array<UIData, FormatJpegOptions::COUNT> format_jpeg_options;
+    std::array<UIData, FormatJp2Options::COUNT> format_jp2_options;
+    std::array<UIData, FormatPngOptions::COUNT> format_png_options;
+    std::array<UIData, FormatPngOptions::COUNT> format_webp_options;
+    std::array<UIData, FormatAvifOptions::COUNT> format_avif_options;
+    std::array<UIData, FormatPbmOptions::COUNT> format_pbm_options;
+    std::array<UIData, FormatPamOptions::COUNT> format_pam_options;
+    std::array<UIData, FormatTiffOptions::COUNT> format_tiff_options;
+    std::array<UIData, FormatExrOptions::COUNT> format_exr_options;
+    std::array<UIData, FormatHdrOptions::COUNT> format_hdr_options;
+    std::array<UIData, OtherOptions::COUNT>* other_options = new std::array<UIData, OtherOptions::COUNT>;
 
-    // Other Data
-    UIData dialog_messages[DialogMessages::COUNT]; // TODO
-    UIData blur_depth_selections[6];
-    //UIData* blur_depth_selections = new UIData[6];
+    // Combo Box UIData
+    std::array<UIData, 6>* width_selections = new std::array<UIData, 6>;
+    std::array<UIData, 6>* height_selections = new std::array<UIData, 6>;
+    std::array<UIData, 3>* resampling_selections = new std::array<UIData, 3>; // TODO: add more Resampling Filters
+    std::array<UIData, 7>* border_types = new std::array<UIData, 7>;
+    std::array<UIData, 7>* blur_filters = new std::array<UIData, 7>;
+    std::array<UIData, 4>* file_name_creation = new std::array<UIData, 4>;
+    //std::array<UIData, 23>* image_formats = new std::array<UIData, 23>;
+    std::array<UIData, 23> image_formats;
+    std::array<UIData, 5> format_jpeg_subsamplings;
+    std::array<UIData, 5> format_png_compression;
+    std::array<UIData, 6> format_pam_tupletype;
+    std::array<UIData, 24> format_tiff_compression;
+    std::array<UIData, 3> format_tiff_resolution_unit;
+    std::array<UIData, 10> format_exr_compression;
+    std::array<UIData, 2> format_hdr_compression;
+
+    // Other UIData
+    std::array<UIData, DialogMessages::COUNT> dialog_messages; // TODO
+    std::array<UIData, 6> blur_depth_selections;
 
     QString supported_image_extensions_dialog_str = ""; // Built from image_formats    
 
@@ -417,27 +535,42 @@ private:
     /// <summary>
     /// Add display text, tooltip descriptions, and other data to various types of ui objects/widgets.
     /// </summary>
-    /// <param name="ui_data">--An array of UIData.</param>
+    /// <param name="ui_data">--Reference to an array of UIData.</param>
     /// <param name="objects">--A list of pointers to objects/widgets.</param>
-    /// 
-    void AddUiDataTo(UIData ui_data[], std::vector<QWidget*> objects, uint count = 0);
+    template<std::size_t array_size>void AddUiDataTo(const std::array<UIData, array_size>& ui_data, const std::vector<QWidget*>& objects);
     /// <summary>
     /// Add display text, tooltip descriptions, and other data to various types of ui objects/widgets.
     /// </summary>
     /// <param name="object">--Pointer to an object/widget.</param>
-    /// <param name="ui_data">--Pointer to a UIData.</param>
-    void AddUiDataTo(QObject* object, UIData* ui_data);
+    /// <param name="ui_data">--Reference to a UIData.</param>
+    void AddUiDataTo(QObject* object, const UIData& ui_data);
     /// <summary>
-    /// Add items to various combo boxes which include titles, tooltip descriptions, and other data.
+    /// Add items/data to various combo boxes which include titles, tooltip descriptions, and other data.
     /// </summary>
     /// <param name="cb">--Pointer to a QComboBox.</param>
-    /// <param name="items">--Data array to enter into a combo box.</param>
-    /// <param name="items_size">--Size/length of item data array.</param>
-    void PopulateComboBox(QComboBox*, UIData*, int);
+    /// <param name="ui_data">--Data array to enter into a combo box.</param>
+    template<std::size_t array_size>void PopulateComboBox(QComboBox* cb, const std::array<UIData, array_size>& ui_data);
     /// <summary>
     /// Update the a combo box status and tool tip.
     /// </summary>
+    /// <param name="">--.</param>
     void UpdateComboBoxTextTips(QComboBox* cb); // unused
+    /// <summary>
+    /// Connect all initial Ui object events (signals and slots).
+    /// </summary>
+    void UiConnections();
+    /// <summary>
+    /// Update the track changes to options.
+    /// </summary>
+    /// <param name="preset_value">--The saved preset option value.</param>
+    /// <param name="changed_option_value">--The unsaved changed option value.</param>
+    /// <param name="tracked_option">--The tracking code of changed option.</param>
+    bool UpdateOptionsChanged(int preset_value, int changed_option_value, uint tracked_option);
+    /// <summary>
+    /// Remove group of options from edit_options_changed.
+    /// </summary>
+    /// <param name="tracked_options">--Vector of tracked options.</param>
+    void RemoveOptionsChanged(std::vector<uint> tracked_options);
     /// <summary>
     /// Build a "right click" context menu for the file tree.
     /// </summary>
