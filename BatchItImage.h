@@ -294,7 +294,7 @@ private:
         ulong i = 1;
         const uint NoChange = 0;
 
-        // Image Edit
+        // Image Edit Options
         const uint comboBox_WidthMod = i;
         const uint spinBox_WidthNumber = iPlus(i);
         const uint comboBox_HeightMod = iPlus(i);
@@ -323,7 +323,7 @@ private:
         const uint spinBox_WatermarkTransparency = iPlus(i);
         const uint spinBox_WatermarkOffset = iPlus(i);
 
-        // Image Save
+        // Image Save Options
         const uint radioButton_Overwrite = reset();
         const uint radioButton_RenameOriginal = iPlus(i);
         const uint radioButton_NewFileName = iPlus(i);
@@ -403,9 +403,9 @@ private:
                 "\n";
         }
     } Option;
-    ulong edit_options_changed = 0;
-    ulong save_options_changed = 0;
-
+    ulong edit_options_change_tracker = 0;
+    ulong save_options_change_tracker = 0;
+    
     // Enums of named objects, widgets or methods
     const struct FileColumn {
         enum { FILE_SELECTED, FILE_NAME, IMAGE_DIMENSIONS, FILE_SIZE, DATE_CREATED, DATE_MODIFIED, COUNT };
@@ -560,17 +560,30 @@ private:
     /// </summary>
     void UiConnections();
     /// <summary>
-    /// Update the track changes to options.
+    /// Update an option tracker if an option changed.
     /// </summary>
+    /// <param name="tracker">--A tracker holding all the options changed.</param>
+    /// <param name="tracked_option">--The tracking code of changed option.</param>
     /// <param name="preset_value">--The saved preset option value.</param>
     /// <param name="changed_option_value">--The unsaved changed option value.</param>
-    /// <param name="tracked_option">--The tracking code of changed option.</param>
-    bool UpdateOptionsChanged(int preset_value, int changed_option_value, uint tracked_option);
+    /// <returns>The tracker</returns>
+    ulong TrackOptionChanges(ulong tracker, uint tracked_option, int preset_value, int changed_option_value);
     /// <summary>
-    /// Remove group of options from edit_options_changed.
+    /// Update an option tracker if an option changed.
     /// </summary>
-    /// <param name="tracked_options">--Vector of tracked options.</param>
-    void RemoveOptionsChanged(std::vector<uint> tracked_options);
+    /// <param name="tracker">--A tracker holding all the options changed.</param>
+    /// <param name="tracked_option">--The tracking code of changed option.</param>
+    /// <param name="preset_string">--The saved preset option string.</param>
+    /// <param name="changed_option_string">--The unsaved changed option string.</param>
+    /// <returns>The tracker</returns>
+    ulong TrackOptionChanges(ulong tracker, uint tracked_option, std::string preset_string, std::string changed_option_string);
+    /// <summary>
+    /// Remove a group of options from an option tracker.
+    /// </summary>
+    /// <param name="tracker">--A tracker holding all the options changed.</param>
+    /// <param name="tracked_options">--Vector of tracked option codes.</param>
+    /// <returns>The tracker</returns>
+    ulong RemoveOptionsChanged(ulong tracker, std::vector<uint> tracked_options);
     /// <summary>
     /// Build a "right click" context menu for the file tree.
     /// </summary>
