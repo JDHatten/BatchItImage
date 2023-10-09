@@ -9,25 +9,37 @@
 #include "ImageSaver.h"
 #include "ui_BatchItImage.h"
 #include "ui_DialogEditPresetDesc.h"
-#include "ui_MessageWindow.h"
+#include "ui_DialogMessage.h"
 
 
-class MessageWindow : public QDialog 
+class DialogMessage : public QDialog 
 {
     Q_OBJECT
 public:
-    MessageWindow(QString title, QString message, QFlags<QDialogButtonBox::StandardButton> buttons, QWidget* parent = nullptr);
-    ~MessageWindow();
-    Ui::Dialog_MessageWindow ui;
+    const struct CustomButton {
+        const static uint NoCustomButton = 0;
+        const static uint SaveContinue = 1;
+        const static uint Continue = 2;
+        const static uint ResetCancel = 4;
+        //const static uint Cancel = 8;
+        const static uint SaveClose = 8;
+        const static uint Close = 16;
+    };
+    DialogMessage(QString title, QString message,
+        const QFlags<QDialogButtonBox::StandardButton> buttons = QDialogButtonBox::StandardButton::NoButton,
+        const uint custom_buttons = CustomButton::NoCustomButton,
+        QWidget* parent = nullptr);
+    ~DialogMessage();
+    Ui::Dialog_Message ui;
 signals:
     void buttonClicked(const QDialogButtonBox::StandardButton&);
+    void buttonRoleClicked(const QDialogButtonBox::ButtonRole&);
 public slots:
     void buttonBoxClicked(QAbstractButton* button);
 protected:
     void changeEvent(QEvent* event);
     void closeEvent(QCloseEvent* event) override;
 private:
-    //Ui::Dialog_MessageWindow* m_ui;
 };
 
 
@@ -56,7 +68,6 @@ private:
 /// <summary>
 /// A QObject that will take a file path and build a struct with metadata.
 /// Intended to be ran in another thread as a "Worker".
-/// Slot -> getFileMetadata() -> Signal -> fileMetadataReady(FileMetadata*)
 /// </summary>
 /// <param name="file_path">--A file path string.</param>
 /// <param name="load_order">--This file metadata should be added now on initialization.</param>
@@ -88,11 +99,6 @@ public:
     ~BatchItImage();
 
     /// <summary>
-    /// Save current (or all) preset to the preset list and to the user settings file.
-    /// </summary>
-    /// <param name="save_all">--Save all presets to settings file.</param>
-    void SavePreset(bool save_all = false);
-    /// <summary>
     /// Save a single preset to the settings file.
     /// </summary>
     /// <param name="checked">--The index of a preset in preset_list.</param>
@@ -106,11 +112,6 @@ public:
     /// Load presets from settings file or get defaults if none found.
     /// </summary>
     void LoadPresets();
-    /// <summary>
-    /// Dialog asking user to save or discard any changes made to current preset before editing images.
-    /// </summary>
-    /// <returns>True if editing of images aborted by user.</returns>
-    bool SavePresetDialog();
     /// <summary>
     /// [Static] Add preset descriptions to one or more combo boxes.
     /// </summary>
@@ -172,6 +173,18 @@ public slots:
     /// </summary>
     /// <param name="index">--The index of the preset.</param>
     void ChangePreset(int index);
+    /// <summary>
+    /// Save current (or all) preset(s) to the preset list and to the user settings file.
+    /// </summary>
+    /// <param name="save_all">--Save all presets to settings file.</param>
+    void SavePreset(bool save_all = false);
+    /// <summary>
+    /// Dialog asking user to save or discard any changes made to current preset before proceeding.
+    /// </summary>
+    /// <param name="include_cancel_buttons">--Toggle to include "Cancel" buttons.</param>
+    /// <param name="closing">--Use closing app text/buttons. [Default: false]</param>
+    /// <returns>True if a "Cancel" (or X) button was clicked.</returns>
+    bool SavePresetDialog(bool include_cancel_buttons = false, bool closing = false);
     /// <summary>
     /// Open dialog allowing user to change any preset description.
     /// </summary>
@@ -286,12 +299,21 @@ private:
     //QMainWindow* main_object;
     Ui::BatchItImageClass ui;
     QString preset_settings_file;
-    MessageWindow* m_window;
-    bool m_window_shown = false;
+    //DialogMessage* m_window;
+    bool non_image_file_dialog_shown = false;
 
-    // Tracks preset options changed in the ui.
-    struct OptionTracker {
+    // Flags for preset options that were changed in the ui.
+    struct OptionTrackerFlags {
+    private:
         ulong i = 1;
+        uint iPlus(uint next) {
+            return i = i + next;
+        }
+        uint reset() {
+            return i = 1;
+        }
+
+    public:
         const uint NoChange = 0;
 
         // Image Edit Options
@@ -344,13 +366,7 @@ private:
         const uint spinBox_ExtraSetting1 = iPlus(i);
         const uint spinBox_ExtraSetting2 = iPlus(i);
 
-        uint iPlus(uint next) {
-            return i = i + next;
-        }
-        uint reset() {
-            return i = 1;
-        }
-        std::string printAllTrackers() const {
+        std::string printAllTrackerFlags() const {
             return
                 "\n  NoChange:                      " + std::to_string(NoChange) +
                 "\n  comboBox_WidthMod:             " + std::to_string(comboBox_WidthMod) +
@@ -438,12 +454,22 @@ private:
     const struct FormatExrOptions { enum { label_FormatFlags, checkBox_Optimize, checkBox_Progressive, label_Compression, COUNT }; };
     const struct FormatHdrOptions { enum { label_FormatFlags, COUNT }; };
     const struct OtherOptions { enum { tab_1, tab_2, tab_3, checkBox_SearchSubDirs, pushButton_EditAndSave, COUNT }; };
-    const struct DialogMessages { enum { action_delete, action_clear, SavePresetDialog, HandleFileMetadata, CheckAbsolutePath, COUNT }; };
-        
+    const struct DialogMessages { enum { delete_dialog, delete_dialog_clear, CreateNewPreset, ChangePresetDescription, save_preset_dialog, save_preset_dialog_closing,
+        non_image_file_dialog, check_path_dialog, COUNT }; };
+    const struct ImageFormats { enum { jpeg, jpg, jpe, jp2, png, webp, bmp, dib, avif,
+        pbm, pgm, ppm, pxm, pnm, pfm, pam, sr, ras, tiff, tif, exr, hdr, pic, COUNT }; };
+
+    // UI Data to be added to an object/widget
+    struct UIData {
+        int data; // A Value, Default, Enum, Index, etc.
+        QString name; // A ui object's title, name, or other short length text.
+        QString desc; // Descriptive text used in Tooltips, Statusbars, Dialog Messages, etc.
+    };
+
     // Tree UIData (Arrays placed on the heap will be deleted after use.)
     std::array<UIData, FileColumn::COUNT>* file_tree_headers = new std::array<UIData, FileColumn::COUNT>;
     std::array<UIData, ActionMenu::COUNT>* file_tree_menu_items = new std::array<UIData, ActionMenu::COUNT>;
-    std::array<std::string, FileColumn::COUNT> file_tree_other_text;
+    std::array<QString, FileColumn::COUNT> file_tree_other_text;
 
     // Tab, Label, Check Box, and Button UIData
     std::array<UIData, FilePathOptions::COUNT>* file_path_options = new std::array<UIData, FilePathOptions::COUNT>;
@@ -470,9 +496,9 @@ private:
     std::array<UIData, 3>* resampling_selections = new std::array<UIData, 3>; // TODO: add more Resampling Filters
     std::array<UIData, 7>* border_types = new std::array<UIData, 7>;
     std::array<UIData, 7>* blur_filters = new std::array<UIData, 7>;
-    std::array<UIData, 4>* file_name_creation = new std::array<UIData, 4>;
-    //std::array<UIData, 23>* image_formats = new std::array<UIData, 23>;
-    std::array<UIData, 23> image_formats;
+    std::array<UIData, ImageSaver::MetadataFlags::COUNT>* file_name_creation = new std::array<UIData, ImageSaver::MetadataFlags::COUNT>;
+    std::array<UIData, ImageFormats::COUNT>* image_formats = new std::array<UIData, ImageFormats::COUNT>;
+    //std::array<UIData, ImageFormats::COUNT> image_formats;
     std::array<UIData, 5> format_jpeg_subsamplings;
     std::array<UIData, 5> format_png_compression;
     std::array<UIData, 6> format_pam_tupletype;
@@ -482,10 +508,10 @@ private:
     std::array<UIData, 2> format_hdr_compression;
 
     // Other UIData
-    std::array<UIData, DialogMessages::COUNT> dialog_messages; // TODO
+    std::array<UIData, DialogMessages::COUNT> dialog_messages;
     std::array<UIData, 6> blur_depth_selections;
-
-    QString supported_image_extensions_dialog_str = ""; // Built from image_formats    
+    std::array <QString, ImageFormats::COUNT> extension_list;
+    QString supported_image_extensions_dialog_str = ""; // Built from extension_list    
 
     const QFont* font_serif = new QFont("Times", 10, QFont::Bold);
     const QFont* font_default = new QFont("Segoe UI", 9);
@@ -514,12 +540,9 @@ private:
     std::vector<struct FileMetadata> current_file_metadata_list;
     std::vector<struct FileMetadata> deleted_file_metadata_list;
     uint current_selected_preset = 0;
-    bool unsaved_preset_settings = false; // TODO
 
     int current_file_column_sorted = -1;
     int current_file_sort_order = -1;
-    float current_load_number = 0.0f;
-    float load_interval  = 0.0f;
     int last_load_count = 0;
 
     const std::function<void()> function_ResizeFileTreeColumns = std::bind(&BatchItImage::ResizeFileTreeColumns, this);
@@ -537,7 +560,7 @@ private:
     /// </summary>
     /// <param name="ui_data">--Reference to an array of UIData.</param>
     /// <param name="objects">--A list of pointers to objects/widgets.</param>
-    template<std::size_t array_size>void AddUiDataTo(const std::array<UIData, array_size>& ui_data, const std::vector<QWidget*>& objects);
+    template<std::size_t ui_data_size>void AddUiDataTo(const std::array<UIData, ui_data_size>& ui_data, const std::vector<QWidget*>& objects);
     /// <summary>
     /// Add display text, tooltip descriptions, and other data to various types of ui objects/widgets.
     /// </summary>
@@ -548,8 +571,18 @@ private:
     /// Add items/data to various combo boxes which include titles, tooltip descriptions, and other data.
     /// </summary>
     /// <param name="cb">--Pointer to a QComboBox.</param>
-    /// <param name="ui_data">--Data array to enter into a combo box.</param>
-    template<std::size_t array_size>void PopulateComboBox(QComboBox* cb, const std::array<UIData, array_size>& ui_data);
+    /// <param name="ui_data">--UIData array to enter into a combo box.</param>
+    /// <param name="string_data">--Array of QStrings to replace integer data from ui_data with.</param>
+    template<std::size_t ui_data_size, std::size_t string_data_size = 0>void PopulateComboBox(
+        QComboBox* cb, const std::array<UIData, ui_data_size>& ui_data, const std::array <QString, string_data_size>& string_data = {});
+    /// <summary>
+    /// Add items/data to various combo boxes which include titles, tooltip descriptions, and other data.
+    /// </summary>
+    /// <param name="cb">--Pointer to a QComboBox.</param>
+    /// <param name="ui_data">--UIData array to enter into a combo box.</param>
+    /// <param name="string_data">--Array of std::strings to replace integer data from ui_data with.</param>
+    template<std::size_t ui_data_size, std::size_t string_data_size>void PopulateComboBox(
+        QComboBox* cb, const std::array<UIData, ui_data_size>& ui_data, const std::array <std::string, string_data_size>& string_data);
     /// <summary>
     /// Update the a combo box status and tool tip.
     /// </summary>
@@ -584,6 +617,10 @@ private:
     /// <param name="tracked_options">--Vector of tracked option codes.</param>
     /// <returns>The tracker</returns>
     ulong RemoveOptionsChanged(ulong tracker, std::vector<uint> tracked_options);
+    /// <summary>
+    /// Remove all options from all option trackers.
+    /// </summary>
+    void RemoveOptionsChanged();
     /// <summary>
     /// Build a "right click" context menu for the file tree.
     /// </summary>
@@ -626,6 +663,11 @@ protected:
     /// <param name="event"></param>
     /// <returns>If true the event has been intercepted, no pass-through.</returns>
     bool eventFilter(QObject* watched, QEvent* event) override;
+    /// <summary>
+    /// Check for any unsaved preset options and ask to save, or not, before closing.
+    /// </summary>
+    /// <param name="event"></param>
+    void closeEvent(QCloseEvent* event) override;
     /// <summary>
     /// Overridden protected function that intercepts file urls dropped.
     /// </summary>
