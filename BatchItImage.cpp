@@ -6,42 +6,64 @@ TODO:
     Holding right click scrolls left to right
     Track changes to undo file list deletes or image edit ui changes
     Image File Filter... show/edit only PNG files, files > 1 MB, etc.
+    A cancel button to abort image editing durring process.
 
 */
 
 
-MessageWindow::MessageWindow(QString title, QString message, QFlags<QDialogButtonBox::StandardButton> buttons, QWidget* parent)
-    : QDialog(parent)//, m_ui(new Ui::Dialog_MessageWindow)
+DialogMessage::DialogMessage(QString title, QString message,
+    QFlags<QDialogButtonBox::StandardButton> buttons, const uint custom_buttons, QWidget* parent)
+    : QDialog(parent)
 {
     ui.setupUi(this);
     setWindowTitle(title);
     ui.label_Message->setText(message);
+    ui.buttonBox->clear();
+
+    if (custom_buttons & CustomButton::SaveContinue)
+        ui.buttonBox->addButton(new QPushButton("&Save && Continue", this), QDialogButtonBox::ApplyRole);
+    if (custom_buttons & CustomButton::Continue)
+        ui.buttonBox->addButton(new QPushButton("&Continue Without Saving", this), QDialogButtonBox::AcceptRole);
+    if (custom_buttons & CustomButton::ResetCancel)
+        ui.buttonBox->addButton(new QPushButton("&Revert && Cancel", this), QDialogButtonBox::ResetRole);
+    //if (custom_buttons & Cancel)
+    //    ui.buttonBox->addButton(new QPushButton("Cancel All", this), QDialogButtonBox::DestructiveRole);
+    if (custom_buttons & CustomButton::SaveClose)
+        ui.buttonBox->addButton(new QPushButton("&Save && Close", this), QDialogButtonBox::ApplyRole);
+    if (custom_buttons & CustomButton::Close)
+        ui.buttonBox->addButton(new QPushButton("&Close Without Saving", this), QDialogButtonBox::AcceptRole);
+    
     ui.buttonBox->setStandardButtons(buttons);
+
     Q_ASSERT(connect(ui.buttonBox, SIGNAL(clicked(QAbstractButton*)), this, SLOT(buttonBoxClicked(QAbstractButton*))));
 }
-MessageWindow::~MessageWindow()
+DialogMessage::~DialogMessage()
 {
-    qDebug() << "MessageWindow Deconstructed";
-    //delete m_ui;
+    qDebug() << "DialogMessage Deconstructed";
 }
-void MessageWindow::changeEvent(QEvent* event)
+void DialogMessage::changeEvent(QEvent* event)
 {
-    //qDebug() << "MessageWindow::changeEvent";
+    //qDebug() << "DialogMessage::changeEvent";
     QDialog::changeEvent(event);
 }
-void MessageWindow::closeEvent(QCloseEvent* event)
+void DialogMessage::closeEvent(QCloseEvent* event)
 {
     if (event->spontaneous()) {
         qDebug() << "The X-close button was clicked.";
         emit buttonClicked(QDialogButtonBox::Close);
+        emit buttonRoleClicked(QDialogButtonBox::DestructiveRole);
     }
     QWidget::closeEvent(event);
 }
-void MessageWindow::buttonBoxClicked(QAbstractButton* button)
+void DialogMessage::buttonBoxClicked(QAbstractButton* button)
 {
-    QDialogButtonBox::StandardButton std_button = ui.buttonBox->standardButton(button);
-    qDebug() << "MessageWindow::buttonBoxClicked: " << std_button;
+    const QDialogButtonBox::StandardButton std_button = ui.buttonBox->standardButton(button);
+    const QDialogButtonBox::ButtonRole button_role = ui.buttonBox->buttonRole(button);
+
+    qDebug() << "DialogMessage::buttonBoxClicked: " << std_button;
+    qDebug() << "DialogMessage::buttonBoxClicked (Role): " << button_role;
     emit buttonClicked(std_button);
+    emit buttonRoleClicked(button_role);
     /*
     QDialogButtonBox::Ok	    0x00000400	An "OK" button defined with the AcceptRole.
     QDialogButtonBox::Open	    0x00002000	An "Open" button defined with the AcceptRole.
@@ -58,15 +80,27 @@ void MessageWindow::buttonBoxClicked(QAbstractButton* button)
     QDialogButtonBox::YesToAll	0x00008000	A "Yes to All" button defined with the YesRole.
     QDialogButtonBox::No	    0x00010000	A "No" button defined with the NoRole.
     QDialogButtonBox::NoToAll	0x00020000	A "No to All" button defined with the NoRole.
-    QDialogButtonBox::Abort	    0x00040000	An "Abort" button defined with the RejectRole.
+    QDialogButtonBox::Abort	    0x00040000	An "Abort" button defined with the RejectRole. and ResetRole?
     QDialogButtonBox::Retry	    0x00080000	A "Retry" button defined with the AcceptRole.
     QDialogButtonBox::Ignore	0x00100000	An "Ignore" button defined with the AcceptRole.
     QDialogButtonBox::NoButton	0x00000000	An invalid button.
+
+    QDialogButtonBox::InvalidRole	    -1	The button is invalid.
+    QDialogButtonBox::AcceptRole	    0	Clicking the button causes the dialog to be accepted (e.g. OK).
+    QDialogButtonBox::RejectRole	    1	Clicking the button causes the dialog to be rejected (e.g. Cancel).
+    QDialogButtonBox::DestructiveRole	2	Clicking the button causes a destructive change (e.g. for Discarding Changes) and closes the dialog.
+    QDialogButtonBox::ActionRole    	3	Clicking the button causes changes to the elements within the dialog.
+    QDialogButtonBox::HelpRole	        4	The button can be clicked to request help.
+    QDialogButtonBox::YesRole       	5	The button is a "Yes"-like button.
+    QDialogButtonBox::NoRole    	    6	The button is a "No"-like button.
+    QDialogButtonBox::ApplyRole     	8	The button applies current changes.
+    QDialogButtonBox::ResetRole	        7	The button resets the dialog's fields to default values.
     */
 }
 
 
-DialogEditPresetDesc::DialogEditPresetDesc(QString title, QString message, std::vector<Preset>* preset_list, uint preset_index, QWidget* parent)
+DialogEditPresetDesc::DialogEditPresetDesc(QString title, QString message,
+    std::vector<Preset>* preset_list, uint preset_index, QWidget* parent)
     : QDialog(parent)
 {
     ui.setupUi(this);
@@ -179,16 +213,15 @@ BatchItImage::BatchItImage(QWidget* parent) : QMainWindow(parent)
     ****************************/
 
     LoadInUiData();
-
     qDebug() << "LoadInUiData = Loaded";
 
-    ui.tabWidget->setCurrentIndex(std::get<int>(other_options->at(OtherOptions::tab_1).data));
-    ui.tabWidget->setTabText(OtherOptions::tab_1, QString::fromStdString(other_options->at(OtherOptions::tab_1).name));
-    ui.tab_1->setToolTip(QString::fromStdString(other_options->at(OtherOptions::tab_1).desc));
-    ui.tabWidget->setTabText(OtherOptions::tab_2, QString::fromStdString(other_options->at(OtherOptions::tab_2).name));
-    ui.tab_2->setToolTip(QString::fromStdString(other_options->at(OtherOptions::tab_2).desc));
-    ui.tabWidget->setTabText(OtherOptions::tab_3, QString::fromStdString(other_options->at(OtherOptions::tab_3).name));
-    ui.tab_3->setToolTip(QString::fromStdString(other_options->at(OtherOptions::tab_3).desc));
+    ui.tabWidget->setCurrentIndex(other_options->at(OtherOptions::tab_1).data);
+    ui.tabWidget->setTabText(OtherOptions::tab_1, other_options->at(OtherOptions::tab_1).name);
+    ui.tab_1->setToolTip(other_options->at(OtherOptions::tab_1).desc);
+    ui.tabWidget->setTabText(OtherOptions::tab_2, other_options->at(OtherOptions::tab_2).name);
+    ui.tab_2->setToolTip(other_options->at(OtherOptions::tab_2).desc);
+    ui.tabWidget->setTabText(OtherOptions::tab_3, other_options->at(OtherOptions::tab_3).name);
+    ui.tab_3->setToolTip(other_options->at(OtherOptions::tab_3).desc);
 
     AddUiDataTo(*resize_options, std::vector<QWidget*>{
         ui.groupBox_Resize, ui.checkBox_KeepAspectRatio });
@@ -213,14 +246,13 @@ BatchItImage::BatchItImage(QWidget* parent) : QMainWindow(parent)
     AddUiDataTo(ui.checkBox_SearchSubDirs, other_options->at(OtherOptions::checkBox_SearchSubDirs));
     AddUiDataTo(ui.pushButton_EditAndSave, other_options->at(OtherOptions::pushButton_EditAndSave));
 
-    //PopulateComboBox(ui.comboBox_WidthMod, width_selections, sizeof(width_selections) / sizeof(UIData));
     PopulateComboBox(ui.comboBox_WidthMod, *width_selections);
     PopulateComboBox(ui.comboBox_HeightMod, *height_selections);
     PopulateComboBox(ui.comboBox_Resample, *resampling_selections);
     PopulateComboBox(ui.comboBox_BorderType, *border_types);
     PopulateComboBox(ui.comboBox_BlurFilter, *blur_filters);
-    PopulateComboBox(ui.comboBox_AddText, *file_name_creation);
-    PopulateComboBox(ui.comboBox_ImageFormat, image_formats);
+    PopulateComboBox(ui.comboBox_AddText, *file_name_creation, ImageSaver::Metadata);
+    PopulateComboBox(ui.comboBox_ImageFormat, *image_formats, extension_list);
 
     /***************************
         Prep UI Widgets, Etc
@@ -254,8 +286,8 @@ BatchItImage::BatchItImage(QWidget* parent) : QMainWindow(parent)
 
     // Create image extension string for "open file dialog".
     supported_image_extensions_dialog_str.append("Images: (");
-    for (const auto& ext : image_formats) {
-        supported_image_extensions_dialog_str.append("*" + std::get<std::string>(ext.data) + " ");
+    for (const auto& ext : extension_list) {
+        supported_image_extensions_dialog_str.append("*" + ext + " ");
     }
     supported_image_extensions_dialog_str.insert(supported_image_extensions_dialog_str.size() - 1, ")");
     supported_image_extensions_dialog_str.append("\nAll Files (*)");
@@ -281,7 +313,7 @@ BatchItImage::BatchItImage(QWidget* parent) : QMainWindow(parent)
     delete border_types;
     delete blur_filters;
     delete file_name_creation;
-    //delete image_formats;
+    delete image_formats;
 
     /***************************
         Testing
@@ -575,61 +607,63 @@ void BatchItImage::LoadInUiData()
     file_path_options->at(FilePathOptions::pushButton_FindAbsolutePath).desc = "Open dialog window to select a directory adding it to the absolute path text box.";
 
     // comboBox_AddText
-    file_name_creation->at(0).data = ImageSaver::ADD_FILE_NAME;
-    file_name_creation->at(0).name = "Original File Name";
-    file_name_creation->at(0).desc = "Add the original file name into the creation of a new file name.";
-    file_name_creation->at(1).data = ImageSaver::ADD_COUNTER;
-    file_name_creation->at(1).name = "Incrementing Counter";
-    file_name_creation->at(1).desc = "Add an incrementing number into the creation of a new file name.";
-    file_name_creation->at(2).data = ImageSaver::ADD_WIDTH;
-    file_name_creation->at(2).name = "Image Width";
-    file_name_creation->at(2).desc = "Add the width of the modified image into the creation of a new file name.";
-    file_name_creation->at(3).data = ImageSaver::ADD_HEIGHT;
-    file_name_creation->at(3).name = "Image Height";
-    file_name_creation->at(3).desc = "Add the height of the modified image into the creation of a new file name.";
+    file_name_creation->at(ImageSaver::FILE_NAME).data = ImageSaver::FILE_NAME;
+    file_name_creation->at(ImageSaver::FILE_NAME).name = "Original File Name";
+    file_name_creation->at(ImageSaver::FILE_NAME).desc = "Add the original file name into the creation of a new file name.";
+    file_name_creation->at(ImageSaver::COUNTER).data = ImageSaver::COUNTER;
+    file_name_creation->at(ImageSaver::COUNTER).name = "Incrementing Counter";
+    file_name_creation->at(ImageSaver::COUNTER).desc = "Add an incrementing number into the creation of a new file name.";
+    file_name_creation->at(ImageSaver::WIDTH).data = ImageSaver::WIDTH;
+    file_name_creation->at(ImageSaver::WIDTH).name = "Image Width";
+    file_name_creation->at(ImageSaver::WIDTH).desc = "Add the width of the modified image into the creation of a new file name.";
+    file_name_creation->at(ImageSaver::HEIGHT).data = ImageSaver::HEIGHT;
+    file_name_creation->at(ImageSaver::HEIGHT).name = "Image Height";
+    file_name_creation->at(ImageSaver::HEIGHT).desc = "Add the height of the modified image into the creation of a new file name.";
+
+    extension_list = { ".jpeg", ".jpg", ".jpe", ".jp2", ".png", ".webp", ".bmp", ".dib", ".avif", ".pbm",
+        ".pgm", ".ppm", ".pxm", ".pnm", ".pfm", ".pam", ".sr", ".ras", ".tiff", ".tif", ".exr", ".hdr", ".pic" };
 
     // comboBox_ImageFormat
-    size_t i = 0;
-    image_formats.at(i).data = ".jpeg";
-    image_formats.at(i).name = "JPEG Files - *.jpeg";
-    image_formats.at(i).desc = "JPEG (Joint Photographic Experts Group) is a commonly used method of lossy compression\n" \
+    image_formats->at(ImageFormats::jpeg).data = ImageFormats::jpeg;
+    image_formats->at(ImageFormats::jpeg).name = "JPEG Files - *.jpeg";
+    image_formats->at(ImageFormats::jpeg).desc = "JPEG (Joint Photographic Experts Group) is a commonly used method of lossy compression\n" \
         "for digital images, particularly for those images produced by digital photography.\n" \
         "The degree of compression can be adjusted, allowing a selectable tradeoff between\n" \
         "storage size and image quality.JPEG typically achieves 10:1 compression with little\n" \
         "perceptible loss in image quality.";
-    image_formats.at(++i).data = ".jpg";
-    image_formats.at(i).name = "JPEG Files - *.jpg";
-    image_formats.at(i).desc = image_formats.at(i - 1).desc;
-    image_formats.at(++i).data = ".jpe";
-    image_formats.at(i).name = "JPEG Files - *.jpe";
-    image_formats.at(i).desc = image_formats.at(i - 2).desc;
-    image_formats.at(++i).data = ".jp2";
-    image_formats.at(i).name = "JPEG 2000 Files - *.jp2";
-    image_formats.at(i).desc = "JPEG 2000 (Joint Photographic Experts Group) is an image compression standard based on a\n" \
+    image_formats->at(ImageFormats::jpg).data = ImageFormats::jpg;
+    image_formats->at(ImageFormats::jpg).name = "JPEG Files - *.jpg";
+    image_formats->at(ImageFormats::jpg).desc = image_formats->at(ImageFormats::jpeg).desc;
+    image_formats->at(ImageFormats::jpe).data = ImageFormats::jpe;
+    image_formats->at(ImageFormats::jpe).name = "JPEG Files - *.jpe";
+    image_formats->at(ImageFormats::jpe).desc = image_formats->at(ImageFormats::jpeg).desc;
+    image_formats->at(ImageFormats::jp2).data = ImageFormats::jp2;
+    image_formats->at(ImageFormats::jp2).name = "JPEG 2000 Files - *.jp2";
+    image_formats->at(ImageFormats::jp2).desc = "JPEG 2000 (Joint Photographic Experts Group) is an image compression standard based on a\n" \
         "discrete wavelet transform (DWT). Note that it is still not widely supported in web\n" \
         "browsers (other than Safari) and hence is not generally used on the World Wide Web.";
-    image_formats.at(++i).data = ".png";
-    image_formats.at(i).name = "Portable Network Graphics - *.png";
-    image_formats.at(i).desc = "Portable Network Graphics (PNG) is a raster-graphics file format that supports lossless\n" \
+    image_formats->at(ImageFormats::png).data = ImageFormats::png;
+    image_formats->at(ImageFormats::png).name = "Portable Network Graphics - *.png";
+    image_formats->at(ImageFormats::png).desc = "Portable Network Graphics (PNG) is a raster-graphics file format that supports lossless\n" \
         "data compression. PNG supports palette-based images (with palettes of 24-bit RGB or\n" \
         "32-bit RGBA colors), grayscale images (with or without an alpha channel for transparency),\n" \
         "and full-color non-palette-based RGB or RGBA images.";
-    image_formats.at(++i).data = ".webp";
-    image_formats.at(i).name = "WebP - *.webp";
-    image_formats.at(i).desc = "WebP is a raster graphics file format developed by Google intended as a replacement for\n" \
+    image_formats->at(ImageFormats::webp).data = ImageFormats::webp;
+    image_formats->at(ImageFormats::webp).name = "WebP - *.webp";
+    image_formats->at(ImageFormats::webp).desc = "WebP is a raster graphics file format developed by Google intended as a replacement for\n" \
         "JPEG, PNG, and GIF file formats. It supports both lossy and lossless compression, as well\n" \
         "as animation and alpha transparency.";
-    image_formats.at(++i).data = ".bmp";
-    image_formats.at(i).name = "Windows Bitmaps - *.bmp";
-    image_formats.at(i).desc = "The BMP file format or bitmap, is a raster graphics image file format used to store\n" \
+    image_formats->at(ImageFormats::bmp).data = ImageFormats::bmp;
+    image_formats->at(ImageFormats::bmp).name = "Windows Bitmaps - *.bmp";
+    image_formats->at(ImageFormats::bmp).desc = "The BMP file format or bitmap, is a raster graphics image file format used to store\n" \
         "bitmap digital images, independently of the display device (such as a graphics adapter),\n" \
         "especially on Microsoft Windows and OS/2 operating systems.";
-    image_formats.at(++i).data = ".dib";
-    image_formats.at(i).name = "Windows Bitmaps - *.dib";
-    image_formats.at(i).desc = image_formats.at(i - 1).desc;
-    image_formats.at(++i).data = ".avif";
-    image_formats.at(i).name = "AVIF - *.avif";
-    image_formats.at(i).desc = "AV1 Image File Format (AVIF) is an open, royalty-free image file format specification\n" \
+    image_formats->at(ImageFormats::dib).data = ImageFormats::dib;
+    image_formats->at(ImageFormats::dib).name = "Windows Bitmaps - *.dib";
+    image_formats->at(ImageFormats::dib).desc = image_formats->at(ImageFormats::bmp).desc;
+    image_formats->at(ImageFormats::avif).data = ImageFormats::avif;
+    image_formats->at(ImageFormats::avif).name = "AVIF - *.avif";
+    image_formats->at(ImageFormats::avif).desc = "AV1 Image File Format (AVIF) is an open, royalty-free image file format specification\n" \
         "for storing images or image sequences compressed with AV1 in the HEIF container format.\n" \
         "AV1 Supports:\n" \
         "* Multiple color spaces (HDR, SDR, color space signaling via CICP or ICC)\n" \
@@ -639,71 +673,71 @@ void BatchItImage::LoadInUiData()
         "* 4:2:0, 4:2:2, 4:4:4 chroma subsampling and RGB\n" \
         "* Film grain synthesis\n" \
         "* Image sequences/animation";
-    image_formats.at(++i).data = ".pbm";
-    image_formats.at(i).name = "Netpbm Formats - *.pbm";
-    image_formats.at(i).desc = "Netpbm (formerly Pbmplus) is an open-source package of graphics programs and a programming\n" \
+    image_formats->at(ImageFormats::pbm).data = ImageFormats::pbm;
+    image_formats->at(ImageFormats::pbm).name = "Netpbm Formats - *.pbm";
+    image_formats->at(ImageFormats::pbm).desc = "Netpbm (formerly Pbmplus) is an open-source package of graphics programs and a programming\n" \
         "library. It is used mainly in the Unix world, but also works on Microsoft Windows, macOS,\n" \
         "and other operating systems.  Graphics formats used and defined by the Netpbm project:\n" \
         "portable pixmap format (PPM), portable graymap format (PGM), and portable bitmap format (PBM).\n" \
         "They are also sometimes referred to collectively as the portable anymap format (PNM).";
-    image_formats.at(++i).data = ".pgm";
-    image_formats.at(i).name = "Netpbm Formats - *.pgm";
-    image_formats.at(i).desc = image_formats.at(i - 1).desc;
-    image_formats.at(++i).data = ".ppm";
-    image_formats.at(i).name = "Netpbm Formats - *.ppm";
-    image_formats.at(i).desc = image_formats.at(i - 2).desc;
-    image_formats.at(++i).data = ".pxm";
-    image_formats.at(i).name = "Netpbm Formats - *.pxm";
-    image_formats.at(i).desc = image_formats.at(i - 3).desc;
-    image_formats.at(++i).data = ".pnm";
-    image_formats.at(i).name = "Netpbm Formats - *.pnm";
-    image_formats.at(i).desc = image_formats.at(i - 4).desc;
-    image_formats.at(++i).data = ".pfm";
-    image_formats.at(i).name = "Netpbm Formats - *.pfm";
-    image_formats.at(i).desc = "The PFM (Portable Floatmap) is supported by the de facto reference implementation Netpbm\n" \
+    image_formats->at(ImageFormats::pgm).data = ImageFormats::pgm;
+    image_formats->at(ImageFormats::pgm).name = "Netpbm Formats - *.pgm";
+    image_formats->at(ImageFormats::pgm).desc = image_formats->at(ImageFormats::pbm).desc;
+    image_formats->at(ImageFormats::ppm).data = ImageFormats::ppm;
+    image_formats->at(ImageFormats::ppm).name = "Netpbm Formats - *.ppm";
+    image_formats->at(ImageFormats::ppm).desc = image_formats->at(ImageFormats::pbm).desc;
+    image_formats->at(ImageFormats::pxm).data = ImageFormats::pxm;
+    image_formats->at(ImageFormats::pxm).name = "Netpbm Formats - *.pxm";
+    image_formats->at(ImageFormats::pxm).desc = image_formats->at(ImageFormats::pbm).desc;
+    image_formats->at(ImageFormats::pnm).data = ImageFormats::pnm;
+    image_formats->at(ImageFormats::pnm).name = "Netpbm Formats - *.pnm";
+    image_formats->at(ImageFormats::pnm).desc = image_formats->at(ImageFormats::pbm).desc;
+    image_formats->at(ImageFormats::pfm).data = ImageFormats::pfm;
+    image_formats->at(ImageFormats::pfm).name = "Netpbm Formats - *.pfm";
+    image_formats->at(ImageFormats::pfm).desc = "The PFM (Portable Floatmap) is supported by the de facto reference implementation Netpbm\n" \
         "and is the unofficial four byte IEEE 754 single precision floating point extension.\n" \
         "PFM is supported by the programs Photoshop, GIMP, and ImageMagick.";
     // TODO: Test support for this format
-    image_formats.at(++i).data = ".pam";
-    image_formats.at(i).name = "Netpbm Formats - *.pam";
-    image_formats.at(i).desc = "Portable Arbitrary Map (PAM) is an extension of the older binary P4...P6 graphics formats,\n" \
+    image_formats->at(ImageFormats::pam).data = ImageFormats::pam;
+    image_formats->at(ImageFormats::pam).name = "Netpbm Formats - *.pam";
+    image_formats->at(ImageFormats::pam).desc = "Portable Arbitrary Map (PAM) is an extension of the older binary P4...P6 graphics formats,\n" \
         "introduced with Netpbm version 9.7. PAM generalizes all features of PBM, PGM and PPM, and\n" \
         "provides for extensions. PAM is supported by XnView and FFmpeg; and defines two new\n" \
         "attributes: depth and tuple type.";
-    image_formats.at(++i).data = ".sr";
-    image_formats.at(i).name = "Sun Rasters - *.sr";
-    image_formats.at(i).desc = "Sun Raster was a raster graphics file format used on SunOS by Sun Microsystems. ACDSee,\n" \
+    image_formats->at(ImageFormats::sr).data = ImageFormats::sr;
+    image_formats->at(ImageFormats::sr).name = "Sun Rasters - *.sr";
+    image_formats->at(ImageFormats::sr).desc = "Sun Raster was a raster graphics file format used on SunOS by Sun Microsystems. ACDSee,\n" \
         "FFmpeg, GIMP, ImageMagick, IrfanView, LibreOffice, Netpbm, PaintShop Pro, PMView, and\n" \
         "XnView among others support Sun Raster image files. The format does not support transparency.";
-    image_formats.at(++i).data = ".ras";
-    image_formats.at(i).name = "Sun Rasters - *.ras";
-    image_formats.at(i).desc = image_formats.at(i - 1).desc;
-    image_formats.at(++i).data = ".tiff";
-    image_formats.at(i).name = "TIFF Files - *.tiff";
-    image_formats.at(i).desc = "Tag Image File Format (TIFF or TIF), is an image file format for storing raster graphics\n" \
+    image_formats->at(ImageFormats::ras).data = ImageFormats::ras;
+    image_formats->at(ImageFormats::ras).name = "Sun Rasters - *.ras";
+    image_formats->at(ImageFormats::ras).desc = image_formats->at(ImageFormats::sr).desc;
+    image_formats->at(ImageFormats::tiff).data = ImageFormats::tiff;
+    image_formats->at(ImageFormats::tiff).name = "TIFF Files - *.tiff";
+    image_formats->at(ImageFormats::tiff).desc = "Tag Image File Format (TIFF or TIF), is an image file format for storing raster graphics\n" \
         "images, popular among graphic artists, the publishing industry, and photographers. TIFF is\n" \
         "widely supported by scanning, faxing, word processing, optical character recognition,\n" \
         "image manipulation, desktop publishing, and page-layout applications.";
-    image_formats.at(++i).data = ".tif";
-    image_formats.at(i).name = "TIFF Files - *.tif";
-    image_formats.at(i).desc = image_formats.at(i - 1).desc;
-    image_formats.at(++i).data = ".exr";
-    image_formats.at(i).name = "OpenEXR Image Files - *.exr";
-    image_formats.at(i).desc = "OpenEXR is a high-dynamic range, multi-channel raster file format, created under a free\n" \
+    image_formats->at(ImageFormats::tif).data = ImageFormats::tif;
+    image_formats->at(ImageFormats::tif).name = "TIFF Files - *.tif";
+    image_formats->at(ImageFormats::tif).desc = image_formats->at(ImageFormats::tiff).desc;
+    image_formats->at(ImageFormats::exr).data = ImageFormats::exr;
+    image_formats->at(ImageFormats::exr).name = "OpenEXR Image Files - *.exr";
+    image_formats->at(ImageFormats::exr).desc = "OpenEXR is a high-dynamic range, multi-channel raster file format, created under a free\n" \
         "software license similar to the BSD license.  It supports multiple channels of potentially\n" \
         "different pixel sizes, including 32-bit unsigned integer, 32-bit and 16-bit floating point\n" \
         "values, as well as various compression techniques which include lossless and lossy\n" \
         "compression algorithms. It also has arbitrary channels and encodes multiple points of view\n" \
         "such as left- and right-camera images.";
-    image_formats.at(++i).data = ".hdr";
-    image_formats.at(i).name = "Radiance HDR - *.hdr";
-    image_formats.at(i).desc = "RGBE or Radiance HDR is an image format that stores pixels as one byte each for RGB (red,\n" \
+    image_formats->at(ImageFormats::hdr).data = ImageFormats::hdr;
+    image_formats->at(ImageFormats::hdr).name = "Radiance HDR - *.hdr";
+    image_formats->at(ImageFormats::hdr).desc = "RGBE or Radiance HDR is an image format that stores pixels as one byte each for RGB (red,\n" \
         "green, and blue) values with a one byte shared exponent. Thus it stores four bytes per pixel.\n" \
         "RGBE allows pixels to have the dynamic range and precision of floating-point values in a\n" \
         "relatively compact data structure (32 bits per pixel).";
-    image_formats.at(++i).data = ".pic";
-    image_formats.at(i).name = "Radiance HDR - *.pic";
-    image_formats.at(i).desc = image_formats.at(i - 1).desc;
+    image_formats->at(ImageFormats::pic).data = ImageFormats::pic;
+    image_formats->at(ImageFormats::pic).name = "Radiance HDR - *.pic";
+    image_formats->at(ImageFormats::pic).desc = image_formats->at(ImageFormats::hdr).desc;
 
     // Specific Format Widget Options (multiple sets)
     format_jpeg_options[FormatJpegOptions::label_FormatFlags].data = 1;
@@ -1011,21 +1045,50 @@ void BatchItImage::LoadInUiData()
     other_options->at(OtherOptions::checkBox_SearchSubDirs).data = 1;
     other_options->at(OtherOptions::checkBox_SearchSubDirs).name = "When Searching Directories Search Sub-Directories As Well";
     other_options->at(OtherOptions::checkBox_SearchSubDirs).desc = "When file directories/folders are dropped into the image file viewer an image file search will begin\n" \
-                                                               "in the directory, and it this is checked, all its sub-directories too.";
+                                                                   "in the directory, and it this is checked, all its sub-directories too.";
     other_options->at(OtherOptions::pushButton_EditAndSave).data = 0;
     other_options->at(OtherOptions::pushButton_EditAndSave).name = "Start Editing And Saving Images";
     other_options->at(OtherOptions::pushButton_EditAndSave).desc = "";
     /*other_options->at(OtherOptions::).data = 0;
     other_options->at(OtherOptions::).name = "";
     other_options->at(OtherOptions::).desc = "";*/
+    
+    dialog_messages.at(DialogMessages::delete_dialog).data = 0;
+    dialog_messages.at(DialogMessages::delete_dialog).name = "Delete?";
+    dialog_messages.at(DialogMessages::delete_dialog).desc = "Delete currently highlighted image file -or- all image files selected/checked?";
+    dialog_messages.at(DialogMessages::delete_dialog_clear).data = 0;
+    dialog_messages.at(DialogMessages::delete_dialog_clear).name = "Clear List?";
+    dialog_messages.at(DialogMessages::delete_dialog_clear).desc = "The entire list of image files is about to be cleared, is this OK?";
+    dialog_messages.at(DialogMessages::CreateNewPreset).data = 0;
+    dialog_messages.at(DialogMessages::CreateNewPreset).name = "Add New Preset";
+    dialog_messages.at(DialogMessages::CreateNewPreset).desc = "Add Description for New Preset.";
+    dialog_messages.at(DialogMessages::ChangePresetDescription).data = 0;
+    dialog_messages.at(DialogMessages::ChangePresetDescription).name = "Change Preset Description";
+    dialog_messages.at(DialogMessages::ChangePresetDescription).desc = "Change Title Description of Currently Selected Preset.";
+    dialog_messages.at(DialogMessages::save_preset_dialog).data = 0;
+    dialog_messages.at(DialogMessages::save_preset_dialog).name = "Save Current Preset?";
+    dialog_messages.at(DialogMessages::save_preset_dialog).desc = "There are unsaved preset options, would you like to save these options before proceeding?";
+    dialog_messages.at(DialogMessages::save_preset_dialog_closing).data = 0;
+    dialog_messages.at(DialogMessages::save_preset_dialog_closing).name = "Closing...";
+    dialog_messages.at(DialogMessages::save_preset_dialog_closing).desc = "There are unsaved preset options, would you like to save these options before closing?";
+    dialog_messages.at(DialogMessages::non_image_file_dialog).data = 0;
+    dialog_messages.at(DialogMessages::non_image_file_dialog).name = "Warning";
+    dialog_messages.at(DialogMessages::non_image_file_dialog).desc = "Unsupported or non-image files were not added to list.";
+    dialog_messages.at(DialogMessages::check_path_dialog).data = 0;
+    dialog_messages.at(DialogMessages::check_path_dialog).name = "Invalid Directory Path";
+    dialog_messages.at(DialogMessages::check_path_dialog).desc = "The directory path provided does not exist. Open directory dialog window?";
+    /*dialog_messages.at(DialogMessages::).data = 0;
+    dialog_messages.at(DialogMessages::).name = "";
+    dialog_messages.at(DialogMessages::).desc = "";*/
+
 }
 
 void BatchItImage::SetupFileTree()
 {
     ui.treeWidget_FileInfo->clear();
     for (int col = 0; col < FileColumn::COUNT; col++) {
-        ui.treeWidget_FileInfo->headerItem()->setText(col, QString::fromStdString(file_tree_headers->at(col).name));
-        ui.treeWidget_FileInfo->headerItem()->setToolTip(col, QString::fromStdString(file_tree_headers->at(col).desc));
+        ui.treeWidget_FileInfo->headerItem()->setText(col, file_tree_headers->at(col).name);
+        ui.treeWidget_FileInfo->headerItem()->setToolTip(col, file_tree_headers->at(col).desc);
     }
     ui.treeWidget_FileInfo->setColumnWidth(FileColumn::FILE_SELECTED, ui.treeWidget_FileInfo->minimumWidth());
     ui.treeWidget_FileInfo->header()->setSectionsClickable(true);
@@ -1034,8 +1097,8 @@ void BatchItImage::SetupFileTree()
     ui.treeWidget_FileInfo->setMouseTracking(true);
 }
 
-template<std::size_t array_size>
-void BatchItImage::AddUiDataTo(const std::array<UIData, array_size>& ui_data, const std::vector<QWidget*>& objects)
+template<std::size_t ui_data_size>
+void BatchItImage::AddUiDataTo(const std::array<UIData, ui_data_size>& ui_data, const std::vector<QWidget*>& objects)
 {
     for (uint i = 0; i < objects.size(); i++) {
         AddUiDataTo(objects.at(i), ui_data.at(i));
@@ -1049,72 +1112,72 @@ void BatchItImage::AddUiDataTo(QObject* object, const UIData& ui_data)
     
     if ("QCheckBox" == object_class) {
         QCheckBox* cb = qobject_cast<QCheckBox*>(object);
-        cb->setChecked(std::get<int>(ui_data.data));
-        cb->setText(QString::fromStdString(ui_data.name));
-        cb->setStatusTip(QString::fromStdString(ui_data.desc));
-        cb->setToolTip(QString::fromStdString(ui_data.desc));
+        cb->setChecked(ui_data.data);
+        cb->setText(ui_data.name);
+        cb->setStatusTip(ui_data.desc);
+        cb->setToolTip(ui_data.desc);
     }
     else if ("QGroupBox" == object_class) {
         QGroupBox* gb = qobject_cast<QGroupBox*>(object);
-        gb->setChecked(std::get<int>(ui_data.data));
-        gb->setTitle(QString::fromStdString(ui_data.name));
-        gb->setStatusTip(QString::fromStdString(ui_data.desc));
-        gb->setToolTip(QString::fromStdString(ui_data.desc));
+        gb->setChecked(ui_data.data);
+        gb->setTitle(ui_data.name);
+        gb->setStatusTip(ui_data.desc);
+        gb->setToolTip(ui_data.desc);
     }else if ("QLabel" == object_class) {
         QLabel* lbl = qobject_cast<QLabel*>(object);
-        lbl->setText(QString::fromStdString(ui_data.name));
-        lbl->setStatusTip(QString::fromStdString(ui_data.desc));
-        lbl->setToolTip(QString::fromStdString(ui_data.desc));
+        lbl->setText(ui_data.name);
+        lbl->setStatusTip(ui_data.desc);
+        lbl->setToolTip(ui_data.desc);
     }
     else if ("QRadioButton" == object_class) {
         QRadioButton* rb = qobject_cast<QRadioButton*>(object);
-        rb->setChecked(std::get<int>(ui_data.data));
-        rb->setText(QString::fromStdString(ui_data.name));
-        rb->setStatusTip(QString::fromStdString(ui_data.desc));
-        rb->setToolTip(QString::fromStdString(ui_data.desc));
+        rb->setChecked(ui_data.data);
+        rb->setText(ui_data.name);
+        rb->setStatusTip(ui_data.desc);
+        rb->setToolTip(ui_data.desc);
     }
     else if ("QPushButton" == object_class) {
         QPushButton* pb = qobject_cast<QPushButton*>(object);
-        pb->setText(QString::fromStdString(ui_data.name));
-        pb->setStatusTip(QString::fromStdString(ui_data.desc));
-        pb->setToolTip(QString::fromStdString(ui_data.desc));
+        pb->setText(ui_data.name);
+        pb->setStatusTip(ui_data.desc);
+        pb->setToolTip(ui_data.desc);
     }
     /*else if ("EnhancedSlider" == object_class) {
         EnhancedSlider* es = qobject_cast<EnhancedSlider*>(object);
         es->addTextTip(
-            std::get<int>(ui_data.data),
-            std::get<int>(ui_data.data),
-            QString::fromStdString(ui_data.name),
+            ui_data.data,
+            ui_data.data,
+            ui_data.name,
             false
         );
     }*/
 }
 
-template<std::size_t array_size>
-void BatchItImage::PopulateComboBox(QComboBox* cb, const std::array<UIData, array_size>& ui_data)
+template<std::size_t ui_data_size, std::size_t string_data_size>
+void BatchItImage::PopulateComboBox(QComboBox* cb, const std::array<UIData, ui_data_size>& ui_data,
+    const std::array <std::string, string_data_size>& string_data)
+{
+    // Convert std::string array to QString array
+    std::array <QString, string_data_size> qstring_data;
+    for (int i = 0; i < ui_data_size; i++) {
+        qstring_data.at(i) = QString::fromStdString(string_data.at(i));
+    }
+    PopulateComboBox(cb, ui_data, qstring_data);
+}
+template<std::size_t ui_data_size, std::size_t string_data_size>
+void BatchItImage::PopulateComboBox(QComboBox* cb, const std::array<UIData, ui_data_size>& ui_data,
+    const std::array <QString, string_data_size>& string_data)
 {
     cb->clear();
     for (int i = 0; i < ui_data.size(); i++) {
-        if (const int* data = std::get_if<int>(&ui_data.at(i).data)) { // variant<int>
-            cb->addItem(
-                QString::fromStdString(ui_data.at(i).name),
-                QVariant::fromValue(*data)
-            );
+        if (string_data.empty()) {
+            cb->addItem(ui_data.at(i).name, ui_data.at(i).data);
         }
-        else if (const std::string* data = std::get_if<std::string>(&ui_data.at(i).data)) { // variant<string>
-            cb->addItem(
-                QString::fromStdString(ui_data.at(i).name),
-                QString::fromStdString(*data)
-            );
+        else {
+            cb->addItem(ui_data.at(i).name, string_data.at(i));
         }
-        cb->setItemData(i,
-            QString::fromStdString(ui_data.at(i).desc),
-            Qt::StatusTipRole
-        );
-        cb->setItemData( i,
-            QString::fromStdString(ui_data.at(i).desc),
-            Qt::ToolTipRole
-        );
+        cb->setItemData(i, ui_data.at(i).desc, Qt::StatusTipRole);
+        cb->setItemData(i, ui_data.at(i).desc, Qt::ToolTipRole);
     }
     cb->setStatusTip(cb->currentData(Qt::StatusTipRole).toString());
     cb->setToolTip(cb->currentData(Qt::ToolTipRole).toString());
@@ -1140,16 +1203,16 @@ void BatchItImage::UiConnections()
     // Main Window Menu
     Q_ASSERT(connect(ui.action_AddImages, SIGNAL(triggered(bool)), this, SLOT(LoadImageFiles())));
     Q_ASSERT(connect(ui.action_SaveLogAs, SIGNAL(triggered(bool)), this, SLOT(Test()))); // TODO
-    Q_ASSERT(connect(ui.action_Close, SIGNAL(triggered(bool)), this, SLOT(Test()))); // TODO
+    Q_ASSERT(connect(ui.action_Close, &QAction::triggered, this, &BatchItImage::close));
     Q_ASSERT(connect(ui.action_AddNewPreset, SIGNAL(triggered(bool)), this, SLOT(CreateNewPreset())));
     Q_ASSERT(connect(ui.action_RemovePreset, SIGNAL(triggered(bool)), this, SLOT(Test()))); // TODO
-    Q_ASSERT(connect(ui.action_SavePresets, SIGNAL(triggered(bool)), this, SLOT(Test()))); // TODO
+    Q_ASSERT(connect(ui.action_SavePresets, &QAction::triggered, this, [this] { SavePreset(true); })); // TODO: Show a DialogMessage?
     Q_ASSERT(connect(ui.action_ChangePresetDesc, &QAction::triggered,
         this, [this] {
             ChangePresetDescription(
                 CurrentSelectedPreset(),
-                "Change Preset Description",
-                "Change Title Description of Currently Selected Preset."
+                dialog_messages.at(DialogMessages::ChangePresetDescription).name,
+                dialog_messages.at(DialogMessages::ChangePresetDescription).desc
             );
         }));
     Q_ASSERT(connect(ui.action_About, SIGNAL(triggered(bool)), this, SLOT(Test()))); // TODO
@@ -1230,7 +1293,7 @@ void BatchItImage::UiConnections()
             UpdateComboBoxTextTips();
             EnableSpecificBlurOptions();
             // If already "off/None" remove below changed options.
-            // TODO: other options once, changed and changed back, could modify an option it doesn't use and flag a false change. fix?
+            // TODO: other options once changed and changed back, could modify an option it doesn't use and flag a false change. fix?
             if (index == 0 and index == preset_value) {
                 edit_options_change_tracker = RemoveOptionsChanged(edit_options_change_tracker, std::vector<uint>{
                     Option.checkBox_BlurNormalize, Option.verticalSlider_BlurX1, Option.verticalSlider_BlurY1,
@@ -1355,13 +1418,13 @@ void BatchItImage::UiConnections()
                 save_options_change_tracker, Option.radioButton_RelativePath,
                 preset_value, (value) ? 1 : preset_value
             );
-            save_options_change_tracker = TrackOptionChanges(
-                save_options_change_tracker,
-                Option.lineEdit_RelativePath,
-                preset_list.at(CurrentSelectedPreset()).save_file_path_change,
-                ui.lineEdit_RelativePath->text().toStdString()
-            );
             if (value) {
+                save_options_change_tracker = TrackOptionChanges(
+                    save_options_change_tracker,
+                    Option.lineEdit_RelativePath,
+                    preset_list.at(CurrentSelectedPreset()).save_file_path_change,
+                    ui.lineEdit_RelativePath->text().toStdString()
+                );
                 save_options_change_tracker = RemoveOptionsChanged(save_options_change_tracker, std::vector<uint>{
                     Option.lineEdit_AbsolutePath
                 });
@@ -1374,13 +1437,13 @@ void BatchItImage::UiConnections()
                 save_options_change_tracker, Option.radioButton_AbsolutePath,
                 preset_value, (value) ? 0 : preset_value
             );
-            save_options_change_tracker = TrackOptionChanges( // TODO: only if radioButton_AbsolutePath checked?
-                save_options_change_tracker,
-                Option.lineEdit_AbsolutePath,
-                preset_list.at(CurrentSelectedPreset()).save_file_path_change,
-                ui.lineEdit_AbsolutePath->text().toStdString()
-            );
             if (value) {
+                save_options_change_tracker = TrackOptionChanges(
+                    save_options_change_tracker,
+                    Option.lineEdit_AbsolutePath,
+                    preset_list.at(CurrentSelectedPreset()).save_file_path_change,
+                    ui.lineEdit_AbsolutePath->text().toStdString()
+                );
                 save_options_change_tracker = RemoveOptionsChanged(save_options_change_tracker, std::vector<uint>{
                     Option.lineEdit_RelativePath
                 });
@@ -1439,7 +1502,7 @@ void BatchItImage::UiConnections()
             );
             EnableSpecificFormatOptions();
             // If already "off/None" remove below changed options.
-            // TODO: other options once, changed and changed back, could modify an option it doesn't use and flag a false change. fix?
+            // TODO: other options once changed and changed back, could modify an option it doesn't use and flag a false change. fix?
             if (value == 0 and value == preset_value) {
                 save_options_change_tracker = RemoveOptionsChanged(save_options_change_tracker, std::vector<uint>{
                     Option.comboBox_ImageFormat, Option.comboBox_FormatFlags, Option.horizontalSlider_Quality, Option.checkBox_Optimize,
@@ -1525,7 +1588,7 @@ void BatchItImage::UiConnections()
     Q_ASSERT(connect(ui.pushButton_EditAndSave, SIGNAL(clicked(bool)), this, SLOT(EditAndSave())));
     Q_ASSERT(connect(this, SIGNAL(progressMade(float)), ui.enhancedProgressBar, SLOT(updateProgressBar(float))));
 
-    //qDebug().noquote() << Option.printAllTrackers();
+    //qDebug().noquote() << Option.printAllTrackerFlags();
 }
 
 ulong BatchItImage::TrackOptionChanges(ulong tracker, uint tracked_option, int preset_value, int changed_option_value)
@@ -1565,9 +1628,17 @@ ulong BatchItImage::RemoveOptionsChanged(ulong tracker, std::vector<uint> tracke
     return tracker;
 }
 
+void BatchItImage::RemoveOptionsChanged()
+{
+    edit_options_change_tracker = 0;
+    save_options_change_tracker = 0;
+    qDebug() << "Options Tracker (all removed): 0";
+}
+
 void BatchItImage::EnableSpecificBlurOptions(bool loading_preset)
 {
     int blur_filter_selected = ui.comboBox_BlurFilter->currentData().toInt();
+
     int NONE = 0;
     int NORMALIZE = 1;
     int X1 = 2;
@@ -1653,39 +1724,39 @@ void BatchItImage::EnableSpecificBlurOptions(bool loading_preset)
         ui.verticalSlider_BlurY2->addTextTip(-1, -1, " (Image Center)", true, EnhancedSlider::TextTipPlacement::ToTheRight);
         ui.verticalSlider_BlurD->setRange(-1, 6);
         ui.verticalSlider_BlurD->addTextTip(
-            std::get<int>(blur_depth_selections[0].data), //-1
-            std::get<int>(blur_depth_selections[0].data),
-            QString::fromStdString(blur_depth_selections[0].name),
+            blur_depth_selections[0].data, //-1
+            blur_depth_selections[0].data,
+            blur_depth_selections[0].name,
             false
         );
         ui.verticalSlider_BlurD->addTextTip(
-            std::get<int>(blur_depth_selections[1].data), //0
-            std::get<int>(blur_depth_selections[1].data),
-            QString::fromStdString(blur_depth_selections[1].name),
+            blur_depth_selections[1].data, //0
+            blur_depth_selections[1].data,
+            blur_depth_selections[1].name,
             false
         );
         ui.verticalSlider_BlurD->addTextTip(
-            std::get<int>(blur_depth_selections[2].data) - 1,
-            std::get<int>(blur_depth_selections[2].data), //2
-            QString::fromStdString(blur_depth_selections[2].name),
+            blur_depth_selections[2].data - 1,
+            blur_depth_selections[2].data, //2
+            blur_depth_selections[2].name,
             false
         );
         ui.verticalSlider_BlurD->addTextTip(
-            std::get<int>(blur_depth_selections[3].data), //3
-            std::get<int>(blur_depth_selections[3].data) + 1,
-            QString::fromStdString(blur_depth_selections[3].name),
+            blur_depth_selections[3].data, //3
+            blur_depth_selections[3].data + 1,
+            blur_depth_selections[3].name,
             false
         );
         ui.verticalSlider_BlurD->addTextTip(
-            std::get<int>(blur_depth_selections[4].data), //5
-            std::get<int>(blur_depth_selections[4].data),
-            QString::fromStdString(blur_depth_selections[4].name),
+            blur_depth_selections[4].data, //5
+            blur_depth_selections[4].data,
+            blur_depth_selections[4].name,
             false
         );
         ui.verticalSlider_BlurD->addTextTip(
-            std::get<int>(blur_depth_selections[5].data), //6
-            std::get<int>(blur_depth_selections[5].data),
-            QString::fromStdString(blur_depth_selections[5].name),
+            blur_depth_selections[5].data, //6
+            blur_depth_selections[5].data,
+            blur_depth_selections[5].name,
             false
         );
         if (not loading_preset) {
@@ -1872,33 +1943,33 @@ void BatchItImage::EnableSpecificFormatOptions(bool loading_preset)
         
         enableOptions(FORMATFLAGS + QUALITY + OPTIMIZE + PROGRESSIVE + COMPRESSION + EXTRASETTING1 + EXTRASETTING2);
         
-        ui.label_FormatFlags->setText(format_jpeg_options[FormatJpegOptions::label_FormatFlags].name.c_str());
-        ui.label_FormatFlags->setStatusTip(format_jpeg_options[FormatJpegOptions::label_FormatFlags].desc.c_str());
-        ui.label_FormatFlags->setToolTip(format_jpeg_options[FormatJpegOptions::label_FormatFlags].desc.c_str());
-        ui.label_Quality->setText(format_jpeg_options[FormatJpegOptions::label_Quality].name.c_str());
-        ui.label_Quality->setStatusTip(format_jpeg_options[FormatJpegOptions::label_Quality].desc.c_str());
-        ui.label_Quality->setToolTip(format_jpeg_options[FormatJpegOptions::label_Quality].desc.c_str());
-        ui.checkBox_Optimize->setText(format_jpeg_options[FormatJpegOptions::checkBox_Optimize].name.c_str());
-        ui.checkBox_Optimize->setStatusTip(format_jpeg_options[FormatJpegOptions::checkBox_Optimize].desc.c_str());
-        ui.checkBox_Optimize->setToolTip(format_jpeg_options[FormatJpegOptions::checkBox_Optimize].desc.c_str());
-        ui.checkBox_Progressive->setText(format_jpeg_options[FormatJpegOptions::checkBox_Progressive].name.c_str());
-        ui.checkBox_Progressive->setStatusTip(format_jpeg_options[FormatJpegOptions::checkBox_Progressive].desc.c_str());
-        ui.checkBox_Progressive->setToolTip(format_jpeg_options[FormatJpegOptions::checkBox_Progressive].desc.c_str());
-        ui.label_Compression->setText(format_jpeg_options[FormatJpegOptions::label_Compression].name.c_str());
-        ui.label_Compression->setStatusTip(format_jpeg_options[FormatJpegOptions::label_Compression].desc.c_str());
-        ui.label_Compression->setToolTip(format_jpeg_options[FormatJpegOptions::label_Compression].desc.c_str());
-        ui.label_ExtraSetting1->setText(format_jpeg_options[FormatJpegOptions::label_ExtraSetting1].name.c_str());
-        ui.label_ExtraSetting1->setStatusTip(format_jpeg_options[FormatJpegOptions::label_ExtraSetting1].desc.c_str());
-        ui.label_ExtraSetting1->setToolTip(format_jpeg_options[FormatJpegOptions::label_ExtraSetting1].desc.c_str());
-        ui.label_ExtraSetting2->setText(format_jpeg_options[FormatJpegOptions::label_ExtraSetting2].name.c_str());
-        ui.label_ExtraSetting2->setStatusTip(format_jpeg_options[FormatJpegOptions::label_ExtraSetting2].desc.c_str());
-        ui.label_ExtraSetting2->setToolTip(format_jpeg_options[FormatJpegOptions::label_ExtraSetting2].desc.c_str());
+        ui.label_FormatFlags->setText(format_jpeg_options[FormatJpegOptions::label_FormatFlags].name);
+        ui.label_FormatFlags->setStatusTip(format_jpeg_options[FormatJpegOptions::label_FormatFlags].desc);
+        ui.label_FormatFlags->setToolTip(format_jpeg_options[FormatJpegOptions::label_FormatFlags].desc);
+        ui.label_Quality->setText(format_jpeg_options[FormatJpegOptions::label_Quality].name);
+        ui.label_Quality->setStatusTip(format_jpeg_options[FormatJpegOptions::label_Quality].desc);
+        ui.label_Quality->setToolTip(format_jpeg_options[FormatJpegOptions::label_Quality].desc);
+        ui.checkBox_Optimize->setText(format_jpeg_options[FormatJpegOptions::checkBox_Optimize].name);
+        ui.checkBox_Optimize->setStatusTip(format_jpeg_options[FormatJpegOptions::checkBox_Optimize].desc);
+        ui.checkBox_Optimize->setToolTip(format_jpeg_options[FormatJpegOptions::checkBox_Optimize].desc);
+        ui.checkBox_Progressive->setText(format_jpeg_options[FormatJpegOptions::checkBox_Progressive].name);
+        ui.checkBox_Progressive->setStatusTip(format_jpeg_options[FormatJpegOptions::checkBox_Progressive].desc);
+        ui.checkBox_Progressive->setToolTip(format_jpeg_options[FormatJpegOptions::checkBox_Progressive].desc);
+        ui.label_Compression->setText(format_jpeg_options[FormatJpegOptions::label_Compression].name);
+        ui.label_Compression->setStatusTip(format_jpeg_options[FormatJpegOptions::label_Compression].desc);
+        ui.label_Compression->setToolTip(format_jpeg_options[FormatJpegOptions::label_Compression].desc);
+        ui.label_ExtraSetting1->setText(format_jpeg_options[FormatJpegOptions::label_ExtraSetting1].name);
+        ui.label_ExtraSetting1->setStatusTip(format_jpeg_options[FormatJpegOptions::label_ExtraSetting1].desc);
+        ui.label_ExtraSetting1->setToolTip(format_jpeg_options[FormatJpegOptions::label_ExtraSetting1].desc);
+        ui.label_ExtraSetting2->setText(format_jpeg_options[FormatJpegOptions::label_ExtraSetting2].name);
+        ui.label_ExtraSetting2->setStatusTip(format_jpeg_options[FormatJpegOptions::label_ExtraSetting2].desc);
+        ui.label_ExtraSetting2->setToolTip(format_jpeg_options[FormatJpegOptions::label_ExtraSetting2].desc);
 
         if (loading_preset)
             //PopulateComboBox(ui.comboBox_FormatFlags, format_jpeg_subsamplings, sizeof(format_jpeg_subsamplings) / sizeof(UIData));
             PopulateComboBox(ui.comboBox_FormatFlags, format_jpeg_subsamplings);
         
-        int default_quality_value = std::get<int>(format_jpeg_options[FormatJpegOptions::label_Quality].data);
+        int default_quality_value = format_jpeg_options[FormatJpegOptions::label_Quality].data;
         ui.horizontalSlider_Quality->setRange(0, 100);
         ui.horizontalSlider_Quality->addTextTip(default_quality_value, default_quality_value, " : Default", true);
         ui.spinBox_Compression->setRange(0, 65535);
@@ -1907,61 +1978,61 @@ void BatchItImage::EnableSpecificFormatOptions(bool loading_preset)
 
         if (not loading_preset and last_selected_format != ".jpeg" and last_selected_format != ".jpg" and last_selected_format != ".jpe") {
             PopulateComboBox(ui.comboBox_FormatFlags, format_jpeg_subsamplings);
-            ui.comboBox_FormatFlags->setCurrentIndex(std::get<int>(format_jpeg_options[FormatJpegOptions::label_FormatFlags].data));
+            ui.comboBox_FormatFlags->setCurrentIndex(format_jpeg_options[FormatJpegOptions::label_FormatFlags].data);
             ui.horizontalSlider_Quality->setValue(default_quality_value);
-            ui.checkBox_Optimize->setChecked(std::get<int>(format_jpeg_options[FormatJpegOptions::checkBox_Optimize].data));
-            ui.checkBox_Progressive->setChecked(std::get<int>(format_jpeg_options[FormatJpegOptions::checkBox_Progressive].data));
-            ui.spinBox_Compression->setValue(std::get<int>(format_jpeg_options[FormatJpegOptions::label_Compression].data));
-            ui.spinBox_ExtraSetting1->setValue(std::get<int>(format_jpeg_options[FormatJpegOptions::label_ExtraSetting1].data));
-            ui.spinBox_ExtraSetting2->setValue(std::get<int>(format_jpeg_options[FormatJpegOptions::label_ExtraSetting2].data));
+            ui.checkBox_Optimize->setChecked(format_jpeg_options[FormatJpegOptions::checkBox_Optimize].data);
+            ui.checkBox_Progressive->setChecked(format_jpeg_options[FormatJpegOptions::checkBox_Progressive].data);
+            ui.spinBox_Compression->setValue(format_jpeg_options[FormatJpegOptions::label_Compression].data);
+            ui.spinBox_ExtraSetting1->setValue(format_jpeg_options[FormatJpegOptions::label_ExtraSetting1].data);
+            ui.spinBox_ExtraSetting2->setValue(format_jpeg_options[FormatJpegOptions::label_ExtraSetting2].data);
         }
     }
     else if (format == ".jp2") {
         
         enableOptions(COMPRESSION);
 
-        ui.label_Compression->setText(format_jp2_options[FormatJp2Options::label_Compression].name.c_str());
-        ui.label_Compression->setStatusTip(format_jp2_options[FormatJp2Options::label_Compression].desc.c_str());
-        ui.label_Compression->setToolTip(format_jp2_options[FormatJp2Options::label_Compression].desc.c_str());
+        ui.label_Compression->setText(format_jp2_options[FormatJp2Options::label_Compression].name);
+        ui.label_Compression->setStatusTip(format_jp2_options[FormatJp2Options::label_Compression].desc);
+        ui.label_Compression->setToolTip(format_jp2_options[FormatJp2Options::label_Compression].desc);
 
         ui.spinBox_Compression->setRange(0, 1000);
 
         if (not loading_preset and last_selected_format != ".jp2") {
-            ui.spinBox_Compression->setValue(std::get<int>(format_jp2_options[FormatJp2Options::label_Compression].data));
+            ui.spinBox_Compression->setValue(format_jp2_options[FormatJp2Options::label_Compression].data);
         }
     }
     else if (format == ".png") {
         
         enableOptions(FORMATFLAGS + OPTIMIZE + COMPRESSION);
 
-        ui.label_FormatFlags->setText(format_png_options[FormatPngOptions::label_FormatFlags].name.c_str());
-        ui.label_FormatFlags->setStatusTip(format_png_options[FormatPngOptions::label_FormatFlags].desc.c_str());
-        ui.label_FormatFlags->setToolTip(format_png_options[FormatPngOptions::label_FormatFlags].desc.c_str());
-        ui.checkBox_Optimize->setText(format_png_options[FormatPngOptions::checkBox_Optimize].name.c_str());
-        ui.checkBox_Optimize->setStatusTip(format_png_options[FormatPngOptions::checkBox_Optimize].desc.c_str());
-        ui.checkBox_Optimize->setToolTip(format_png_options[FormatPngOptions::checkBox_Optimize].desc.c_str());
-        ui.label_Compression->setText(format_png_options[FormatPngOptions::label_Compression].name.c_str());
-        ui.label_Compression->setStatusTip(format_png_options[FormatPngOptions::label_Compression].desc.c_str());
-        ui.label_Compression->setToolTip(format_png_options[FormatPngOptions::label_Compression].desc.c_str());
+        ui.label_FormatFlags->setText(format_png_options[FormatPngOptions::label_FormatFlags].name);
+        ui.label_FormatFlags->setStatusTip(format_png_options[FormatPngOptions::label_FormatFlags].desc);
+        ui.label_FormatFlags->setToolTip(format_png_options[FormatPngOptions::label_FormatFlags].desc);
+        ui.checkBox_Optimize->setText(format_png_options[FormatPngOptions::checkBox_Optimize].name);
+        ui.checkBox_Optimize->setStatusTip(format_png_options[FormatPngOptions::checkBox_Optimize].desc);
+        ui.checkBox_Optimize->setToolTip(format_png_options[FormatPngOptions::checkBox_Optimize].desc);
+        ui.label_Compression->setText(format_png_options[FormatPngOptions::label_Compression].name);
+        ui.label_Compression->setStatusTip(format_png_options[FormatPngOptions::label_Compression].desc);
+        ui.label_Compression->setToolTip(format_png_options[FormatPngOptions::label_Compression].desc);
 
         PopulateComboBox(ui.comboBox_FormatFlags, format_png_compression);
         ui.spinBox_Compression->setRange(0, 9);
 
         if (not loading_preset and last_selected_format != ".png") {
-            ui.comboBox_FormatFlags->setCurrentIndex(std::get<int>(format_png_options[FormatPngOptions::label_FormatFlags].data));
-            ui.checkBox_Optimize->setChecked(std::get<int>(format_png_options[FormatPngOptions::checkBox_Optimize].data));
-            ui.spinBox_Compression->setValue(std::get<int>(format_png_options[FormatPngOptions::label_Compression].data));
+            ui.comboBox_FormatFlags->setCurrentIndex(format_png_options[FormatPngOptions::label_FormatFlags].data);
+            ui.checkBox_Optimize->setChecked(format_png_options[FormatPngOptions::checkBox_Optimize].data);
+            ui.spinBox_Compression->setValue(format_png_options[FormatPngOptions::label_Compression].data);
         }
     }
     else if (format == ".webp") { 
 
         enableOptions(QUALITY);
 
-        ui.label_Quality->setText(format_webp_options[FormatWebpOptions::label_Quality].name.c_str());
-        ui.label_Quality->setStatusTip(format_webp_options[FormatWebpOptions::label_Quality].desc.c_str());
-        ui.label_Quality->setToolTip(format_webp_options[FormatWebpOptions::label_Quality].desc.c_str());
+        ui.label_Quality->setText(format_webp_options[FormatWebpOptions::label_Quality].name);
+        ui.label_Quality->setStatusTip(format_webp_options[FormatWebpOptions::label_Quality].desc);
+        ui.label_Quality->setToolTip(format_webp_options[FormatWebpOptions::label_Quality].desc);
 
-        int default_quality_value = std::get<int>(format_webp_options[FormatWebpOptions::label_Quality].data);
+        int default_quality_value = format_webp_options[FormatWebpOptions::label_Quality].data;
         ui.horizontalSlider_Quality->setRange(1, 100);
         ui.horizontalSlider_Quality->addTextTip(default_quality_value, default_quality_value, " : Default", true);
 
@@ -1974,17 +2045,17 @@ void BatchItImage::EnableSpecificFormatOptions(bool loading_preset)
         enableOptions(QUALITY + COMPRESSION + EXTRASETTING2);
 
         //ui.label_FormatFlags->setText(":");
-        ui.label_Quality->setText(format_avif_options[FormatAvifOptions::label_Quality].name.c_str());
-        ui.label_Quality->setStatusTip(format_avif_options[FormatAvifOptions::label_Quality].desc.c_str());
-        ui.label_Quality->setToolTip(format_avif_options[FormatAvifOptions::label_Quality].desc.c_str());
-        ui.label_Compression->setText(format_avif_options[FormatAvifOptions::label_Compression].name.c_str());
-        ui.label_Compression->setStatusTip(format_avif_options[FormatAvifOptions::label_Compression].desc.c_str());
-        ui.label_Compression->setToolTip(format_avif_options[FormatAvifOptions::label_Compression].desc.c_str());
-        ui.label_ExtraSetting2->setText(format_avif_options[FormatAvifOptions::label_ExtraSetting2].name.c_str());
-        ui.label_ExtraSetting2->setStatusTip(format_avif_options[FormatAvifOptions::label_ExtraSetting2].desc.c_str());
-        ui.label_ExtraSetting2->setToolTip(format_avif_options[FormatAvifOptions::label_ExtraSetting2].desc.c_str());
+        ui.label_Quality->setText(format_avif_options[FormatAvifOptions::label_Quality].name);
+        ui.label_Quality->setStatusTip(format_avif_options[FormatAvifOptions::label_Quality].desc);
+        ui.label_Quality->setToolTip(format_avif_options[FormatAvifOptions::label_Quality].desc);
+        ui.label_Compression->setText(format_avif_options[FormatAvifOptions::label_Compression].name);
+        ui.label_Compression->setStatusTip(format_avif_options[FormatAvifOptions::label_Compression].desc);
+        ui.label_Compression->setToolTip(format_avif_options[FormatAvifOptions::label_Compression].desc);
+        ui.label_ExtraSetting2->setText(format_avif_options[FormatAvifOptions::label_ExtraSetting2].name);
+        ui.label_ExtraSetting2->setStatusTip(format_avif_options[FormatAvifOptions::label_ExtraSetting2].desc);
+        ui.label_ExtraSetting2->setToolTip(format_avif_options[FormatAvifOptions::label_ExtraSetting2].desc);
 
-        int default_quality_value = std::get<int>(format_avif_options[FormatAvifOptions::label_Quality].data);
+        int default_quality_value = format_avif_options[FormatAvifOptions::label_Quality].data;
         ui.horizontalSlider_Quality->setRange(0, 100);
         ui.horizontalSlider_Quality->addTextTip(default_quality_value, default_quality_value, " : Default", true);
         ui.spinBox_Compression->setRange(0, 9);
@@ -2001,61 +2072,61 @@ void BatchItImage::EnableSpecificFormatOptions(bool loading_preset)
         if (not loading_preset and last_selected_format != ".avif") {
             //ui.comboBox_FormatFlags->setCurrentIndex(0);
             ui.horizontalSlider_Quality->setValue(default_quality_value);
-            ui.spinBox_Compression->setValue(std::get<int>(format_avif_options[FormatAvifOptions::label_Compression].data));
-            ui.spinBox_ExtraSetting2->setValue(std::get<int>(format_avif_options[FormatAvifOptions::label_ExtraSetting2].data));
+            ui.spinBox_Compression->setValue(format_avif_options[FormatAvifOptions::label_Compression].data);
+            ui.spinBox_ExtraSetting2->setValue(format_avif_options[FormatAvifOptions::label_ExtraSetting2].data);
         }
     }
     else if (format == ".pbm" or format == ".pgm" or format == ".ppm") {
 
         enableOptions(OPTIMIZE);
 
-        ui.checkBox_Optimize->setText(format_pbm_options[FormatPbmOptions::checkBox_Optimize].name.c_str());
-        ui.checkBox_Optimize->setStatusTip(format_pbm_options[FormatPbmOptions::checkBox_Optimize].desc.c_str());
-        ui.checkBox_Optimize->setToolTip(format_pbm_options[FormatPbmOptions::checkBox_Optimize].desc.c_str());
+        ui.checkBox_Optimize->setText(format_pbm_options[FormatPbmOptions::checkBox_Optimize].name);
+        ui.checkBox_Optimize->setStatusTip(format_pbm_options[FormatPbmOptions::checkBox_Optimize].desc);
+        ui.checkBox_Optimize->setToolTip(format_pbm_options[FormatPbmOptions::checkBox_Optimize].desc);
 
         if (not loading_preset and last_selected_format != ".pbm" and last_selected_format != ".pgm" and last_selected_format != ".ppm") {
-            ui.checkBox_Optimize->setChecked(std::get<int>(format_pbm_options[FormatPbmOptions::checkBox_Optimize].data));
+            ui.checkBox_Optimize->setChecked(format_pbm_options[FormatPbmOptions::checkBox_Optimize].data);
         }
     }
     else if (format == ".pam") {
 
         enableOptions(FORMATFLAGS);
 
-        ui.label_FormatFlags->setText(format_pam_options[FormatPamOptions::label_FormatFlags].name.c_str());
-        ui.label_FormatFlags->setStatusTip(format_pam_options[FormatPamOptions::label_FormatFlags].desc.c_str());
-        ui.label_FormatFlags->setToolTip(format_pam_options[FormatPamOptions::label_FormatFlags].desc.c_str());
+        ui.label_FormatFlags->setText(format_pam_options[FormatPamOptions::label_FormatFlags].name);
+        ui.label_FormatFlags->setStatusTip(format_pam_options[FormatPamOptions::label_FormatFlags].desc);
+        ui.label_FormatFlags->setToolTip(format_pam_options[FormatPamOptions::label_FormatFlags].desc);
 
         PopulateComboBox(ui.comboBox_FormatFlags, format_pam_tupletype);
 
         if (not loading_preset and last_selected_format != ".pam") {
-            ui.comboBox_FormatFlags->setCurrentIndex(std::get<int>(format_pam_options[FormatPamOptions::label_FormatFlags].data));
+            ui.comboBox_FormatFlags->setCurrentIndex(format_pam_options[FormatPamOptions::label_FormatFlags].data);
         }
     }
     else if (format == ".tiff" or format == ".tif") {
 
         enableOptions(FORMATFLAGS + QUALITY + EXTRASETTING1 + EXTRASETTING2);
 
-        ui.label_FormatFlags->setText(format_tiff_options[FormatTiffOptions::label_FormatFlags].name.c_str());
-        ui.label_FormatFlags->setStatusTip(format_tiff_options[FormatTiffOptions::label_FormatFlags].desc.c_str());
-        ui.label_FormatFlags->setToolTip(format_tiff_options[FormatTiffOptions::label_FormatFlags].desc.c_str());
-        ui.label_Quality->setText(format_tiff_options[FormatTiffOptions::label_Quality].name.c_str());
-        ui.label_Quality->setStatusTip(format_tiff_options[FormatTiffOptions::label_Quality].desc.c_str());
-        ui.label_Quality->setToolTip(format_tiff_options[FormatTiffOptions::label_Quality].desc.c_str());
-        ui.label_ExtraSetting1->setText(format_tiff_options[FormatTiffOptions::label_ExtraSetting1].name.c_str());
-        ui.label_ExtraSetting1->setStatusTip(format_tiff_options[FormatTiffOptions::label_ExtraSetting1].desc.c_str());
-        ui.label_ExtraSetting1->setToolTip(format_tiff_options[FormatTiffOptions::label_ExtraSetting1].desc.c_str());
-        ui.label_ExtraSetting2->setText(format_tiff_options[FormatTiffOptions::label_ExtraSetting2].name.c_str());
-        ui.label_ExtraSetting2->setStatusTip(format_tiff_options[FormatTiffOptions::label_ExtraSetting2].desc.c_str());
-        ui.label_ExtraSetting2->setToolTip(format_tiff_options[FormatTiffOptions::label_ExtraSetting2].desc.c_str());
+        ui.label_FormatFlags->setText(format_tiff_options[FormatTiffOptions::label_FormatFlags].name);
+        ui.label_FormatFlags->setStatusTip(format_tiff_options[FormatTiffOptions::label_FormatFlags].desc);
+        ui.label_FormatFlags->setToolTip(format_tiff_options[FormatTiffOptions::label_FormatFlags].desc);
+        ui.label_Quality->setText(format_tiff_options[FormatTiffOptions::label_Quality].name);
+        ui.label_Quality->setStatusTip(format_tiff_options[FormatTiffOptions::label_Quality].desc);
+        ui.label_Quality->setToolTip(format_tiff_options[FormatTiffOptions::label_Quality].desc);
+        ui.label_ExtraSetting1->setText(format_tiff_options[FormatTiffOptions::label_ExtraSetting1].name);
+        ui.label_ExtraSetting1->setStatusTip(format_tiff_options[FormatTiffOptions::label_ExtraSetting1].desc);
+        ui.label_ExtraSetting1->setToolTip(format_tiff_options[FormatTiffOptions::label_ExtraSetting1].desc);
+        ui.label_ExtraSetting2->setText(format_tiff_options[FormatTiffOptions::label_ExtraSetting2].name);
+        ui.label_ExtraSetting2->setStatusTip(format_tiff_options[FormatTiffOptions::label_ExtraSetting2].desc);
+        ui.label_ExtraSetting2->setToolTip(format_tiff_options[FormatTiffOptions::label_ExtraSetting2].desc);
 
         if (loading_preset)
             PopulateComboBox(ui.comboBox_FormatFlags, format_tiff_compression);
         ui.horizontalSlider_Quality->setRange(1, 3);
         for (auto& tiff_ru : format_tiff_resolution_unit) {
             ui.horizontalSlider_Quality->addTextTip(
-                std::get<int>(tiff_ru.data),
-                std::get<int>(tiff_ru.data),
-                QString::fromStdString(" : " + tiff_ru.name + " " + tiff_ru.desc),
+                tiff_ru.data,
+                tiff_ru.data,
+                " : " + tiff_ru.name + " " + tiff_ru.desc,
                 true,
                 EnhancedSlider::ToTheRight
             );
@@ -2065,38 +2136,38 @@ void BatchItImage::EnableSpecificFormatOptions(bool loading_preset)
 
         if (not loading_preset and last_selected_format != ".tiff" and last_selected_format != ".tif") {
             PopulateComboBox(ui.comboBox_FormatFlags, format_tiff_compression);
-            ui.comboBox_FormatFlags->setCurrentIndex(std::get<int>(format_tiff_options[FormatTiffOptions::label_FormatFlags].data));
-            ui.horizontalSlider_Quality->setValue(std::get<int>(format_tiff_options[FormatTiffOptions::label_Quality].data));
-            ui.spinBox_ExtraSetting1->setValue(std::get<int>(format_tiff_options[FormatTiffOptions::label_ExtraSetting1].data));
-            ui.spinBox_ExtraSetting2->setValue(std::get<int>(format_tiff_options[FormatTiffOptions::label_ExtraSetting2].data));
+            ui.comboBox_FormatFlags->setCurrentIndex(format_tiff_options[FormatTiffOptions::label_FormatFlags].data);
+            ui.horizontalSlider_Quality->setValue(format_tiff_options[FormatTiffOptions::label_Quality].data);
+            ui.spinBox_ExtraSetting1->setValue(format_tiff_options[FormatTiffOptions::label_ExtraSetting1].data);
+            ui.spinBox_ExtraSetting2->setValue(format_tiff_options[FormatTiffOptions::label_ExtraSetting2].data);
         }
     }
     else if (format == ".exr") {
 
         enableOptions(FORMATFLAGS + OPTIMIZE + PROGRESSIVE + COMPRESSION);
 
-        ui.label_FormatFlags->setText(format_exr_options[FormatExrOptions::label_FormatFlags].name.c_str());
-        ui.label_FormatFlags->setStatusTip(format_exr_options[FormatExrOptions::label_FormatFlags].desc.c_str());
-        ui.label_FormatFlags->setToolTip(format_exr_options[FormatExrOptions::label_FormatFlags].desc.c_str());
-        ui.checkBox_Optimize->setText(format_exr_options[FormatExrOptions::checkBox_Optimize].name.c_str());
-        ui.checkBox_Optimize->setStatusTip(format_exr_options[FormatExrOptions::checkBox_Optimize].desc.c_str());
-        ui.checkBox_Optimize->setToolTip(format_exr_options[FormatExrOptions::checkBox_Optimize].desc.c_str());
-        ui.checkBox_Progressive->setText(format_exr_options[FormatExrOptions::checkBox_Progressive].name.c_str());
-        ui.checkBox_Progressive->setStatusTip(format_exr_options[FormatExrOptions::checkBox_Progressive].desc.c_str());
-        ui.checkBox_Progressive->setToolTip(format_exr_options[FormatExrOptions::checkBox_Progressive].desc.c_str());
-        ui.label_Compression->setText(format_exr_options[FormatExrOptions::label_Compression].name.c_str());
-        ui.label_Compression->setStatusTip(format_exr_options[FormatExrOptions::label_Compression].desc.c_str());
-        ui.label_Compression->setToolTip(format_exr_options[FormatExrOptions::label_Compression].desc.c_str());
+        ui.label_FormatFlags->setText(format_exr_options[FormatExrOptions::label_FormatFlags].name);
+        ui.label_FormatFlags->setStatusTip(format_exr_options[FormatExrOptions::label_FormatFlags].desc);
+        ui.label_FormatFlags->setToolTip(format_exr_options[FormatExrOptions::label_FormatFlags].desc);
+        ui.checkBox_Optimize->setText(format_exr_options[FormatExrOptions::checkBox_Optimize].name);
+        ui.checkBox_Optimize->setStatusTip(format_exr_options[FormatExrOptions::checkBox_Optimize].desc);
+        ui.checkBox_Optimize->setToolTip(format_exr_options[FormatExrOptions::checkBox_Optimize].desc);
+        ui.checkBox_Progressive->setText(format_exr_options[FormatExrOptions::checkBox_Progressive].name);
+        ui.checkBox_Progressive->setStatusTip(format_exr_options[FormatExrOptions::checkBox_Progressive].desc);
+        ui.checkBox_Progressive->setToolTip(format_exr_options[FormatExrOptions::checkBox_Progressive].desc);
+        ui.label_Compression->setText(format_exr_options[FormatExrOptions::label_Compression].name);
+        ui.label_Compression->setStatusTip(format_exr_options[FormatExrOptions::label_Compression].desc);
+        ui.label_Compression->setToolTip(format_exr_options[FormatExrOptions::label_Compression].desc);
 
         PopulateComboBox(ui.comboBox_FormatFlags, format_exr_compression);
         ui.checkBox_Optimize->setAutoExclusive(true);
         ui.checkBox_Progressive->setAutoExclusive(true);
 
         if (not loading_preset and last_selected_format != ".exr") {
-            ui.comboBox_FormatFlags->setCurrentIndex(std::get<int>(format_exr_options[FormatExrOptions::label_FormatFlags].data));
-            ui.checkBox_Optimize->setChecked(std::get<int>(format_exr_options[FormatExrOptions::checkBox_Optimize].data));
-            ui.checkBox_Progressive->setChecked(std::get<int>(format_exr_options[FormatExrOptions::checkBox_Progressive].data));
-            ui.spinBox_Compression->setValue(std::get<int>(format_exr_options[FormatExrOptions::label_Compression].data));
+            ui.comboBox_FormatFlags->setCurrentIndex(format_exr_options[FormatExrOptions::label_FormatFlags].data);
+            ui.checkBox_Optimize->setChecked(format_exr_options[FormatExrOptions::checkBox_Optimize].data);
+            ui.checkBox_Progressive->setChecked(format_exr_options[FormatExrOptions::checkBox_Progressive].data);
+            ui.spinBox_Compression->setValue(format_exr_options[FormatExrOptions::label_Compression].data);
         }
 
     }
@@ -2104,16 +2175,16 @@ void BatchItImage::EnableSpecificFormatOptions(bool loading_preset)
 
         enableOptions(FORMATFLAGS);
 
-        ui.label_FormatFlags->setText(format_hdr_options[FormatHdrOptions::label_FormatFlags].name.c_str());
-        ui.label_FormatFlags->setStatusTip(format_hdr_options[FormatHdrOptions::label_FormatFlags].desc.c_str());
-        ui.label_FormatFlags->setToolTip(format_hdr_options[FormatHdrOptions::label_FormatFlags].desc.c_str());
+        ui.label_FormatFlags->setText(format_hdr_options[FormatHdrOptions::label_FormatFlags].name);
+        ui.label_FormatFlags->setStatusTip(format_hdr_options[FormatHdrOptions::label_FormatFlags].desc);
+        ui.label_FormatFlags->setToolTip(format_hdr_options[FormatHdrOptions::label_FormatFlags].desc);
 
         if (loading_preset)
             PopulateComboBox(ui.comboBox_FormatFlags, format_hdr_compression);
 
         if (not loading_preset and last_selected_format != ".hdr" and last_selected_format != ".pic") {
             PopulateComboBox(ui.comboBox_FormatFlags, format_hdr_compression);
-            ui.comboBox_FormatFlags->setCurrentIndex(std::get<int>(format_hdr_options[FormatHdrOptions::label_FormatFlags].data));
+            ui.comboBox_FormatFlags->setCurrentIndex(format_hdr_options[FormatHdrOptions::label_FormatFlags].data);
         }
     }
     else {
@@ -2129,19 +2200,19 @@ void BatchItImage::EnableSpecificFormatOptions(bool loading_preset)
 
 void BatchItImage::SetupFileTreeContextMenu()
 {
-    action_add = new QAction(QString::fromStdString(file_tree_menu_items->at(ActionMenu::action_add).name), this);
-    action_delete = new QAction(QString::fromStdString(file_tree_menu_items->at(ActionMenu::action_delete).name), this);
-    action_clear = new QAction(QString::fromStdString(file_tree_menu_items->at(ActionMenu::action_clear).name), this);
-    action_select = new QAction(QString::fromStdString(file_tree_menu_items->at(ActionMenu::action_select).name), this);
-    action_view = new QAction(QString::fromStdString(file_tree_menu_items->at(ActionMenu::action_view).name), this);
-    action_preview = new QAction(QString::fromStdString(file_tree_menu_items->at(ActionMenu::action_preview).name), this);
+    action_add = new QAction(file_tree_menu_items->at(ActionMenu::action_add).name, this);
+    action_delete = new QAction(file_tree_menu_items->at(ActionMenu::action_delete).name, this);
+    action_clear = new QAction(file_tree_menu_items->at(ActionMenu::action_clear).name, this);
+    action_select = new QAction(file_tree_menu_items->at(ActionMenu::action_select).name, this);
+    action_view = new QAction(file_tree_menu_items->at(ActionMenu::action_view).name, this);
+    action_preview = new QAction(file_tree_menu_items->at(ActionMenu::action_preview).name, this);
 
-    action_add->setToolTip(QString::fromStdString(file_tree_menu_items->at(ActionMenu::action_add).desc));
-    action_delete->setToolTip(QString::fromStdString(file_tree_menu_items->at(ActionMenu::action_delete).desc));
-    action_clear->setToolTip(QString::fromStdString(file_tree_menu_items->at(ActionMenu::action_clear).desc));
-    action_select->setToolTip(QString::fromStdString(file_tree_menu_items->at(ActionMenu::action_select).desc));
-    action_view->setToolTip(QString::fromStdString(file_tree_menu_items->at(ActionMenu::action_view).desc));
-    action_preview->setToolTip(QString::fromStdString(file_tree_menu_items->at(ActionMenu::action_preview).desc));
+    action_add->setToolTip(file_tree_menu_items->at(ActionMenu::action_add).desc);
+    action_delete->setToolTip(file_tree_menu_items->at(ActionMenu::action_delete).desc);
+    action_clear->setToolTip(file_tree_menu_items->at(ActionMenu::action_clear).desc);
+    action_select->setToolTip(file_tree_menu_items->at(ActionMenu::action_select).desc);
+    action_view->setToolTip(file_tree_menu_items->at(ActionMenu::action_view).desc);
+    action_preview->setToolTip(file_tree_menu_items->at(ActionMenu::action_preview).desc);
 
     auto action_line_1 = new QAction(this);
     action_line_1->setSeparator(true);
@@ -2173,7 +2244,7 @@ void BatchItImage::SetupFileTreeContextMenu()
         action_select, action_line_2, action_view, action_preview 
         });
 
-#ifdef DEBUG
+#ifdef _DEBUG
     QAction* action_debug_quick_load = new QAction("Debug Quick Load", this);
     QStringList testing_file_list;
     //testing_file_list.append(qdefault_path + R"(/test_images/01.jpg)"); // large file
@@ -2189,7 +2260,7 @@ void BatchItImage::SetupFileTreeContextMenu()
     testing_folder_list.append(qdefault_path + R"(/test_images)");
     connect(action_debug_large_load, &QAction::triggered, [this, testing_folder_list] { AddNewFiles(testing_folder_list); });
     ui.treeWidget_FileInfo->addAction(action_debug_large_load);
-#endif // DEBUG
+#endif // _DEBUG
 }
 
 void BatchItImage::ToggleFileTreeContextMenuItems(bool enable)
@@ -2217,14 +2288,14 @@ void BatchItImage::ToggleFileTreeContextMenuItems(bool enable)
 
 void BatchItImage::ChangePreset(int index)
 {
+    SavePresetDialog();
+    RemoveOptionsChanged();
+    
     ui.comboBox_Preset_1->blockSignals(true);
     ui.comboBox_Preset_2->blockSignals(true);
     ui.comboBox_Preset_3->blockSignals(true);
 
-    //DEBUG2("current_selected_preset: ", current_selected_preset);
     //if (index != current_selected_preset) {
-    // TODO: ask user before saving?
-    //SavePreset(); // Save previous preset before change
     current_selected_preset = index;
     DEBUG2("current_selected_preset: ", current_selected_preset);
 
@@ -2237,33 +2308,6 @@ void BatchItImage::ChangePreset(int index)
     ui.comboBox_Preset_1->blockSignals(false);
     ui.comboBox_Preset_2->blockSignals(false);
     ui.comboBox_Preset_3->blockSignals(false);
-}
-
-void BatchItImage::ChangePresetDescription(int selected_preset_index, QString title, QString message)
-{
-    int* preset_index = new int(selected_preset_index);
-    qDebug() << "ChangePresetDescription: " << *preset_index;
-    
-    DialogEditPresetDesc* change_preset_desc_dialog = new DialogEditPresetDesc(
-        title,
-        message,
-        &preset_list,
-        *preset_index,
-        this
-    );
-    Q_ASSERT(connect(change_preset_desc_dialog, &DialogEditPresetDesc::presetIndexSelected,
-        this, [=](int index) { *preset_index = index; change_preset_desc_dialog->deleteLater(); }));
-    /*Q_ASSERT(connect(change_preset_desc_dialog, &DialogEditPresetDesc::presetIndexSelected,
-        change_preset_desc_dialog, &DialogEditPresetDesc::deleteLater));*/
-
-    change_preset_desc_dialog->exec();
-
-    AddPresetsToComboBox(&preset_list, std::vector<QComboBox*>{
-        ui.comboBox_Preset_1, ui.comboBox_Preset_2, ui.comboBox_Preset_3
-    });
-    ChangePreset(*preset_index);
-    SavePreset(true);
-    delete preset_index;
 }
 
 void BatchItImage::SavePreset(bool save_all)
@@ -2284,6 +2328,7 @@ void BatchItImage::SavePreset(bool save_all)
         for (int i = 0; i < preset_list.size(); i++) {
             SavePresetToSettingsFile(i);
         }
+        ui.statusbar->showMessage("All Presets Saved!", 5000);
     }
     else {
         DEBUG2("Update Settings Preset #", current_selected_preset);
@@ -2348,6 +2393,7 @@ void BatchItImage::SavePreset(bool save_all)
 
         SavePresetToSettingsFile(current_selected_preset);
     }
+    RemoveOptionsChanged();
 }
 
 void BatchItImage::SavePresetToSettingsFile(int index)
@@ -2390,9 +2436,9 @@ void BatchItImage::SavePresetToSettingsFile(int index)
     settings.setValue("format_extra1", preset_list.at(index).format_extra1);
     settings.setValue("format_extra2", preset_list.at(index).format_extra2);
     settings.setValue("save_file_policy_option", preset_list.at(index).save_file_policy_option);
-    settings.setValue("save_file_name_change", preset_list.at(index).save_file_name_change.c_str());
+    settings.setValue("save_file_name_change", QString::fromStdString(preset_list.at(index).save_file_name_change));
     settings.setValue("relative_save_path", preset_list.at(index).relative_save_path);
-    settings.setValue("save_file_path_change", preset_list.at(index).save_file_path_change.c_str());
+    settings.setValue("save_file_path_change", QString::fromStdString(preset_list.at(index).save_file_path_change));
     settings.endGroup();
 }
 
@@ -2587,6 +2633,8 @@ void BatchItImage::LoadPresets()
 
 void BatchItImage::CreateNewPreset()
 {
+    SavePresetDialog();
+    RemoveOptionsChanged();
     int new_preset_index = preset_list.size();
     qDebug() << "CreateNewPreset: " << new_preset_index;
     
@@ -2595,35 +2643,101 @@ void BatchItImage::CreateNewPreset()
     new_preset.description = "New Preset";
     preset_list.push_back({ new_preset });
 
-    ChangePresetDescription(new_preset_index, "Add New Preset", "Add Description for New Preset."); // TODO: text -> UIData
+    ChangePresetDescription(
+        new_preset_index,
+        dialog_messages.at(DialogMessages::CreateNewPreset).name,
+        dialog_messages.at(DialogMessages::CreateNewPreset).name
+    );
 }
 
-bool BatchItImage::SavePresetDialog()
+bool BatchItImage::SavePresetDialog(bool include_cancel_buttons, bool closing)
 {
-    m_window = new MessageWindow( // TODO: text -> UIData
-        "Save Current Preset",
-        "Before editing any images, with the current settings, would you like to \"Save/Discard\" those settings to the currently selected preset?\nYou may also choose to \"Abort\" the editing of images.",
-        QDialogButtonBox::Save | QDialogButtonBox::Discard | QDialogButtonBox::Abort,
-        this
-    );
-    bool abort = false;
-    bool* abort_p = &abort;
-    Q_ASSERT(connect(m_window, &MessageWindow::buttonClicked, this,
-        [=](QDialogButtonBox::StandardButton button_clicked) {
-            if (QDialogButtonBox::Save & button_clicked)
-                SavePreset();
-            if (QDialogButtonBox::Discard & button_clicked)
-                m_window->close();
-            else if (QDialogButtonBox::Abort & button_clicked or QDialogButtonBox::Close & button_clicked) {
-                bool abort = true;
-                *abort_p = abort;
-            }
-            m_window->deleteLater();
+    if (edit_options_change_tracker or save_options_change_tracker) {
+        QString title;
+        QString message;
+        QDialogButtonBox::StandardButtons buttons = QDialogButtonBox::NoButton;
+        uint custom_buttons = DialogMessage::CustomButton::NoCustomButton;
+
+        if (closing) {
+            title = dialog_messages.at(DialogMessages::save_preset_dialog_closing).name;
+            message = dialog_messages.at(DialogMessages::save_preset_dialog_closing).desc;
+            buttons = QDialogButtonBox::Cancel;
+            custom_buttons = DialogMessage::CustomButton::SaveClose
+                | DialogMessage::CustomButton::Close;
         }
-    ));
-    m_window->exec();
-    //delete m_window;
-    return abort;
+        else {
+            title = dialog_messages.at(DialogMessages::save_preset_dialog).name;
+            message = dialog_messages.at(DialogMessages::save_preset_dialog).desc;
+            if (include_cancel_buttons) {
+                buttons = QDialogButtonBox::Cancel;
+                custom_buttons = DialogMessage::CustomButton::SaveContinue
+                    | DialogMessage::CustomButton::Continue
+                    | DialogMessage::CustomButton::ResetCancel;
+            }
+            else {
+                custom_buttons = DialogMessage::CustomButton::SaveContinue
+                    | DialogMessage::CustomButton::Continue;
+            }
+        }
+        auto* save_preset_dialog = new DialogMessage(title, message, buttons, custom_buttons, this);
+        bool abort = false;
+        bool* abort_p = &abort;
+        Q_ASSERT(connect(save_preset_dialog, &DialogMessage::buttonRoleClicked, this,
+            [=](QDialogButtonBox::ButtonRole button_role_clicked) {
+                if (QDialogButtonBox::ApplyRole == button_role_clicked) { // Save and Continue
+                    qDebug() << "ApplyRole";
+                    SavePreset();
+                    //RemoveOptionsChanged();
+                }
+                else if (QDialogButtonBox::AcceptRole == button_role_clicked) { // Don't Save and Continue
+                    qDebug() << "AcceptRole";
+                    //save_preset_dialog->close();
+                    //RemoveOptionsChanged();
+                }
+                else if (QDialogButtonBox::ResetRole == button_role_clicked) { // Revert Changes and Don't Continue
+                    qDebug() << "ResetRole";
+                    // Reload saved preset
+                    LoadPreset(preset_list.at(CurrentSelectedPreset()));
+                    RemoveOptionsChanged();
+                    //save_preset_dialog->close();
+                    bool abort = true;
+                    *abort_p = abort;
+                }
+                else if (QDialogButtonBox::RejectRole == button_role_clicked or 
+                    QDialogButtonBox::DestructiveRole == button_role_clicked) { // Don't Save and Don't Continue
+                    qDebug() << "DestructiveRole";
+                    bool abort = true;
+                    *abort_p = abort;
+                }
+                save_preset_dialog->deleteLater();
+            }
+        ));
+        save_preset_dialog->exec();
+        return abort;
+    }
+    return false;
+}
+
+void BatchItImage::ChangePresetDescription(int selected_preset_index, QString title, QString message)
+{
+    SavePresetDialog();
+    RemoveOptionsChanged();
+
+    int* preset_index = new int(selected_preset_index);
+    qDebug() << "ChangePresetDescription: " << *preset_index;
+
+    auto* change_preset_desc_dialog = new DialogEditPresetDesc(title, message, &preset_list, *preset_index, this);
+    Q_ASSERT(connect(change_preset_desc_dialog, &DialogEditPresetDesc::presetIndexSelected, this,
+        [=](int index) { *preset_index = index; change_preset_desc_dialog->deleteLater(); }));
+
+    change_preset_desc_dialog->exec();
+
+    AddPresetsToComboBox(&preset_list, std::vector<QComboBox*>{
+        ui.comboBox_Preset_1, ui.comboBox_Preset_2, ui.comboBox_Preset_3
+    });
+    ChangePreset(*preset_index);
+    SavePreset(true);
+    delete preset_index;
 }
 
 void BatchItImage::AddPresetsToComboBox(std::vector<Preset>* preset_list, std::vector<QComboBox*> preset_cb) // Static
@@ -2663,14 +2777,14 @@ uint BatchItImage::CurrentSelectedPreset()
 void BatchItImage::EditAndSave()
 {
     DEBUG("Edit And Save...");
+    int file_count = current_file_metadata_list.size();
     
     // TODO: if current preset settings are not saved, ask to save them now before editing images
     // Save Current, Save New, Cancel... all preset ui elements would need to trigger a "changed and not saved" flag
-    if (SavePresetDialog()) {
+    if (SavePresetDialog(true) or file_count == 0) {
         DEBUG("Edit And Save... Aborted");
         return;
     }
-    int file_count = current_file_metadata_list.size();
     ui.enhancedProgressBar->configure(file_count, 3.0f);
 
     for (int i = 0; i < file_count; i++) {
@@ -2721,9 +2835,6 @@ void BatchItImage::SaveImageFile(int image_index, ImageEditor* image_editor)
     DEBUG4("SaveImageFile: ", image_index, ", Edit-Code: ", image_editor->GetImageEditsMade());
     
     emit progressMade();
-    //QApplication::processEvents();
-    //QApplication::instance()->processEvents();
-    //qApp->processEvents();
 
     int save_file_option_flag = ImageSaver::OVERWRITE;
     std::string save_file_path_change;
@@ -2843,8 +2954,8 @@ template<typename DirectoryIter>QStringList BatchItImage::IterateDirectory(Direc
         if (std::filesystem::is_regular_file(dir_entry)) {
             DEBUG2("File: ", dir_entry);
             std::string file_ext = dir_entry.path().extension().string();
-            for (const auto& img_format : image_formats) {
-                std::string ext = std::get<std::string>(img_format.data);
+            for (const auto& img_format : extension_list) {
+                std::string ext = img_format.toStdString();
                 if (ext == file_ext) {
                     QString file = QString::fromStdString(dir_entry.path().string());
                     updated_file_list.append(file);
@@ -2929,22 +3040,23 @@ void BatchItImage::HandleFileMetadata(FileMetadata* file_metadata)
         emit progressMade(2.0f);
         DEBUG("----> Bad/Non Image File");
 
-        // TODO: return bad file path? then add to vector of bad files, show m_window for each or ignore all
-        if (not m_window_shown) {
-            m_window = new MessageWindow(
-                "Warning",
-                "Unsupported or non-image files were not added to list.",
+        // TODO: return bad file path? then add to vector of bad files, show non_image_file_dialog for each or ignore all
+        if (not non_image_file_dialog_shown) {
+            auto* non_image_file_dialog = new DialogMessage(
+                dialog_messages.at(DialogMessages::non_image_file_dialog).name,
+                dialog_messages.at(DialogMessages::non_image_file_dialog).desc,
                 QDialogButtonBox::Ignore,
+                DialogMessage::CustomButton::NoCustomButton,
                 this
             );
-            Q_ASSERT(connect(m_window, &MessageWindow::buttonClicked,
-                [this](QDialogButtonBox::StandardButton button) {
+            Q_ASSERT(connect(non_image_file_dialog, &DialogMessage::buttonClicked,
+                [=](QDialogButtonBox::StandardButton button) {
                     //DEBUG2("Button: ", button);
-                    m_window_shown = false;
-                    m_window->deleteLater();
+                    non_image_file_dialog_shown = false;
+                    non_image_file_dialog->deleteLater();
                 }));
-            m_window->show();
-            m_window_shown = true;
+            non_image_file_dialog->show();
+            non_image_file_dialog_shown = true;
         }
     }
 
@@ -2988,38 +3100,41 @@ void BatchItImage::LoadFileIntoTree(int file_index, int sorted_column)
     strftime(date_created, sizeof(date_created), "%x %I:%M%p", file_ctime);
     struct tm* file_mtime = localtime(&t_stat.st_mtime);
     strftime(date_modified, sizeof(date_modified), "%x %I:%M%p", file_mtime);
-    
+    //QString qdate_created = date_created;
+    //QString qdate_modified = date_modified;
+
+
     QTreeWidgetItem* new_item = new QTreeWidgetItem(ui.treeWidget_FileInfo);
     
     QCheckBox* file_selected_check_box = new QCheckBox(ui.treeWidget_FileInfo);
     file_selected_check_box->setText("");
     file_selected_check_box->setChecked(file.selected);
-    file_selected_check_box->setStatusTip(QString::fromStdString(file_tree_other_text[FileColumn::FILE_LOAD_ORDER] + std::to_string(file.load_order)));
+    file_selected_check_box->setStatusTip(file_tree_other_text[FileColumn::FILE_LOAD_ORDER] + QVariant(file.load_order).toString());
     
     connect(file_selected_check_box, SIGNAL(toggled(bool)), this, SLOT(FileSelectionChange(bool)));
 
     ui.treeWidget_FileInfo->setItemWidget(new_item, FileColumn::FILE_SELECTED, file_selected_check_box);
-    new_item->setToolTip(FileColumn::FILE_SELECTED, QString::fromStdString(file_tree_other_text[FileColumn::FILE_LOAD_ORDER] + std::to_string(file.load_order)));
+    new_item->setToolTip(FileColumn::FILE_SELECTED, file_tree_other_text[FileColumn::FILE_LOAD_ORDER] + QVariant(file.load_order).toString());
     //new_item->setData(FileColumn::FILE_SELECTED, Qt::ToolTipRole, QVariant(file.load_order));
     //new_item->setData(FileColumn::FILE_SELECTED, Qt::StatusTipRole, QVariant(file.load_order)); // Won't show for widget column
     new_item->setText(FileColumn::FILE_NAME, QString::fromStdString(file_path.filename().string()));
-    new_item->setStatusTip(FileColumn::FILE_NAME, QString::fromStdString(file_tree_other_text[FileColumn::FILE_NAME] + file.path));
-    new_item->setToolTip(FileColumn::FILE_NAME, QString::fromStdString(file_tree_other_text[FileColumn::FILE_NAME] + file.path));
+    new_item->setStatusTip(FileColumn::FILE_NAME, file_tree_other_text[FileColumn::FILE_NAME] + QString::fromStdString(file.path));
+    new_item->setToolTip(FileColumn::FILE_NAME, file_tree_other_text[FileColumn::FILE_NAME] + QString::fromStdString(file.path));
     new_item->setText(FileColumn::IMAGE_DIMENSIONS, QString::fromStdString(std::to_string(file.width) + " x " + std::to_string(file.height)));
     new_item->setTextAlignment(FileColumn::IMAGE_DIMENSIONS, Qt::AlignCenter);
-    new_item->setStatusTip(FileColumn::IMAGE_DIMENSIONS, QString::fromStdString(file_tree_other_text[FileColumn::IMAGE_DIMENSIONS] + std::to_string(file.width) + " x " + std::to_string(file.height)));
+    new_item->setStatusTip(FileColumn::IMAGE_DIMENSIONS, file_tree_other_text[FileColumn::IMAGE_DIMENSIONS] + QVariant(file.width).toString() + " x " + QVariant(file.height).toString());
     //new_item->setToolTip(FileColumn::IMAGE_DIMENSIONS, QString::fromStdString("Image Width: " + std::to_string(file.width) + ",   Image Height: " + std::to_string(file.height)));
-    new_item->setToolTip(FileColumn::IMAGE_DIMENSIONS, QString::fromStdString(file_tree_other_text[FileColumn::IMAGE_DIMENSIONS] + std::to_string(file.width) + " x " + std::to_string(file.height)));
+    new_item->setToolTip(FileColumn::IMAGE_DIMENSIONS, file_tree_other_text[FileColumn::IMAGE_DIMENSIONS] + QVariant(file.width).toString() + " x " + QVariant(file.height).toString());
     new_item->setText(FileColumn::FILE_SIZE, QString::fromStdString(file_size_str));
     new_item->setTextAlignment(FileColumn::FILE_SIZE, Qt::AlignRight);
-    new_item->setStatusTip(FileColumn::FILE_SIZE, QString::fromStdString(file_tree_other_text[FileColumn::FILE_SIZE] + file_size_str));
-    new_item->setToolTip(FileColumn::FILE_SIZE, QString::fromStdString(file_tree_other_text[FileColumn::FILE_SIZE] + file_size_str));
+    new_item->setStatusTip(FileColumn::FILE_SIZE, file_tree_other_text[FileColumn::FILE_SIZE] + QString::fromStdString(file_size_str));
+    new_item->setToolTip(FileColumn::FILE_SIZE, file_tree_other_text[FileColumn::FILE_SIZE] + QString::fromStdString(file_size_str));
     new_item->setText(FileColumn::DATE_CREATED, QString::fromStdString(date_created));
-    new_item->setStatusTip(FileColumn::DATE_CREATED, QString::fromStdString(file_tree_other_text[FileColumn::DATE_CREATED]).append(date_created));
-    new_item->setToolTip(FileColumn::DATE_CREATED, QString::fromStdString(file_tree_other_text[FileColumn::DATE_CREATED]).append(date_created));
+    new_item->setStatusTip(FileColumn::DATE_CREATED, file_tree_other_text[FileColumn::DATE_CREATED] + QString(date_created));
+    new_item->setToolTip(FileColumn::DATE_CREATED, file_tree_other_text[FileColumn::DATE_CREATED] + QString(date_created));
     new_item->setText(FileColumn::DATE_MODIFIED, QString::fromStdString(date_modified));
-    new_item->setStatusTip(FileColumn::DATE_MODIFIED, QString::fromStdString(file_tree_other_text[FileColumn::DATE_MODIFIED]).append(date_modified));
-    new_item->setToolTip(FileColumn::DATE_MODIFIED, QString::fromStdString(file_tree_other_text[FileColumn::DATE_MODIFIED]).append(date_modified));
+    new_item->setStatusTip(FileColumn::DATE_MODIFIED, file_tree_other_text[FileColumn::DATE_MODIFIED] + QString(date_modified));
+    new_item->setToolTip(FileColumn::DATE_MODIFIED, file_tree_other_text[FileColumn::DATE_MODIFIED] + QString(date_modified));
     
     new_item->setFont(FileColumn::FILE_SELECTED, *font_mono);
     new_item->setFont(FileColumn::FILE_NAME, *font_mono);
@@ -3197,6 +3312,19 @@ bool BatchItImage::eventFilter(QObject* watched, QEvent* event)
     return QWidget::eventFilter(watched, event);
 }
 
+void BatchItImage::closeEvent(QCloseEvent* event)
+{
+    if (event->spontaneous()) {
+        qDebug() << "The X-close button was clicked.";
+    }
+    if (SavePresetDialog(true, true)) {
+        event->ignore();
+    }
+    else {
+        QWidget::closeEvent(event);
+    }
+}
+
 void BatchItImage::dropEvent(QDropEvent* event)
 {
     if (event->mimeData()->hasUrls()) {
@@ -3234,31 +3362,34 @@ void BatchItImage::DeleteConfirmationPopup(bool clear_all)
         int current_file_tree_row = GetCurrentFileTreeRow();
         if (current_file_tree_row > -1) {
             
+            DialogMessage* delete_dialog;
+
             if (clear_all) {
-                m_window = new MessageWindow(
-                    "Clear List?",
-                    "The entire list of image files is about to be cleared, is this OK?",
+                delete_dialog = new DialogMessage(
+                    dialog_messages.at(DialogMessages::delete_dialog_clear).name,
+                    dialog_messages.at(DialogMessages::delete_dialog_clear).desc,
                     QDialogButtonBox::Ok | QDialogButtonBox::Cancel,
+                    DialogMessage::CustomButton::NoCustomButton,
                     this
                 );
             }
             else {
-                m_window = new MessageWindow(
-                    "OK To Delete?",
-                    "Delete currently highlighted image file -or- all image files selected/checked?",
+                delete_dialog = new DialogMessage(
+                    dialog_messages.at(DialogMessages::delete_dialog).name,
+                    dialog_messages.at(DialogMessages::delete_dialog).name,
                     QDialogButtonBox::Yes | QDialogButtonBox::YesToAll | QDialogButtonBox::Cancel,
+                    DialogMessage::CustomButton::NoCustomButton,
                     this
                 );
             }
-            //connect(m_window, SIGNAL(buttonClicked(QDialogButtonBox::StandardButton)), this, SLOT(RemoveFileFromTree(QDialogButtonBox::StandardButton)));
-            Q_ASSERT(connect(m_window, &MessageWindow::buttonClicked, this,
+            Q_ASSERT(connect(delete_dialog, &DialogMessage::buttonClicked, this,
                 [=](QDialogButtonBox::StandardButton button) {
                     RemoveFileFromTree(button);
-                    m_window->deleteLater();
+                    delete_dialog->deleteLater();
                 }));
-            m_window->setModal(true); // Block parent window inputs. exec() = auto modal.
-            //DEBUG(m_window->exec()); //QDialog::Accepted ?
-            m_window->show();
+            delete_dialog->setModal(true); // Block parent window inputs. exec() = auto modal.
+            //DEBUG(delete_dialog->exec()); //QDialog::Accepted ?
+            delete_dialog->show();
         }
     }
 }
@@ -3294,7 +3425,6 @@ void BatchItImage::RemoveFileFromTree(const QDialogButtonBox::StandardButton& bu
 {
     int current_file_tree_row = GetCurrentFileTreeRow(); // this should never be -1, if it is something is changing it between this and DeleteConfirmationPopup
     DEBUG4("RemoveFileFromTree At Index: ", current_file_tree_row, ", Button: ", button_clicked);
-    //delete m_window;
     int dupe_index = -1;
     std::vector<size_t> d_indexes;
 
@@ -3465,19 +3595,20 @@ void BatchItImage::CheckAbsolutePath()
         last_existing_save_path = path;
     }
     else {
-        m_window = new MessageWindow(
-            "Invalid Directory Path",
-            "The directory path provided does not exist. Open directory dialog window?",
-            QDialogButtonBox::Open | QDialogButtonBox::Abort,
+        auto* check_path_dialog = new DialogMessage(
+            dialog_messages.at(DialogMessages::check_path_dialog).name,
+            dialog_messages.at(DialogMessages::check_path_dialog).desc,
+            QDialogButtonBox::Open | QDialogButtonBox::Cancel,
+            DialogMessage::CustomButton::NoCustomButton,
             this
         );
-        if (m_window->exec()) {
+        if (check_path_dialog->exec()) {
             ui.lineEdit_AbsolutePath->setText(GetSaveDirectoryPath());
         }
         else {
             ui.lineEdit_AbsolutePath->setText(GetLastExistingSavePath());
         }
-        delete m_window;
+        delete check_path_dialog;
     }
 }
 
