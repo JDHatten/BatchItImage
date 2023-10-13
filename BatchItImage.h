@@ -24,11 +24,12 @@ public:
         //const static uint Cancel = 8;
         const static uint SaveClose = 8;
         const static uint Close = 16;
+        const static uint Delete = 32;
     };
     DialogMessage(QString title, QString message,
         const QFlags<QDialogButtonBox::StandardButton> buttons = QDialogButtonBox::StandardButton::NoButton,
         const uint custom_buttons = CustomButton::NoCustomButton,
-        QWidget* parent = nullptr);
+        QWidget* parent = nullptr, bool bold_message_text = false);
     ~DialogMessage();
     Ui::Dialog_Message ui;
 signals:
@@ -40,6 +41,7 @@ protected:
     void changeEvent(QEvent* event);
     void closeEvent(QCloseEvent* event) override;
 private:
+    QFont message_font = QFont("Segoe UI", 18);
 };
 
 
@@ -157,14 +159,25 @@ public:
     /// <returns>Iterator where the path was found in list.</returns>
     std::vector<FileMetadata>::iterator IsFileInListIterator(std::string path, std::vector<FileMetadata> list);
     /// <summary>
-    /// [Static] Find and replace all matched text.
+    /// [Static] Find and replace all matched text in a string.
     /// </summary>
     /// <param name="str">--The text to search.</param>
     /// <param name="from">--Find this text.</param>
     /// <param name="to">--Replace with this text</param>
-    /// <param name="no_really_all">--If true will include cases where "to" is a substring of "from". Default is false.</param>
+    /// <param name="no_really_all">--If true will include cases where "to" is a substring of "from".</param>
     /// <returns>An edited string.</returns>
     static const std::string ReplaceAll(std::string str, const std::string& from, const std::string& to, bool no_really_all = false);
+    /// <summary>
+    /// [Static] Find and replace all matched text in a QString.
+    /// </summary>
+    /// <param name="str">--The text to search.</param>
+    /// <param name="from">--Find this text.</param>
+    /// <param name="to">--Replace with this text.</param>
+    /// <param name="case_sensitivity">--Qt::CaseSensitive or Qt::CaseInsensitive.</param>
+    /// <param name="no_really_all">--If true will include cases where "to" is a substring of "from".</param>
+    /// <returns>An edited QString.</returns>
+    const QString ReplaceAll(QString str, const QString& from, const QString& to,
+        const Qt::CaseSensitivity case_sensitivity = Qt::CaseSensitive, bool no_really_all = false);
     
 public slots:
     void Test();
@@ -197,6 +210,10 @@ public slots:
     /// </summary>
     void CreateNewPreset();
     /// <summary>
+    /// Dialog confirming the removal of current selected preset.
+    /// </summary>
+    void RemoveCurrentPreset();
+    /// <summary>
     /// Start editing and saving images in file tree (in another thread).
     /// </summary>
     void EditAndSave();
@@ -204,6 +221,11 @@ public slots:
     /// Show open file dialog allowing user to load one or more image files.
     /// </summary>
     void LoadImageFiles();
+    /// <summary>
+    /// Show open file dialog allowing user to add an image file.
+    /// </summary>
+    /// <param name="default_image_path">--Default image path to both start search from and return if canceled.</param>
+    QString GetImageFile(QString default_image_path = "");
     /// <summary>
     /// Check for any directories and add any files found to the list before sending it too BuildFileMetadataList(). 
     /// </summary>
@@ -225,14 +247,6 @@ public slots:
     /// <param name="button_clicked">--Based on a clicked button's role delete one, multiple, or all rows.</param>
     void RemoveFileFromTree(const QDialogButtonBox::StandardButton& role);
     /// <summary>
-    /// Add/insert special data from a combo box representing specific metadata to a line edit.
-    /// </summary>
-    void AddTextToFileName(); 
-    /// <summary>
-    /// Makes sure ui lineEdit_RelativePath uses platform specific slashes, converting all in current text. 
-    /// </summary>
-    void CheckRelativePath();
-    /// <summary>
     /// Opens a directory dialog to obtain an existing directory path.
     /// </summary>
     /// <returns>A QString directory path.</returns>
@@ -240,9 +254,19 @@ public slots:
 
 private slots:
     /// <summary>
-    /// [Slot Only] Update the sender combo box status and tool tip when signal sent.
+    /// Update the sender (or specific) combo box status and tool tip when signal sent.
     /// </summary>
-    void UpdateComboBoxTextTips();
+    void UpdateComboBoxTextTips(QComboBox* combo_box = nullptr);
+    /// <summary>
+    /// Update the sender (or specific) line edit status and tool tip when signal sent.
+    /// </summary>
+    void UpdateLineEditTextTips(QLineEdit* line_edit = nullptr);
+    /// <summary>
+    /// Enable or disable all objects in a group.
+    /// </summary>
+    /// <param name="option_group">--List of objects.</param>
+    /// <param name="enabled">--Toggle</param>
+    void EnableOptionGroup(QObjectList option_group, bool enabled);
     /// <summary>
     /// Enable specific ui options depending on which blur filter option is currently selected.
     /// </summary>
@@ -254,6 +278,10 @@ private slots:
     /// </summary>
     /// <param name="loading_preset">--If loading presets do not insert any default values. Default is false.</param>
     void EnableSpecificFormatOptions(bool loading_preset = false);
+    /// <summary>
+    /// Set the background color of label_ColorPreview to represent the chosen background color option.
+    /// </summary>
+    void SetColorPreviewStyleSheet();
     /// <summary>
     /// Build a list of files with it's metadata each on another thread. Results will be sent to HandleFileMetadata().
     /// </summary>
@@ -286,6 +314,18 @@ private slots:
     /// <param name="clear_all">--If true will clear file list entirely, else deletes are selective.</param>
     void DeleteConfirmationPopup(bool clear_all = false);
     /// <summary>
+    /// Add/insert special data from a combo box representing specific metadata to a line edit.
+    /// </summary>
+    void AddTextToFileName();
+    /// <summary>
+    /// Check if path from ui lineEdit_WatermarkPath exists and if it doesn't, revert to last known existing path.
+    /// </summary>
+    void CheckWatermarkPath();
+    /// <summary>
+    /// Makes sure ui lineEdit_RelativePath uses platform specific slashes, converting all in current text. 
+    /// </summary>
+    void CheckRelativePath();
+    /// <summary>
     /// Check if path from ui lineEdit_AbsolutePath exists and if it doesn't, replace text with last existing path or a default path.
     /// </summary>
     void CheckAbsolutePath();
@@ -306,11 +346,21 @@ private:
     struct OptionTrackerFlags {
     private:
         ulong i = 1;
+        std::vector<uint> max_numbers;
         uint iPlus(uint next) {
             return i = i + next;
         }
         uint reset() {
+            max_numbers.push_back(i + i);
             return i = 1;
+        }
+        std::string maxTrackerNumbers() {
+            max_numbers.push_back(i + i);
+            std::string str = "";
+            for (auto& t : max_numbers) {
+                str += std::to_string(t) + ", ";
+            }
+            return str;
         }
 
     public:
@@ -325,7 +375,7 @@ private:
         const uint checkBox_KeepAspectRatio = iPlus(i);
 
         const uint comboBox_BorderType = iPlus(i);
-        const uint pushButton_ColorPicker = iPlus(i);
+        const uint pushButton_ColorDialog = iPlus(i);
 
         const uint comboBox_BlurFilter = iPlus(i);
         const uint checkBox_BlurNormalize = iPlus(i);
@@ -343,7 +393,8 @@ private:
         const uint lineEdit_WatermarkPath = iPlus(i);
         const uint comboBox_WatermarkLocation = iPlus(i);
         const uint spinBox_WatermarkTransparency = iPlus(i);
-        const uint spinBox_WatermarkOffset = iPlus(i);
+        const uint spinBox_WatermarkOffsetX = iPlus(i);
+        const uint spinBox_WatermarkOffsetY = iPlus(i);
 
         // Image Save Options
         const uint radioButton_Overwrite = reset();
@@ -366,7 +417,7 @@ private:
         const uint spinBox_ExtraSetting1 = iPlus(i);
         const uint spinBox_ExtraSetting2 = iPlus(i);
 
-        std::string printAllTrackerFlags() const {
+        std::string printAllTrackerFlags() {
             return
                 "\n  NoChange:                      " + std::to_string(NoChange) +
                 "\n  comboBox_WidthMod:             " + std::to_string(comboBox_WidthMod) +
@@ -377,7 +428,7 @@ private:
                 "\n  checkBox_KeepAspectRatio:      " + std::to_string(checkBox_KeepAspectRatio) +
 
                 "\n  comboBox_BorderType:           " + std::to_string(comboBox_BorderType) +
-                "\n  pushButton_ColorPicker:        " + std::to_string(pushButton_ColorPicker) +
+                "\n  pushButton_ColorDialog:        " + std::to_string(pushButton_ColorDialog) +
 
                 "\n  comboBox_BlurFilter:           " + std::to_string(comboBox_BlurFilter) +
                 "\n  checkBox_BlurNormalize:        " + std::to_string(checkBox_BlurNormalize) +
@@ -395,7 +446,8 @@ private:
                 "\n  lineEdit_WatermarkPath:        " + std::to_string(lineEdit_WatermarkPath) +
                 "\n  comboBox_WatermarkLocation:    " + std::to_string(comboBox_WatermarkLocation) +
                 "\n  spinBox_WatermarkTransparency: " + std::to_string(spinBox_WatermarkTransparency) +
-                "\n  spinBox_WatermarkOffset:       " + std::to_string(spinBox_WatermarkOffset) +
+                "\n  spinBox_WatermarkOffsetX:      " + std::to_string(spinBox_WatermarkOffsetX) +
+                "\n  spinBox_WatermarkOffsetY:      " + std::to_string(spinBox_WatermarkOffsetY) +
 
                 "\n  radioButton_Overwrite:         " + std::to_string(radioButton_Overwrite) +
                 "\n  radioButton_RenameOriginal:    " + std::to_string(radioButton_RenameOriginal) +
@@ -416,6 +468,11 @@ private:
                 "\n  spinBox_Compression:           " + std::to_string(spinBox_Compression) +
                 "\n  spinBox_ExtraSetting1:         " + std::to_string(spinBox_ExtraSetting1) +
                 "\n  spinBox_ExtraSetting2:         " + std::to_string(spinBox_ExtraSetting2) +
+
+                "\n  uint:   " + std::to_string(std::numeric_limits<unsigned int>::max()) +
+                "\n  ulong:  " + std::to_string(std::numeric_limits<unsigned long>::max()) +
+                "\n  size_t: " + std::to_string(std::numeric_limits<size_t>::max()) +
+                "\n  Maxes:  " + maxTrackerNumbers() +
                 "\n";
         }
     } Option;
@@ -430,11 +487,14 @@ private:
     const struct SortOrder { enum { ASCENDING1, DESCENDING1, ASCENDING2, DESCENDING2 }; };
     const struct ActionMenu { enum { action_add, action_delete, action_clear, action_select, action_view, action_preview, COUNT }; };
     const struct ResizeOptions { enum { groupBox_Resize, checkBox_KeepAspectRatio, COUNT }; };
-    const struct BackgroundOptions { enum { groupBox_Background, pushButton_ColorPicker, label_ColorPreview, COUNT }; };
+    const struct BackgroundOptions { enum { groupBox_Background, pushButton_ColorDialog, label_ColorPreview, COUNT }; };
     const struct BlurOptions {
         enum { groupBox_Blur, checkBox_BlurNormalize, label_BlurX1, label_BlurY1, label_BlurX2, label_BlurY2, label_BlurD, COUNT };
     };
     const struct RotationOptions { enum { groupBox_Rotation, checkBox_IncreaseBounds, checkBox_FlipImage, COUNT }; };
+    const struct WatermarkOptions {
+        enum { groupBox_Watermark, pushButton_Watermark, label_WatermarkLocation, label_WatermarkTransparency, label_WatermarkOffset, COUNT };
+    };
     const struct FilePathOptions {
         enum { groupBox_FileRename, radioButton_Overwrite, radioButton_RenameOriginal, radioButton_NewFileName,
             label_Add, groupBox_SaveDir, radioButton_RelativePath, radioButton_AbsolutePath, pushButton_AddBackOneDir, 
@@ -454,10 +514,18 @@ private:
     const struct FormatExrOptions { enum { label_FormatFlags, checkBox_Optimize, checkBox_Progressive, label_Compression, COUNT }; };
     const struct FormatHdrOptions { enum { label_FormatFlags, COUNT }; };
     const struct OtherOptions { enum { tab_1, tab_2, tab_3, checkBox_SearchSubDirs, pushButton_EditAndSave, COUNT }; };
-    const struct DialogMessages { enum { delete_dialog, delete_dialog_clear, CreateNewPreset, ChangePresetDescription, save_preset_dialog, save_preset_dialog_closing,
-        non_image_file_dialog, check_path_dialog, COUNT }; };
-    const struct ImageFormats { enum { jpeg, jpg, jpe, jp2, png, webp, bmp, dib, avif,
-        pbm, pgm, ppm, pxm, pnm, pfm, pam, sr, ras, tiff, tif, exr, hdr, pic, COUNT }; };
+    const struct DialogMessages {
+        enum { delete_dialog, delete_dialog_clear, CreateNewPreset, ChangePresetDescription, save_preset_dialog,
+            save_preset_dialog_closing, remove_preset_dialog, remove_preset_dialog_halted, non_image_file_dialog, check_wm_path_dialog, check_path_dialog, COUNT };
+    };
+    const struct FileDialogTitles {
+        enum { LoadImageFiles, GetImageFile, GetSaveDirectoryPath, COUNT };
+    };
+
+    const struct ImageFormats {
+        enum { jpeg, jpg, jpe, jp2, png, webp, bmp, dib, avif, pbm, pgm, ppm, pxm, pnm, pfm, pam,
+            sr, ras, tiff, tif, exr, hdr, pic, COUNT };
+    };
 
     // UI Data to be added to an object/widget
     struct UIData {
@@ -474,10 +542,11 @@ private:
     // Tab, Label, Check Box, and Button UIData
     std::array<UIData, FilePathOptions::COUNT>* file_path_options = new std::array<UIData, FilePathOptions::COUNT>;
     std::array<UIData, ResizeOptions::COUNT>* resize_options = new std::array<UIData, ResizeOptions::COUNT>;
-    std::array<UIData, BackgroundOptions::COUNT>* background_options = new std::array<UIData, BackgroundOptions::COUNT>; // TODO: desc
+    //std::array<UIData, BackgroundOptions::COUNT>* background_options = new std::array<UIData, BackgroundOptions::COUNT>; // TODO: desc
+    std::array<UIData, BackgroundOptions::COUNT> background_options; // TODO: desc
     std::array<UIData, BlurOptions::COUNT>* blur_options = new std::array<UIData, BlurOptions::COUNT>; // TODO: desc
     std::array<UIData, RotationOptions::COUNT>* rotation_options = new std::array<UIData, RotationOptions::COUNT>; // TODO: desc
-
+    std::array<UIData, WatermarkOptions::COUNT>* watermark_options = new std::array<UIData, WatermarkOptions::COUNT>;
     std::array<UIData, FormatJpegOptions::COUNT> format_jpeg_options;
     std::array<UIData, FormatJp2Options::COUNT> format_jp2_options;
     std::array<UIData, FormatPngOptions::COUNT> format_png_options;
@@ -496,9 +565,9 @@ private:
     std::array<UIData, 3>* resampling_selections = new std::array<UIData, 3>; // TODO: add more Resampling Filters
     std::array<UIData, 7>* border_types = new std::array<UIData, 7>;
     std::array<UIData, 7>* blur_filters = new std::array<UIData, 7>;
+    std::array<UIData, 9>* watermark_locations = new std::array<UIData, 9>;
     std::array<UIData, ImageSaver::MetadataFlags::COUNT>* file_name_creation = new std::array<UIData, ImageSaver::MetadataFlags::COUNT>;
     std::array<UIData, ImageFormats::COUNT>* image_formats = new std::array<UIData, ImageFormats::COUNT>;
-    //std::array<UIData, ImageFormats::COUNT> image_formats;
     std::array<UIData, 5> format_jpeg_subsamplings;
     std::array<UIData, 5> format_png_compression;
     std::array<UIData, 6> format_pam_tupletype;
@@ -510,8 +579,10 @@ private:
     // Other UIData
     std::array<UIData, DialogMessages::COUNT> dialog_messages;
     std::array<UIData, 6> blur_depth_selections;
+    std::array <QString, FileDialogTitles::COUNT> file_dialog_titles;
     std::array <QString, ImageFormats::COUNT> extension_list;
-    QString supported_image_extensions_dialog_str = ""; // Built from extension_list    
+    QString supported_image_extensions_dialog_str = ""; // Built from extension_list
+    QColor background_color = QColor(0, 0, 0, 255);
 
     const QFont* font_serif = new QFont("Times", 10, QFont::Bold);
     const QFont* font_default = new QFont("Segoe UI", 9);
@@ -533,6 +604,7 @@ private:
     const QString qdefault_path = QString::fromStdString(default_path.string());
     std::string last_existing_load_path;
     std::string last_existing_save_path;
+    QString last_existing_wm_path = "";
     std::string last_selected_format;
 
     // Presets
@@ -574,7 +646,8 @@ private:
     /// <param name="ui_data">--UIData array to enter into a combo box.</param>
     /// <param name="string_data">--Array of QStrings to replace integer data from ui_data with.</param>
     template<std::size_t ui_data_size, std::size_t string_data_size = 0>void PopulateComboBox(
-        QComboBox* cb, const std::array<UIData, ui_data_size>& ui_data, const std::array <QString, string_data_size>& string_data = {});
+        QComboBox* cb, const std::array<UIData, ui_data_size>& ui_data, const uint default_index = 0,
+        const std::array <QString, string_data_size>& string_data = {});
     /// <summary>
     /// Add items/data to various combo boxes which include titles, tooltip descriptions, and other data.
     /// </summary>
@@ -582,12 +655,8 @@ private:
     /// <param name="ui_data">--UIData array to enter into a combo box.</param>
     /// <param name="string_data">--Array of std::strings to replace integer data from ui_data with.</param>
     template<std::size_t ui_data_size, std::size_t string_data_size>void PopulateComboBox(
-        QComboBox* cb, const std::array<UIData, ui_data_size>& ui_data, const std::array <std::string, string_data_size>& string_data);
-    /// <summary>
-    /// Update the a combo box status and tool tip.
-    /// </summary>
-    /// <param name="">--.</param>
-    void UpdateComboBoxTextTips(QComboBox* cb); // unused
+        QComboBox* cb, const std::array<UIData, ui_data_size>& ui_data, const uint default_index,
+        const std::array <std::string, string_data_size>& string_data);
     /// <summary>
     /// Connect all initial Ui object events (signals and slots).
     /// </summary>
