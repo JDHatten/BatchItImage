@@ -3,6 +3,7 @@
 #define   BATCHITIMAGE_H
 
 #include "common.h"
+#include "Preset.h"
 #include "EnhancedProgressBar.h"
 #include "EnhancedSlider.h"
 #include "ImageEditor.h"
@@ -336,10 +337,8 @@ signals:
     void progressMade(float multiplier = 1.0f);
 
 private:
-    //QMainWindow* main_object;
     Ui::BatchItImageClass ui;
     QString preset_settings_file;
-    //DialogMessage* m_window;
     bool non_image_file_dialog_shown = false;
 
     // Flags for preset options that were changed in the ui.
@@ -522,11 +521,6 @@ private:
         enum { LoadImageFiles, GetImageFile, GetSaveDirectoryPath, COUNT };
     };
 
-    const struct ImageFormats {
-        enum { jpeg, jpg, jpe, jp2, png, webp, bmp, dib, avif, pbm, pgm, ppm, pxm, pnm, pfm, pam,
-            sr, ras, tiff, tif, exr, hdr, pic, COUNT };
-    };
-
     // UI Data to be added to an object/widget
     struct UIData {
         int data; // A Value, Default, Enum, Index, etc.
@@ -567,7 +561,7 @@ private:
     std::array<UIData, 7>* blur_filters = new std::array<UIData, 7>;
     std::array<UIData, 9>* watermark_locations = new std::array<UIData, 9>;
     std::array<UIData, ImageSaver::MetadataFlags::COUNT>* file_name_creation = new std::array<UIData, ImageSaver::MetadataFlags::COUNT>;
-    std::array<UIData, ImageFormats::COUNT>* image_formats = new std::array<UIData, ImageFormats::COUNT>;
+    std::array<UIData, ImageSaver::SupportedImageFormats::COUNT>* image_formats = new std::array<UIData, ImageSaver::SupportedImageFormats::COUNT>;
     std::array<UIData, 5> format_jpeg_subsamplings;
     std::array<UIData, 5> format_png_compression;
     std::array<UIData, 6> format_pam_tupletype;
@@ -580,10 +574,11 @@ private:
     std::array<UIData, DialogMessages::COUNT> dialog_messages;
     std::array<UIData, 6> blur_depth_selections;
     std::array <QString, FileDialogTitles::COUNT> file_dialog_titles;
-    std::array <QString, ImageFormats::COUNT> extension_list;
+    std::array <QString, ImageSaver::SupportedImageFormats::COUNT> extension_list;
     QString supported_image_extensions_dialog_str = ""; // Built from extension_list
     QColor background_color = QColor(0, 0, 0, 255);
 
+    // Fonts
     const QFont* font_serif = new QFont("Times", 10, QFont::Bold);
     const QFont* font_default = new QFont("Segoe UI", 9);
     const QFont* font_default_light = new QFont("Segoe UI", 9, QFont::Thin);
@@ -607,17 +602,27 @@ private:
     QString last_existing_wm_path = "";
     std::string last_selected_format;
 
-    // Presets
+    // Preset and File Lists
     std::vector<struct Preset> preset_list;
     std::vector<struct FileMetadata> current_file_metadata_list;
     std::vector<struct FileMetadata> deleted_file_metadata_list;
     uint current_selected_preset = 0;
-
     int current_file_column_sorted = -1;
     int current_file_sort_order = -1;
     int last_load_count = 0;
 
+    // Logging
+    std::vector<std::string> log_lines;
+    std::chrono::time_point<std::chrono::system_clock> session_start_time;
+    std::chrono::time_point<std::chrono::system_clock> image_edit_start_time;
+    uint log_batch_number = 0;
+    uint log_batch_line = 0;
+    uint log_end_line = 0;
+    uint successful_image_edits = 0;
+    uint successful_image_saves = 0;
+
     const std::function<void()> function_ResizeFileTreeColumns = std::bind(&BatchItImage::ResizeFileTreeColumns, this);
+    const std::function<void()> function_PrintBatchImageLog = std::bind(&BatchItImage::PrintBatchImageLog, this);
 
     /// <summary>
     /// Load in all text and other ui data.
@@ -694,6 +699,14 @@ private:
     /// Build a "right click" context menu for the file tree.
     /// </summary>
     void SetupFileTreeContextMenu();
+    /// <summary>
+    /// Create a header for the log file and add current settings used to log.
+    /// </summary>
+    void StartBatchImageLog();
+    /// <summary>
+    /// Write log to file.
+    /// </summary>
+    void PrintBatchImageLog();
     /// <summary>
     /// Toggle usability of certain action context menu items.
     /// </summary>
