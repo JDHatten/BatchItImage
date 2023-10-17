@@ -1,0 +1,10 @@
+﻿################################################################################
+# This .gitignore file was automatically created by Microsoft(R) Visual Studio.
+################################################################################
+
+/BatchItImage - Copy.ui
+/BatchItImage - Copy (2).ui
+/BatchItImage - Copy (1).ui
+/test_images
+/q
+/logs
