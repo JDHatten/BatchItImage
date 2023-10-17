@@ -6,7 +6,8 @@ TODO:
     Holding right click scrolls left to right
     Track changes to undo file list deletes or image edit ui changes
     Image File Filter... show/edit only PNG files, files > 1 MB, etc.
-    A cancel button to abort image editing durring process.
+    A cancel button to abort image editing durring image processing.
+    Application Settings Dialog
 
 */
 
@@ -126,7 +127,7 @@ DialogEditPresetDesc::~DialogEditPresetDesc()
 void DialogEditPresetDesc::presetIndexChanged(int index)
 {
     qDebug() << "presetIndexChanged:" << index;
-    ui.lineEdit_PresetDesc->setText(preset_list->at(index).description);
+    ui.lineEdit_PresetDesc->setText(preset_list->at(index).presetDescription());
     current_selected_preset = index;
 }
 void DialogEditPresetDesc::updateComboBox()
@@ -151,7 +152,7 @@ void DialogEditPresetDesc::buttonBoxClicked(QAbstractButton* button)
 
     if (QDialogButtonBox::Apply & std_button) {
         QString updated_description = ui.lineEdit_PresetDesc->text();
-        preset_list->at(current_selected_preset).description = updated_description;
+        preset_list->at(current_selected_preset).setPresetDescription(updated_description);
         qDebug() << updated_description.toStdString();
         updateComboBox();
     }
@@ -259,7 +260,7 @@ BatchItImage::BatchItImage(QWidget* parent) : QMainWindow(parent)
     PopulateComboBox(ui.comboBox_BorderType, *border_types);
     PopulateComboBox(ui.comboBox_BlurFilter, *blur_filters);
     PopulateComboBox(ui.comboBox_WatermarkLocation, *watermark_locations, watermark_options->at(WatermarkOptions::label_WatermarkLocation).data);
-    PopulateComboBox(ui.comboBox_AddText, *file_name_creation, 0, ImageSaver::Metadata);
+    PopulateComboBox(ui.comboBox_AddText, *file_name_creation, 0, ImageSaver::MetadataIdentifiers);
     PopulateComboBox(ui.comboBox_ImageFormat, *image_formats, 0, extension_list);
 
     /***************************
@@ -323,6 +324,12 @@ BatchItImage::BatchItImage(QWidget* parent) : QMainWindow(parent)
     delete watermark_locations;
     delete file_name_creation;
     delete image_formats;
+
+    session_start_time = std::chrono::system_clock::now();
+    qDebug().noquote() << std::format("{0:%Y.%m.%d %H:%M:%OS}", session_start_time);
+    std::chrono::zoned_time zt{ std::chrono::current_zone(), session_start_time };
+    qDebug().noquote() << "Session Start (Local Time-Zone):" << std::format("{0:%Y.%m.%d %H:%M:%OS}", zt) << '\n';
+
 
     /***************************
         Testing
@@ -408,45 +415,45 @@ void BatchItImage::LoadInUiData()
     resize_options->at(ResizeOptions::checkBox_KeepAspectRatio).desc = "In order to keep aspect ratio, either width or height must be set to \"No Change\" or \"0\".";
 
     // comboBox_WidthMod
-    width_selections->at(0).data = ImageEditor::NO_CHANGE;
+    width_selections->at(0).data = ImageEditor::SizeModifier::NO_CHANGE;
     width_selections->at(0).name = "No Change";
     width_selections->at(0).desc = "Image widths may still be modified if 'keep aspect ratio' is checked.";
-    width_selections->at(1).data = ImageEditor::CHANGE_TO;
+    width_selections->at(1).data = ImageEditor::SizeModifier::CHANGE_TO;
     width_selections->at(1).name = "Change Width To:";
     width_selections->at(1).desc = "All image widths will be modified to a specific number.";
-    width_selections->at(2).data = ImageEditor::MODIFY_BY;
+    width_selections->at(2).data = ImageEditor::SizeModifier::MODIFY_BY;
     width_selections->at(2).name = "Modify Width By:";
     width_selections->at(2).desc = "This adds to or subtracts from an image's current width. Ex. 1080 + '220' = 1300";
-    width_selections->at(3).data = ImageEditor::MODIFY_BY_PCT;
+    width_selections->at(3).data = ImageEditor::SizeModifier::MODIFY_BY_PCT;
     width_selections->at(3).name = "Modify Width By (%):";
     width_selections->at(3).desc = "This modifies an image's current width by percentage. Ex. 720 x '200%' = 1440";
-    width_selections->at(4).data = ImageEditor::DOWNSCALE;
+    width_selections->at(4).data = ImageEditor::SizeModifier::DOWNSCALE;
     width_selections->at(4).name = "Downscale Width To:";
     width_selections->at(4).desc = "All images above entered width will be modified to that specific number.\n" \
         "All images already at or below that number will not be modified.";
-    width_selections->at(5).data = ImageEditor::UPSCALE;
+    width_selections->at(5).data = ImageEditor::SizeModifier::UPSCALE;
     width_selections->at(5).name = "Upscale Width To:";
     width_selections->at(5).desc = "All images below entered width will be modified to that specific number.\n" \
         "All images already at or above that number will not be modified.";
 
     // comboBox_HeightMod
-    height_selections->at(0).data = ImageEditor::NO_CHANGE;
+    height_selections->at(0).data = ImageEditor::SizeModifier::NO_CHANGE;
     height_selections->at(0).name = "No Change";
     height_selections->at(0).desc = "Image heights may still be modified if 'keep aspect ratio' is checked.";
-    height_selections->at(1).data = ImageEditor::CHANGE_TO;
+    height_selections->at(1).data = ImageEditor::SizeModifier::CHANGE_TO;
     height_selections->at(1).name = "Change Height To:";
     height_selections->at(1).desc = "All images heights will be modified to a specific number.";
-    height_selections->at(2).data = ImageEditor::MODIFY_BY;
+    height_selections->at(2).data = ImageEditor::SizeModifier::MODIFY_BY;
     height_selections->at(2).name = "Modify Height By:";
     height_selections->at(2).desc = "This adds to or subtracts from an image's current height. Ex. 1080 + '220' = 1300";
-    height_selections->at(3).data = ImageEditor::MODIFY_BY_PCT;
+    height_selections->at(3).data = ImageEditor::SizeModifier::MODIFY_BY_PCT;
     height_selections->at(3).name = "Modify Height By (%):";
     height_selections->at(3).desc = "This modifies an image's current height by percentage. Ex. 720 x '200%' = 1440";
-    height_selections->at(4).data = ImageEditor::DOWNSCALE;
+    height_selections->at(4).data = ImageEditor::SizeModifier::DOWNSCALE;
     height_selections->at(4).name = "Downscale Height To:";
     height_selections->at(4).desc = "All images above entered height will be modified to that specific number.\n" \
         "All images already at or below that number will not be modified.";
-    height_selections->at(5).data = ImageEditor::UPSCALE;
+    height_selections->at(5).data = ImageEditor::SizeModifier::UPSCALE;
     height_selections->at(5).name = "Upscale Height To:";
     height_selections->at(5).desc = "All images below entered height will be modified to that specific number.\n" \
         "All images already at or above that number will not be modified.";
@@ -519,35 +526,35 @@ void BatchItImage::LoadInUiData()
     blur_options->at(BlurOptions::label_BlurD).desc = "";
 
     // comboBox_BlurFilter
-    blur_filters->at(0).data = ImageEditor::NO_FILTER;
+    blur_filters->at(0).data = ImageEditor::BlurFilter::NO_FILTER;
     blur_filters->at(0).name = "None";
     blur_filters->at(0).desc = "Does not apply a blur filter.";
-    //blur_filters->at(1).data = ImageEditor::BLUR_FILTER;
+    //blur_filters->at(1).data = ImageEditor::BlurFilter::BLUR_FILTER;
     //blur_filters->at(1).name = "Simple Blur Filter";
     //blur_filters->at(1).desc = "Blurs an image using the normalized box filter. Also known as homogeneous smoothing.";
-    blur_filters->at(1).data = ImageEditor::BOX_FILTER;
+    blur_filters->at(1).data = ImageEditor::BlurFilter::BOX_FILTER;
     blur_filters->at(1).name = "Box Filter";
     blur_filters->at(1).desc = "Blurs an image using the box filter. An unnormalized box filter is useful for computing\n" \
                            "various integral characteristics over each pixel neighborhood, such as covariance\n" \
                            "matrices of image derivatives (used in dense optical flow algorithms, and so on).";
-    blur_filters->at(2).data = ImageEditor::BILATERAL_FILTER;
+    blur_filters->at(2).data = ImageEditor::BlurFilter::BILATERAL_FILTER;
     blur_filters->at(2).name = "Bilateral Filter";
     blur_filters->at(2).desc = "Applies the bilateral filter to an image, which can reduce unwanted noise very well while\n" \
                            "keeping edges fairly sharp. However, it is very slow compared to most other filters.";
-    blur_filters->at(3).data = ImageEditor::GAUSSIAN_BLUR;
+    blur_filters->at(3).data = ImageEditor::BlurFilter::GAUSSIAN_BLUR;
     blur_filters->at(3).name = "Gaussian Blur Filter";
     blur_filters->at(3).desc = "Applies the Gaussian blur filter to an image, which convolves the source image with the\n" \
                            "specified Gaussian kernel.";
-    blur_filters->at(4).data = ImageEditor::MEDIAN_BLUR;
+    blur_filters->at(4).data = ImageEditor::BlurFilter::MEDIAN_BLUR;
     blur_filters->at(4).name = "Median Blur Filter";
     blur_filters->at(4).desc = "Blurs an image using the median filter, which smooths an image with the x/y size aperture.\n" \
                            "Each channel of a multi-channel image is processed independently.";
-    blur_filters->at(5).data = ImageEditor::PYR_DOWN_BLUR;
+    blur_filters->at(5).data = ImageEditor::BlurFilter::PYR_DOWN_BLUR;
     blur_filters->at(5).name = "PYR Down-Sample Blur";
     blur_filters->at(5).desc = "Blurs an image and down-samples it. This performs the down-sampling step of the Gaussian\n" \
                            "pyramid construction. First, it convolves the source image with the Gaussian kernel, then\n" \
                            "down-samples the image by rejecting even rows and columns.";
-    blur_filters->at(6).data = ImageEditor::PYR_UP_BLUR;
+    blur_filters->at(6).data = ImageEditor::BlurFilter::PYR_UP_BLUR;
     blur_filters->at(6).name = "PYR Up-Sample Blur";
     blur_filters->at(6).desc = "Up-samples an image and then blurs it. This performs the up-sampling step of the Gaussian\n" \
                            "pyramid construction, though it can actually be used to construct the Laplacian pyramid.\n" \
@@ -632,92 +639,92 @@ void BatchItImage::LoadInUiData()
     watermark_options->at(WatermarkOptions::label_WatermarkOffset).desc = "Offset the watermark position relative to the chosen location.";
 
     // comboBox_WatermarkLocation
-    watermark_locations->at(ImageEditor::TopLeft).data = ImageEditor::TopLeft;
-    watermark_locations->at(ImageEditor::TopLeft).name = "Top Left";
-    watermark_locations->at(ImageEditor::TopLeft).desc = "Place a watermark at the top left position of each edited image.";
-    watermark_locations->at(ImageEditor::TopCenter).data = ImageEditor::TopCenter;
-    watermark_locations->at(ImageEditor::TopCenter).name = "Top Center";
-    watermark_locations->at(ImageEditor::TopCenter).desc = "Place a watermark at the top center position of each edited image.";
-    watermark_locations->at(ImageEditor::TopRight).data = ImageEditor::TopRight;
-    watermark_locations->at(ImageEditor::TopRight).name = "Top Right";
-    watermark_locations->at(ImageEditor::TopRight).desc = "Place a watermark at the top right position of each edited image.";
-    watermark_locations->at(ImageEditor::CenterLeft).data = ImageEditor::CenterLeft;
-    watermark_locations->at(ImageEditor::CenterLeft).name = "Center Left";
-    watermark_locations->at(ImageEditor::CenterLeft).desc = "Place a watermark at the center left position of each edited image.";
-    watermark_locations->at(ImageEditor::Center).data = ImageEditor::Center;
-    watermark_locations->at(ImageEditor::Center).name = "Center";
-    watermark_locations->at(ImageEditor::Center).desc = "Place a watermark at the center (middle) position of each edited image.";
-    watermark_locations->at(ImageEditor::CenterRight).data = ImageEditor::CenterRight;
-    watermark_locations->at(ImageEditor::CenterRight).name = "Center Right";
-    watermark_locations->at(ImageEditor::CenterRight).desc = "Place a watermark at the center right position of each edited image.";
-    watermark_locations->at(ImageEditor::BottomLeft).data = ImageEditor::BottomLeft;
-    watermark_locations->at(ImageEditor::BottomLeft).name = "Bottom Left";
-    watermark_locations->at(ImageEditor::BottomLeft).desc = "Place a watermark at the bottom left position of each edited image.";
-    watermark_locations->at(ImageEditor::BottomCenter).data = ImageEditor::BottomCenter;
-    watermark_locations->at(ImageEditor::BottomCenter).name = "Bottom Center";
-    watermark_locations->at(ImageEditor::BottomCenter).desc = "Place a watermark at the bottom center position of each edited image.";
-    watermark_locations->at(ImageEditor::BottomRight).data = ImageEditor::BottomRight;
-    watermark_locations->at(ImageEditor::BottomRight).name = "Bottom Right";
-    watermark_locations->at(ImageEditor::BottomRight).desc = "Place a watermark at the bottom right position of each edited image.";
+    watermark_locations->at(ImageEditor::WatermarkLocation::TopLeft).data = ImageEditor::WatermarkLocation::TopLeft;
+    watermark_locations->at(ImageEditor::WatermarkLocation::TopLeft).name = "Top Left";
+    watermark_locations->at(ImageEditor::WatermarkLocation::TopLeft).desc = "Place a watermark at the top left position of each edited image.";
+    watermark_locations->at(ImageEditor::WatermarkLocation::TopCenter).data = ImageEditor::WatermarkLocation::TopCenter;
+    watermark_locations->at(ImageEditor::WatermarkLocation::TopCenter).name = "Top Center";
+    watermark_locations->at(ImageEditor::WatermarkLocation::TopCenter).desc = "Place a watermark at the top center position of each edited image.";
+    watermark_locations->at(ImageEditor::WatermarkLocation::TopRight).data = ImageEditor::WatermarkLocation::TopRight;
+    watermark_locations->at(ImageEditor::WatermarkLocation::TopRight).name = "Top Right";
+    watermark_locations->at(ImageEditor::WatermarkLocation::TopRight).desc = "Place a watermark at the top right position of each edited image.";
+    watermark_locations->at(ImageEditor::WatermarkLocation::CenterLeft).data = ImageEditor::WatermarkLocation::CenterLeft;
+    watermark_locations->at(ImageEditor::WatermarkLocation::CenterLeft).name = "Center Left";
+    watermark_locations->at(ImageEditor::WatermarkLocation::CenterLeft).desc = "Place a watermark at the center left position of each edited image.";
+    watermark_locations->at(ImageEditor::WatermarkLocation::Center).data = ImageEditor::WatermarkLocation::Center;
+    watermark_locations->at(ImageEditor::WatermarkLocation::Center).name = "Center";
+    watermark_locations->at(ImageEditor::WatermarkLocation::Center).desc = "Place a watermark at the center (middle) position of each edited image.";
+    watermark_locations->at(ImageEditor::WatermarkLocation::CenterRight).data = ImageEditor::WatermarkLocation::CenterRight;
+    watermark_locations->at(ImageEditor::WatermarkLocation::CenterRight).name = "Center Right";
+    watermark_locations->at(ImageEditor::WatermarkLocation::CenterRight).desc = "Place a watermark at the center right position of each edited image.";
+    watermark_locations->at(ImageEditor::WatermarkLocation::BottomLeft).data = ImageEditor::WatermarkLocation::BottomLeft;
+    watermark_locations->at(ImageEditor::WatermarkLocation::BottomLeft).name = "Bottom Left";
+    watermark_locations->at(ImageEditor::WatermarkLocation::BottomLeft).desc = "Place a watermark at the bottom left position of each edited image.";
+    watermark_locations->at(ImageEditor::WatermarkLocation::BottomCenter).data = ImageEditor::WatermarkLocation::BottomCenter;
+    watermark_locations->at(ImageEditor::WatermarkLocation::BottomCenter).name = "Bottom Center";
+    watermark_locations->at(ImageEditor::WatermarkLocation::BottomCenter).desc = "Place a watermark at the bottom center position of each edited image.";
+    watermark_locations->at(ImageEditor::WatermarkLocation::BottomRight).data = ImageEditor::WatermarkLocation::BottomRight;
+    watermark_locations->at(ImageEditor::WatermarkLocation::BottomRight).name = "Bottom Right";
+    watermark_locations->at(ImageEditor::WatermarkLocation::BottomRight).desc = "Place a watermark at the bottom right position of each edited image.";
 
     // comboBox_AddText
-    file_name_creation->at(ImageSaver::FILE_NAME).data = ImageSaver::FILE_NAME;
-    file_name_creation->at(ImageSaver::FILE_NAME).name = "Original File Name";
-    file_name_creation->at(ImageSaver::FILE_NAME).desc = "Add the original file name into the creation of a new file name.";
-    file_name_creation->at(ImageSaver::COUNTER).data = ImageSaver::COUNTER;
-    file_name_creation->at(ImageSaver::COUNTER).name = "Incrementing Counter";
-    file_name_creation->at(ImageSaver::COUNTER).desc = "Add an incrementing number into the creation of a new file name.";
-    file_name_creation->at(ImageSaver::WIDTH).data = ImageSaver::WIDTH;
-    file_name_creation->at(ImageSaver::WIDTH).name = "Image Width";
-    file_name_creation->at(ImageSaver::WIDTH).desc = "Add the width of the modified image into the creation of a new file name.";
-    file_name_creation->at(ImageSaver::HEIGHT).data = ImageSaver::HEIGHT;
-    file_name_creation->at(ImageSaver::HEIGHT).name = "Image Height";
-    file_name_creation->at(ImageSaver::HEIGHT).desc = "Add the height of the modified image into the creation of a new file name.";
+    file_name_creation->at(ImageSaver::MetadataFlags::FILE_NAME).data = ImageSaver::MetadataFlags::FILE_NAME;
+    file_name_creation->at(ImageSaver::MetadataFlags::FILE_NAME).name = "Original File Name";
+    file_name_creation->at(ImageSaver::MetadataFlags::FILE_NAME).desc = "Add the original file name into the creation of a new file name.";
+    file_name_creation->at(ImageSaver::MetadataFlags::COUNTER).data = ImageSaver::MetadataFlags::COUNTER;
+    file_name_creation->at(ImageSaver::MetadataFlags::COUNTER).name = "Incrementing Counter";
+    file_name_creation->at(ImageSaver::MetadataFlags::COUNTER).desc = "Add an incrementing number into the creation of a new file name.";
+    file_name_creation->at(ImageSaver::MetadataFlags::WIDTH).data = ImageSaver::MetadataFlags::WIDTH;
+    file_name_creation->at(ImageSaver::MetadataFlags::WIDTH).name = "Image Width";
+    file_name_creation->at(ImageSaver::MetadataFlags::WIDTH).desc = "Add the width of the modified image into the creation of a new file name.";
+    file_name_creation->at(ImageSaver::MetadataFlags::HEIGHT).data = ImageSaver::MetadataFlags::HEIGHT;
+    file_name_creation->at(ImageSaver::MetadataFlags::HEIGHT).name = "Image Height";
+    file_name_creation->at(ImageSaver::MetadataFlags::HEIGHT).desc = "Add the height of the modified image into the creation of a new file name.";
 
     extension_list = { ".jpeg", ".jpg", ".jpe", ".jp2", ".png", ".webp", ".bmp", ".dib", ".avif", ".pbm",
         ".pgm", ".ppm", ".pxm", ".pnm", ".pfm", ".pam", ".sr", ".ras", ".tiff", ".tif", ".exr", ".hdr", ".pic" };
 
     // comboBox_ImageFormat
-    image_formats->at(ImageFormats::jpeg).data = ImageFormats::jpeg;
-    image_formats->at(ImageFormats::jpeg).name = "JPEG Files - *.jpeg";
-    image_formats->at(ImageFormats::jpeg).desc = "JPEG (Joint Photographic Experts Group) is a commonly used method of lossy compression\n" \
+    image_formats->at(ImageSaver::SupportedImageFormats::jpeg).data = ImageSaver::SupportedImageFormats::jpeg;
+    image_formats->at(ImageSaver::SupportedImageFormats::jpeg).name = "JPEG Files - *.jpeg";
+    image_formats->at(ImageSaver::SupportedImageFormats::jpeg).desc = "JPEG (Joint Photographic Experts Group) is a commonly used method of lossy compression\n" \
         "for digital images, particularly for those images produced by digital photography.\n" \
         "The degree of compression can be adjusted, allowing a selectable tradeoff between\n" \
         "storage size and image quality.JPEG typically achieves 10:1 compression with little\n" \
         "perceptible loss in image quality.";
-    image_formats->at(ImageFormats::jpg).data = ImageFormats::jpg;
-    image_formats->at(ImageFormats::jpg).name = "JPEG Files - *.jpg";
-    image_formats->at(ImageFormats::jpg).desc = image_formats->at(ImageFormats::jpeg).desc;
-    image_formats->at(ImageFormats::jpe).data = ImageFormats::jpe;
-    image_formats->at(ImageFormats::jpe).name = "JPEG Files - *.jpe";
-    image_formats->at(ImageFormats::jpe).desc = image_formats->at(ImageFormats::jpeg).desc;
-    image_formats->at(ImageFormats::jp2).data = ImageFormats::jp2;
-    image_formats->at(ImageFormats::jp2).name = "JPEG 2000 Files - *.jp2";
-    image_formats->at(ImageFormats::jp2).desc = "JPEG 2000 (Joint Photographic Experts Group) is an image compression standard based on a\n" \
+    image_formats->at(ImageSaver::SupportedImageFormats::jpg).data = ImageSaver::SupportedImageFormats::jpg;
+    image_formats->at(ImageSaver::SupportedImageFormats::jpg).name = "JPEG Files - *.jpg";
+    image_formats->at(ImageSaver::SupportedImageFormats::jpg).desc = image_formats->at(ImageSaver::SupportedImageFormats::jpeg).desc;
+    image_formats->at(ImageSaver::SupportedImageFormats::jpe).data = ImageSaver::SupportedImageFormats::jpe;
+    image_formats->at(ImageSaver::SupportedImageFormats::jpe).name = "JPEG Files - *.jpe";
+    image_formats->at(ImageSaver::SupportedImageFormats::jpe).desc = image_formats->at(ImageSaver::SupportedImageFormats::jpeg).desc;
+    image_formats->at(ImageSaver::SupportedImageFormats::jp2).data = ImageSaver::SupportedImageFormats::jp2;
+    image_formats->at(ImageSaver::SupportedImageFormats::jp2).name = "JPEG 2000 Files - *.jp2";
+    image_formats->at(ImageSaver::SupportedImageFormats::jp2).desc = "JPEG 2000 (Joint Photographic Experts Group) is an image compression standard based on a\n" \
         "discrete wavelet transform (DWT). Note that it is still not widely supported in web\n" \
         "browsers (other than Safari) and hence is not generally used on the World Wide Web.";
-    image_formats->at(ImageFormats::png).data = ImageFormats::png;
-    image_formats->at(ImageFormats::png).name = "Portable Network Graphics - *.png";
-    image_formats->at(ImageFormats::png).desc = "Portable Network Graphics (PNG) is a raster-graphics file format that supports lossless\n" \
+    image_formats->at(ImageSaver::SupportedImageFormats::png).data = ImageSaver::SupportedImageFormats::png;
+    image_formats->at(ImageSaver::SupportedImageFormats::png).name = "Portable Network Graphics - *.png";
+    image_formats->at(ImageSaver::SupportedImageFormats::png).desc = "Portable Network Graphics (PNG) is a raster-graphics file format that supports lossless\n" \
         "data compression. PNG supports palette-based images (with palettes of 24-bit RGB or\n" \
         "32-bit RGBA colors), grayscale images (with or without an alpha channel for transparency),\n" \
         "and full-color non-palette-based RGB or RGBA images.";
-    image_formats->at(ImageFormats::webp).data = ImageFormats::webp;
-    image_formats->at(ImageFormats::webp).name = "WebP - *.webp";
-    image_formats->at(ImageFormats::webp).desc = "WebP is a raster graphics file format developed by Google intended as a replacement for\n" \
+    image_formats->at(ImageSaver::SupportedImageFormats::webp).data = ImageSaver::SupportedImageFormats::webp;
+    image_formats->at(ImageSaver::SupportedImageFormats::webp).name = "WebP - *.webp";
+    image_formats->at(ImageSaver::SupportedImageFormats::webp).desc = "WebP is a raster graphics file format developed by Google intended as a replacement for\n" \
         "JPEG, PNG, and GIF file formats. It supports both lossy and lossless compression, as well\n" \
         "as animation and alpha transparency.";
-    image_formats->at(ImageFormats::bmp).data = ImageFormats::bmp;
-    image_formats->at(ImageFormats::bmp).name = "Windows Bitmaps - *.bmp";
-    image_formats->at(ImageFormats::bmp).desc = "The BMP file format or bitmap, is a raster graphics image file format used to store\n" \
+    image_formats->at(ImageSaver::SupportedImageFormats::bmp).data = ImageSaver::SupportedImageFormats::bmp;
+    image_formats->at(ImageSaver::SupportedImageFormats::bmp).name = "Windows Bitmaps - *.bmp";
+    image_formats->at(ImageSaver::SupportedImageFormats::bmp).desc = "The BMP file format or bitmap, is a raster graphics image file format used to store\n" \
         "bitmap digital images, independently of the display device (such as a graphics adapter),\n" \
         "especially on Microsoft Windows and OS/2 operating systems.";
-    image_formats->at(ImageFormats::dib).data = ImageFormats::dib;
-    image_formats->at(ImageFormats::dib).name = "Windows Bitmaps - *.dib";
-    image_formats->at(ImageFormats::dib).desc = image_formats->at(ImageFormats::bmp).desc;
-    image_formats->at(ImageFormats::avif).data = ImageFormats::avif;
-    image_formats->at(ImageFormats::avif).name = "AVIF - *.avif";
-    image_formats->at(ImageFormats::avif).desc = "AV1 Image File Format (AVIF) is an open, royalty-free image file format specification\n" \
+    image_formats->at(ImageSaver::SupportedImageFormats::dib).data = ImageSaver::SupportedImageFormats::dib;
+    image_formats->at(ImageSaver::SupportedImageFormats::dib).name = "Windows Bitmaps - *.dib";
+    image_formats->at(ImageSaver::SupportedImageFormats::dib).desc = image_formats->at(ImageSaver::SupportedImageFormats::bmp).desc;
+    image_formats->at(ImageSaver::SupportedImageFormats::avif).data = ImageSaver::SupportedImageFormats::avif;
+    image_formats->at(ImageSaver::SupportedImageFormats::avif).name = "AVIF - *.avif";
+    image_formats->at(ImageSaver::SupportedImageFormats::avif).desc = "AV1 Image File Format (AVIF) is an open, royalty-free image file format specification\n" \
         "for storing images or image sequences compressed with AV1 in the HEIF container format.\n" \
         "AV1 Supports:\n" \
         "* Multiple color spaces (HDR, SDR, color space signaling via CICP or ICC)\n" \
@@ -727,71 +734,71 @@ void BatchItImage::LoadInUiData()
         "* 4:2:0, 4:2:2, 4:4:4 chroma subsampling and RGB\n" \
         "* Film grain synthesis\n" \
         "* Image sequences/animation";
-    image_formats->at(ImageFormats::pbm).data = ImageFormats::pbm;
-    image_formats->at(ImageFormats::pbm).name = "Netpbm Formats - *.pbm";
-    image_formats->at(ImageFormats::pbm).desc = "Netpbm (formerly Pbmplus) is an open-source package of graphics programs and a programming\n" \
+    image_formats->at(ImageSaver::SupportedImageFormats::pbm).data = ImageSaver::SupportedImageFormats::pbm;
+    image_formats->at(ImageSaver::SupportedImageFormats::pbm).name = "Netpbm Formats - *.pbm";
+    image_formats->at(ImageSaver::SupportedImageFormats::pbm).desc = "Netpbm (formerly Pbmplus) is an open-source package of graphics programs and a programming\n" \
         "library. It is used mainly in the Unix world, but also works on Microsoft Windows, macOS,\n" \
         "and other operating systems.  Graphics formats used and defined by the Netpbm project:\n" \
         "portable pixmap format (PPM), portable graymap format (PGM), and portable bitmap format (PBM).\n" \
         "They are also sometimes referred to collectively as the portable anymap format (PNM).";
-    image_formats->at(ImageFormats::pgm).data = ImageFormats::pgm;
-    image_formats->at(ImageFormats::pgm).name = "Netpbm Formats - *.pgm";
-    image_formats->at(ImageFormats::pgm).desc = image_formats->at(ImageFormats::pbm).desc;
-    image_formats->at(ImageFormats::ppm).data = ImageFormats::ppm;
-    image_formats->at(ImageFormats::ppm).name = "Netpbm Formats - *.ppm";
-    image_formats->at(ImageFormats::ppm).desc = image_formats->at(ImageFormats::pbm).desc;
-    image_formats->at(ImageFormats::pxm).data = ImageFormats::pxm;
-    image_formats->at(ImageFormats::pxm).name = "Netpbm Formats - *.pxm";
-    image_formats->at(ImageFormats::pxm).desc = image_formats->at(ImageFormats::pbm).desc;
-    image_formats->at(ImageFormats::pnm).data = ImageFormats::pnm;
-    image_formats->at(ImageFormats::pnm).name = "Netpbm Formats - *.pnm";
-    image_formats->at(ImageFormats::pnm).desc = image_formats->at(ImageFormats::pbm).desc;
-    image_formats->at(ImageFormats::pfm).data = ImageFormats::pfm;
-    image_formats->at(ImageFormats::pfm).name = "Netpbm Formats - *.pfm";
-    image_formats->at(ImageFormats::pfm).desc = "The PFM (Portable Floatmap) is supported by the de facto reference implementation Netpbm\n" \
+    image_formats->at(ImageSaver::SupportedImageFormats::pgm).data = ImageSaver::SupportedImageFormats::pgm;
+    image_formats->at(ImageSaver::SupportedImageFormats::pgm).name = "Netpbm Formats - *.pgm";
+    image_formats->at(ImageSaver::SupportedImageFormats::pgm).desc = image_formats->at(ImageSaver::SupportedImageFormats::pbm).desc;
+    image_formats->at(ImageSaver::SupportedImageFormats::ppm).data = ImageSaver::SupportedImageFormats::ppm;
+    image_formats->at(ImageSaver::SupportedImageFormats::ppm).name = "Netpbm Formats - *.ppm";
+    image_formats->at(ImageSaver::SupportedImageFormats::ppm).desc = image_formats->at(ImageSaver::SupportedImageFormats::pbm).desc;
+    image_formats->at(ImageSaver::SupportedImageFormats::pxm).data = ImageSaver::SupportedImageFormats::pxm;
+    image_formats->at(ImageSaver::SupportedImageFormats::pxm).name = "Netpbm Formats - *.pxm";
+    image_formats->at(ImageSaver::SupportedImageFormats::pxm).desc = image_formats->at(ImageSaver::SupportedImageFormats::pbm).desc;
+    image_formats->at(ImageSaver::SupportedImageFormats::pnm).data = ImageSaver::SupportedImageFormats::pnm;
+    image_formats->at(ImageSaver::SupportedImageFormats::pnm).name = "Netpbm Formats - *.pnm";
+    image_formats->at(ImageSaver::SupportedImageFormats::pnm).desc = image_formats->at(ImageSaver::SupportedImageFormats::pbm).desc;
+    image_formats->at(ImageSaver::SupportedImageFormats::pfm).data = ImageSaver::SupportedImageFormats::pfm;
+    image_formats->at(ImageSaver::SupportedImageFormats::pfm).name = "Netpbm Formats - *.pfm";
+    image_formats->at(ImageSaver::SupportedImageFormats::pfm).desc = "The PFM (Portable Floatmap) is supported by the de facto reference implementation Netpbm\n" \
         "and is the unofficial four byte IEEE 754 single precision floating point extension.\n" \
         "PFM is supported by the programs Photoshop, GIMP, and ImageMagick.";
     // TODO: Test support for this format
-    image_formats->at(ImageFormats::pam).data = ImageFormats::pam;
-    image_formats->at(ImageFormats::pam).name = "Netpbm Formats - *.pam";
-    image_formats->at(ImageFormats::pam).desc = "Portable Arbitrary Map (PAM) is an extension of the older binary P4...P6 graphics formats,\n" \
+    image_formats->at(ImageSaver::SupportedImageFormats::pam).data = ImageSaver::SupportedImageFormats::pam;
+    image_formats->at(ImageSaver::SupportedImageFormats::pam).name = "Netpbm Formats - *.pam";
+    image_formats->at(ImageSaver::SupportedImageFormats::pam).desc = "Portable Arbitrary Map (PAM) is an extension of the older binary P4...P6 graphics formats,\n" \
         "introduced with Netpbm version 9.7. PAM generalizes all features of PBM, PGM and PPM, and\n" \
         "provides for extensions. PAM is supported by XnView and FFmpeg; and defines two new\n" \
         "attributes: depth and tuple type.";
-    image_formats->at(ImageFormats::sr).data = ImageFormats::sr;
-    image_formats->at(ImageFormats::sr).name = "Sun Rasters - *.sr";
-    image_formats->at(ImageFormats::sr).desc = "Sun Raster was a raster graphics file format used on SunOS by Sun Microsystems. ACDSee,\n" \
+    image_formats->at(ImageSaver::SupportedImageFormats::sr).data = ImageSaver::SupportedImageFormats::sr;
+    image_formats->at(ImageSaver::SupportedImageFormats::sr).name = "Sun Rasters - *.sr";
+    image_formats->at(ImageSaver::SupportedImageFormats::sr).desc = "Sun Raster was a raster graphics file format used on SunOS by Sun Microsystems. ACDSee,\n" \
         "FFmpeg, GIMP, ImageMagick, IrfanView, LibreOffice, Netpbm, PaintShop Pro, PMView, and\n" \
         "XnView among others support Sun Raster image files. The format does not support transparency.";
-    image_formats->at(ImageFormats::ras).data = ImageFormats::ras;
-    image_formats->at(ImageFormats::ras).name = "Sun Rasters - *.ras";
-    image_formats->at(ImageFormats::ras).desc = image_formats->at(ImageFormats::sr).desc;
-    image_formats->at(ImageFormats::tiff).data = ImageFormats::tiff;
-    image_formats->at(ImageFormats::tiff).name = "TIFF Files - *.tiff";
-    image_formats->at(ImageFormats::tiff).desc = "Tag Image File Format (TIFF or TIF), is an image file format for storing raster graphics\n" \
+    image_formats->at(ImageSaver::SupportedImageFormats::ras).data = ImageSaver::SupportedImageFormats::ras;
+    image_formats->at(ImageSaver::SupportedImageFormats::ras).name = "Sun Rasters - *.ras";
+    image_formats->at(ImageSaver::SupportedImageFormats::ras).desc = image_formats->at(ImageSaver::SupportedImageFormats::sr).desc;
+    image_formats->at(ImageSaver::SupportedImageFormats::tiff).data = ImageSaver::SupportedImageFormats::tiff;
+    image_formats->at(ImageSaver::SupportedImageFormats::tiff).name = "TIFF Files - *.tiff";
+    image_formats->at(ImageSaver::SupportedImageFormats::tiff).desc = "Tag Image File Format (TIFF or TIF), is an image file format for storing raster graphics\n" \
         "images, popular among graphic artists, the publishing industry, and photographers. TIFF is\n" \
         "widely supported by scanning, faxing, word processing, optical character recognition,\n" \
         "image manipulation, desktop publishing, and page-layout applications.";
-    image_formats->at(ImageFormats::tif).data = ImageFormats::tif;
-    image_formats->at(ImageFormats::tif).name = "TIFF Files - *.tif";
-    image_formats->at(ImageFormats::tif).desc = image_formats->at(ImageFormats::tiff).desc;
-    image_formats->at(ImageFormats::exr).data = ImageFormats::exr;
-    image_formats->at(ImageFormats::exr).name = "OpenEXR Image Files - *.exr";
-    image_formats->at(ImageFormats::exr).desc = "OpenEXR is a high-dynamic range, multi-channel raster file format, created under a free\n" \
+    image_formats->at(ImageSaver::SupportedImageFormats::tif).data = ImageSaver::SupportedImageFormats::tif;
+    image_formats->at(ImageSaver::SupportedImageFormats::tif).name = "TIFF Files - *.tif";
+    image_formats->at(ImageSaver::SupportedImageFormats::tif).desc = image_formats->at(ImageSaver::SupportedImageFormats::tiff).desc;
+    image_formats->at(ImageSaver::SupportedImageFormats::exr).data = ImageSaver::SupportedImageFormats::exr;
+    image_formats->at(ImageSaver::SupportedImageFormats::exr).name = "OpenEXR Image Files - *.exr";
+    image_formats->at(ImageSaver::SupportedImageFormats::exr).desc = "OpenEXR is a high-dynamic range, multi-channel raster file format, created under a free\n" \
         "software license similar to the BSD license.  It supports multiple channels of potentially\n" \
         "different pixel sizes, including 32-bit unsigned integer, 32-bit and 16-bit floating point\n" \
         "values, as well as various compression techniques which include lossless and lossy\n" \
         "compression algorithms. It also has arbitrary channels and encodes multiple points of view\n" \
         "such as left- and right-camera images.";
-    image_formats->at(ImageFormats::hdr).data = ImageFormats::hdr;
-    image_formats->at(ImageFormats::hdr).name = "Radiance HDR - *.hdr";
-    image_formats->at(ImageFormats::hdr).desc = "RGBE or Radiance HDR is an image format that stores pixels as one byte each for RGB (red,\n" \
+    image_formats->at(ImageSaver::SupportedImageFormats::hdr).data = ImageSaver::SupportedImageFormats::hdr;
+    image_formats->at(ImageSaver::SupportedImageFormats::hdr).name = "Radiance HDR - *.hdr";
+    image_formats->at(ImageSaver::SupportedImageFormats::hdr).desc = "RGBE or Radiance HDR is an image format that stores pixels as one byte each for RGB (red,\n" \
         "green, and blue) values with a one byte shared exponent. Thus it stores four bytes per pixel.\n" \
         "RGBE allows pixels to have the dynamic range and precision of floating-point values in a\n" \
         "relatively compact data structure (32 bits per pixel).";
-    image_formats->at(ImageFormats::pic).data = ImageFormats::pic;
-    image_formats->at(ImageFormats::pic).name = "Radiance HDR - *.pic";
-    image_formats->at(ImageFormats::pic).desc = image_formats->at(ImageFormats::hdr).desc;
+    image_formats->at(ImageSaver::SupportedImageFormats::pic).data = ImageSaver::SupportedImageFormats::pic;
+    image_formats->at(ImageSaver::SupportedImageFormats::pic).name = "Radiance HDR - *.pic";
+    image_formats->at(ImageSaver::SupportedImageFormats::pic).desc = image_formats->at(ImageSaver::SupportedImageFormats::hdr).desc;
 
     // Specific Format Widget Options (multiple sets)
     format_jpeg_options[FormatJpegOptions::label_FormatFlags].data = 1;
@@ -842,7 +849,7 @@ void BatchItImage::LoadInUiData()
     format_png_options[FormatPngOptions::checkBox_Optimize].name = "Binary Level";
     format_png_options[FormatPngOptions::checkBox_Optimize].desc = "If binary level (bi-level) is checked a grayscale PNG image will be created. Default is unchecked.";
     format_png_options[FormatPngOptions::label_Compression].data = 1;
-    format_png_options[FormatPngOptions::label_Compression].name = "Compression Level";
+    format_png_options[FormatPngOptions::label_Compression].name = "Compression Level:";
     format_png_options[FormatPngOptions::label_Compression].desc = "PNG compression levels are from 0 to 9 with higher values meaning a smaller file size and longer\n" \
         "compression time. If specified, the strategy is changed to [Default].\n" \
         "Default value is 1 (best speed setting).";
@@ -1301,7 +1308,7 @@ void BatchItImage::UiConnections()
         [=](int index) {
             edit_options_change_tracker = TrackOptionChanges(
                 edit_options_change_tracker, Option.comboBox_WidthMod,
-                preset_list.at(CurrentSelectedPreset()).width_modifier, index
+                preset_list.at(CurrentSelectedPreset()).widthModifierIndex(), index
             );
             UpdateComboBoxTextTips();
         }));
@@ -1309,14 +1316,14 @@ void BatchItImage::UiConnections()
         [=](int value) {
             edit_options_change_tracker = TrackOptionChanges(
                 edit_options_change_tracker, Option.spinBox_WidthNumber,
-                preset_list.at(CurrentSelectedPreset()).width_number, value
+                preset_list.at(CurrentSelectedPreset()).widthNumber(), value
             );
         }));
     Q_ASSERT(connect(ui.comboBox_HeightMod, &QComboBox::currentIndexChanged, this,
         [=](int index) {
             edit_options_change_tracker = TrackOptionChanges(
                 edit_options_change_tracker, Option.comboBox_HeightMod,
-                preset_list.at(CurrentSelectedPreset()).height_modifier, index
+                preset_list.at(CurrentSelectedPreset()).heightModifierIndex(), index
             );
             UpdateComboBoxTextTips();
         }));
@@ -1324,14 +1331,14 @@ void BatchItImage::UiConnections()
         [=](int value) {
             edit_options_change_tracker = TrackOptionChanges(
                 edit_options_change_tracker, Option.spinBox_HeightNumber,
-                preset_list.at(CurrentSelectedPreset()).height_number, value
+                preset_list.at(CurrentSelectedPreset()).heightNumber(), value
             );
         }));
     Q_ASSERT(connect(ui.comboBox_Resample, &QComboBox::currentIndexChanged, this,
         [=](int index) {
             edit_options_change_tracker = TrackOptionChanges(
                 edit_options_change_tracker, Option.comboBox_Resample,
-                preset_list.at(CurrentSelectedPreset()).resampling_filter, index
+                preset_list.at(CurrentSelectedPreset()).resamplingFilterIndex(), index
             );
             UpdateComboBoxTextTips();
         }));
@@ -1339,14 +1346,14 @@ void BatchItImage::UiConnections()
         [=](int value) {
             edit_options_change_tracker = TrackOptionChanges(
                 edit_options_change_tracker, Option.checkBox_KeepAspectRatio,
-                preset_list.at(CurrentSelectedPreset()).keep_aspect_ratio, (value) ? 1 : 0
+                preset_list.at(CurrentSelectedPreset()).keepAspectRatio(), (value) ? 1 : 0
             );
         }));
     Q_ASSERT(connect(ui.comboBox_BorderType, &QComboBox::currentIndexChanged, this,
         [=](int index) {
             edit_options_change_tracker = TrackOptionChanges(
                 edit_options_change_tracker, Option.comboBox_BorderType,
-                preset_list.at(CurrentSelectedPreset()).border_type, index
+                preset_list.at(CurrentSelectedPreset()).borderTypeIndex(), index
             );
             UpdateComboBoxTextTips();
         }));
@@ -1361,19 +1368,22 @@ void BatchItImage::UiConnections()
                 << "x" << background_color.red() << ":" << background_color.alpha();
             SetColorPreviewStyleSheet();
             bool changed = true;
-            if (background_color.blue() == preset_list.at(CurrentSelectedPreset()).background_color_blue and
+            if (background_color == preset_list.at(CurrentSelectedPreset()).backgroundColor()) {
+                changed = false;
+            }
+            /*if (background_color.blue() == preset_list.at(CurrentSelectedPreset()).background_color_blue and
                 background_color.green() == preset_list.at(CurrentSelectedPreset()).background_color_green and
                 background_color.red() == preset_list.at(CurrentSelectedPreset()).background_color_red and
                 background_color.alpha() == preset_list.at(CurrentSelectedPreset()).background_color_alpha) {
                 changed = false;
-            }
+            }*/
             edit_options_change_tracker = TrackOptionChanges(
                 edit_options_change_tracker, Option.pushButton_ColorDialog, 0, changed
             );
         }));
     Q_ASSERT(connect(ui.comboBox_BlurFilter, &QComboBox::currentIndexChanged, this,
         [=](int index) {
-            int preset_value = preset_list.at(CurrentSelectedPreset()).blur_filter;
+            int preset_value = preset_list.at(CurrentSelectedPreset()).blurFilterIndex();
             edit_options_change_tracker = TrackOptionChanges(edit_options_change_tracker,
                 Option.comboBox_BlurFilter, preset_value, index
             );
@@ -1392,42 +1402,42 @@ void BatchItImage::UiConnections()
         [=](int value) {
             edit_options_change_tracker = TrackOptionChanges(
                 edit_options_change_tracker, Option.checkBox_BlurNormalize,
-                preset_list.at(CurrentSelectedPreset()).blur_normalize, (value) ? 1 : 0
+                preset_list.at(CurrentSelectedPreset()).blurNormalize(), (value) ? 1 : 0
             );
         }));
     Q_ASSERT(connect(ui.verticalSlider_BlurX1, &QSlider::valueChanged, this,
         [=](int value) {
             edit_options_change_tracker = TrackOptionChanges(
                 edit_options_change_tracker, Option.verticalSlider_BlurX1,
-                preset_list.at(CurrentSelectedPreset()).blur_x, value
+                preset_list.at(CurrentSelectedPreset()).blurX(), value
             );
         }));
     Q_ASSERT(connect(ui.verticalSlider_BlurY1, &QSlider::valueChanged, this,
         [=](int value) {
             edit_options_change_tracker = TrackOptionChanges(
                 edit_options_change_tracker, Option.verticalSlider_BlurY1,
-                preset_list.at(CurrentSelectedPreset()).blur_y, value
+                preset_list.at(CurrentSelectedPreset()).blurY(), value
             );
         }));
     Q_ASSERT(connect(ui.verticalSlider_BlurX2, &QSlider::valueChanged, this,
         [=](int value) {
             edit_options_change_tracker = TrackOptionChanges(
                 edit_options_change_tracker, Option.verticalSlider_BlurX2,
-                preset_list.at(CurrentSelectedPreset()).blur_sx, value
+                preset_list.at(CurrentSelectedPreset()).blurSX(), value
             );
         }));
     Q_ASSERT(connect(ui.verticalSlider_BlurY2, &QSlider::valueChanged, this,
         [=](int value) {
             edit_options_change_tracker = TrackOptionChanges(
                 edit_options_change_tracker, Option.verticalSlider_BlurY2,
-                preset_list.at(CurrentSelectedPreset()).blur_sy, value
+                preset_list.at(CurrentSelectedPreset()).blurSY(), value
             );
         }));
     Q_ASSERT(connect(ui.verticalSlider_BlurD, &QSlider::valueChanged, this,
         [=](int value) {
             edit_options_change_tracker = TrackOptionChanges(
                 edit_options_change_tracker, Option.verticalSlider_BlurD,
-                preset_list.at(CurrentSelectedPreset()).blur_depth, value
+                preset_list.at(CurrentSelectedPreset()).blurDepth(), value
             );
         }));
     Q_ASSERT(connect(ui.dial_Rotation, &QSlider::valueChanged, this,
@@ -1435,26 +1445,26 @@ void BatchItImage::UiConnections()
             ui.lcdNumber_Rotation->display(value);
             edit_options_change_tracker = TrackOptionChanges(
                 edit_options_change_tracker, Option.dial_Rotation,
-                preset_list.at(CurrentSelectedPreset()).rotation_degrees, value
+                preset_list.at(CurrentSelectedPreset()).rotationDegrees(), value
             );
         }));
     Q_ASSERT(connect(ui.checkBox_IncreaseBounds, &QCheckBox::stateChanged, this,
         [=](int value) {
             edit_options_change_tracker = TrackOptionChanges(
                 edit_options_change_tracker, Option.checkBox_IncreaseBounds,
-                preset_list.at(CurrentSelectedPreset()).increase_boundaries, (value) ? 1 : 0
+                preset_list.at(CurrentSelectedPreset()).increaseBoundaries(), (value) ? 1 : 0
             );
         }));
     Q_ASSERT(connect(ui.checkBox_FlipImage, &QCheckBox::stateChanged, this,
         [=](int value) {
             edit_options_change_tracker = TrackOptionChanges(
                 edit_options_change_tracker, Option.checkBox_FlipImage,
-                preset_list.at(CurrentSelectedPreset()).flip_image, (value) ? 1 : 0
+                preset_list.at(CurrentSelectedPreset()).flipImage(), (value) ? 1 : 0
             );
         }));
     Q_ASSERT(connect(ui.groupBox_Watermark, &QGroupBox::toggled, this,
         [=](int value) {
-            std::string preset_value = preset_list.at(CurrentSelectedPreset()).watermark_path;
+            //std::string preset_value = preset_list.at(CurrentSelectedPreset()).watermark_path;
             if (value) {
                 EnableOptionGroup(ui.groupBox_Watermark->children(), true);
             }
@@ -1462,7 +1472,8 @@ void BatchItImage::UiConnections()
                 EnableOptionGroup(ui.groupBox_Watermark->children(), false);
             }
             // If "off/None" remove below changed options.
-            if (value == 0 and preset_value.length() == 0) {
+            //if (value == 0 and preset_value.length() == 0) {
+            if (value == 0 and not preset_list.at(CurrentSelectedPreset()).watermarkAdded()) {
                 edit_options_change_tracker = RemoveOptionsChanged(edit_options_change_tracker, std::vector<uint>{
                     Option.lineEdit_WatermarkPath, Option.comboBox_WatermarkLocation, Option.spinBox_WatermarkTransparency,
                         Option.spinBox_WatermarkOffsetX, Option.spinBox_WatermarkOffsetY
@@ -1478,16 +1489,14 @@ void BatchItImage::UiConnections()
         }));
     Q_ASSERT(connect(ui.pushButton_Watermark, &QAbstractButton::pressed, this,
         [this] {
-            QString last_verified_watermark_path = (last_existing_wm_path.length() > 0) ? last_existing_wm_path :
-                QString::fromStdString(
-                    preset_list.at(CurrentSelectedPreset()).watermark_path
-                );
+            QString last_verified_watermark_path = (last_existing_wm_path.length() > 0) ? 
+                last_existing_wm_path : preset_list.at(CurrentSelectedPreset()).watermarkPath();
             ui.lineEdit_WatermarkPath->setText(GetImageFile(last_verified_watermark_path));
             UpdateLineEditTextTips(ui.lineEdit_WatermarkPath);
             edit_options_change_tracker = TrackOptionChanges(
                 edit_options_change_tracker,
                 Option.lineEdit_WatermarkPath,
-                preset_list.at(CurrentSelectedPreset()).watermark_path,
+                preset_list.at(CurrentSelectedPreset()).watermarkPath().toStdString(),
                 ui.lineEdit_WatermarkPath->text().toStdString()
             );
             
@@ -1501,7 +1510,7 @@ void BatchItImage::UiConnections()
             edit_options_change_tracker = TrackOptionChanges(
                 edit_options_change_tracker,
                 Option.lineEdit_WatermarkPath,
-                preset_list.at(CurrentSelectedPreset()).watermark_path,
+                preset_list.at(CurrentSelectedPreset()).watermarkPath().toStdString(),
                 ui.lineEdit_WatermarkPath->text().toStdString()
             );
         }));
@@ -1509,7 +1518,7 @@ void BatchItImage::UiConnections()
         [=](int index) {
             edit_options_change_tracker = TrackOptionChanges(
                 edit_options_change_tracker, Option.comboBox_WatermarkLocation,
-                preset_list.at(CurrentSelectedPreset()).watermark_location, index
+                preset_list.at(CurrentSelectedPreset()).watermarkLocationIndex(), index
             );
             UpdateComboBoxTextTips();
         }));
@@ -1517,47 +1526,47 @@ void BatchItImage::UiConnections()
         [=](int value) {
             edit_options_change_tracker = TrackOptionChanges(
                 edit_options_change_tracker, Option.spinBox_WatermarkTransparency,
-                preset_list.at(CurrentSelectedPreset()).watermark_transparency, value
+                preset_list.at(CurrentSelectedPreset()).watermarkTransparency(), value
             );
         }));
     Q_ASSERT(connect(ui.spinBox_WatermarkOffsetX, &QSpinBox::valueChanged, this,
         [=](int value) {
             edit_options_change_tracker = TrackOptionChanges(
                 edit_options_change_tracker, Option.spinBox_WatermarkOffsetX,
-                preset_list.at(CurrentSelectedPreset()).watermark_offset_x, value
+                preset_list.at(CurrentSelectedPreset()).watermarkOffsetX(), value
             );
         }));
     Q_ASSERT(connect(ui.spinBox_WatermarkOffsetY, &QSpinBox::valueChanged, this,
         [=](int value) {
             edit_options_change_tracker = TrackOptionChanges(
                 edit_options_change_tracker, Option.spinBox_WatermarkOffsetY,
-                preset_list.at(CurrentSelectedPreset()).watermark_offset_y, value
+                preset_list.at(CurrentSelectedPreset()).watermarkOffsetY(), value
             );
         }));
 
     // Image Save Widgets
     Q_ASSERT(connect(ui.radioButton_Overwrite, &QRadioButton::toggled, this,
         [=](int value) {
-            int preset_value = preset_list.at(CurrentSelectedPreset()).save_file_procedure;
+            int preset_value = preset_list.at(CurrentSelectedPreset()).saveFileProcedureIndex();
             save_options_change_tracker = TrackOptionChanges(
                 save_options_change_tracker, Option.radioButton_Overwrite,
-                preset_value, (value) ? ImageSaver::OVERWRITE : preset_value
+                preset_value, (value) ? ImageSaver::SaveOptionFlag::OVERWRITE : preset_value
             );
         }));
     Q_ASSERT(connect(ui.radioButton_RenameOriginal, &QRadioButton::toggled, this,
         [=](int value) {
-            int preset_value = preset_list.at(CurrentSelectedPreset()).save_file_procedure;
+            int preset_value = preset_list.at(CurrentSelectedPreset()).saveFileProcedureIndex();
             save_options_change_tracker = TrackOptionChanges(
                 save_options_change_tracker, Option.radioButton_RenameOriginal,
-                preset_value, (value) ? ImageSaver::RENAME_ORIGINAL : preset_value
+                preset_value, (value) ? ImageSaver::SaveOptionFlag::RENAME_ORIGINAL : preset_value
             );
         }));
     Q_ASSERT(connect(ui.radioButton_NewFileName, &QRadioButton::toggled, this,
         [=](int value) {
-            int preset_value = preset_list.at(CurrentSelectedPreset()).save_file_procedure;
+            int preset_value = preset_list.at(CurrentSelectedPreset()).saveFileProcedureIndex();
             save_options_change_tracker = TrackOptionChanges(
                 save_options_change_tracker, Option.radioButton_NewFileName,
-                preset_value, (value) ? ImageSaver::NEW_NAME : preset_value
+                preset_value, (value) ? ImageSaver::SaveOptionFlag::NEW_NAME : preset_value
             );
         }));
     Q_ASSERT(connect(ui.comboBox_AddText, &QComboBox::activated, this,
@@ -1567,7 +1576,7 @@ void BatchItImage::UiConnections()
             save_options_change_tracker = TrackOptionChanges(
                 save_options_change_tracker,
                 Option.lineEdit_FileName,
-                preset_list.at(CurrentSelectedPreset()).save_file_name_change,
+                preset_list.at(CurrentSelectedPreset()).saveFileNameChange(),
                 ui.lineEdit_FileName->text().toStdString()
             );
         }));
@@ -1578,13 +1587,13 @@ void BatchItImage::UiConnections()
             save_options_change_tracker = TrackOptionChanges(
                 save_options_change_tracker,
                 Option.lineEdit_FileName, 
-                preset_list.at(CurrentSelectedPreset()).save_file_name_change,
+                preset_list.at(CurrentSelectedPreset()).saveFileNameChange(),
                 ui.lineEdit_FileName->text().toStdString()
             );
         }));
     Q_ASSERT(connect(ui.radioButton_RelativePath, &QRadioButton::toggled, this,
         [=](int value) {
-            int preset_value = preset_list.at(CurrentSelectedPreset()).save_path_relative;
+            int preset_value = preset_list.at(CurrentSelectedPreset()).savePathRelative();
             save_options_change_tracker = TrackOptionChanges(
                 save_options_change_tracker, Option.radioButton_RelativePath,
                 preset_value, (value) ? 1 : preset_value
@@ -1593,7 +1602,7 @@ void BatchItImage::UiConnections()
                 save_options_change_tracker = TrackOptionChanges(
                     save_options_change_tracker,
                     Option.lineEdit_RelativePath,
-                    preset_list.at(CurrentSelectedPreset()).save_file_path_change,
+                    preset_list.at(CurrentSelectedPreset()).saveFilePathChange().toStdString(),
                     ui.lineEdit_RelativePath->text().toStdString()
                 );
                 save_options_change_tracker = RemoveOptionsChanged(save_options_change_tracker, std::vector<uint>{
@@ -1603,7 +1612,7 @@ void BatchItImage::UiConnections()
         }));
     Q_ASSERT(connect(ui.radioButton_AbsolutePath, &QRadioButton::toggled, this,
         [=](int value) {
-            int preset_value = preset_list.at(CurrentSelectedPreset()).save_path_relative;
+            int preset_value = preset_list.at(CurrentSelectedPreset()).savePathRelative();
             save_options_change_tracker = TrackOptionChanges(
                 save_options_change_tracker, Option.radioButton_AbsolutePath,
                 preset_value, (value) ? 0 : preset_value
@@ -1612,7 +1621,7 @@ void BatchItImage::UiConnections()
                 save_options_change_tracker = TrackOptionChanges(
                     save_options_change_tracker,
                     Option.lineEdit_AbsolutePath,
-                    preset_list.at(CurrentSelectedPreset()).save_file_path_change,
+                    preset_list.at(CurrentSelectedPreset()).saveFilePathChange().toStdString(),
                     ui.lineEdit_AbsolutePath->text().toStdString()
                 );
                 save_options_change_tracker = RemoveOptionsChanged(save_options_change_tracker, std::vector<uint>{
@@ -1627,7 +1636,7 @@ void BatchItImage::UiConnections()
             save_options_change_tracker = TrackOptionChanges(
                 save_options_change_tracker,
                 Option.lineEdit_RelativePath,
-                preset_list.at(CurrentSelectedPreset()).save_file_path_change,
+                preset_list.at(CurrentSelectedPreset()).saveFilePathChange().toStdString(),
                 ui.lineEdit_RelativePath->text().toStdString()
             );
         }));
@@ -1640,7 +1649,7 @@ void BatchItImage::UiConnections()
                 save_options_change_tracker = TrackOptionChanges(
                     save_options_change_tracker,
                     Option.lineEdit_RelativePath,
-                    preset_list.at(CurrentSelectedPreset()).save_file_path_change,
+                    preset_list.at(CurrentSelectedPreset()).saveFilePathChange().toStdString(),
                     ui.lineEdit_RelativePath->text().toStdString()
                 );
             }
@@ -1652,7 +1661,7 @@ void BatchItImage::UiConnections()
             save_options_change_tracker = TrackOptionChanges(
                 save_options_change_tracker,
                 Option.lineEdit_AbsolutePath,
-                preset_list.at(CurrentSelectedPreset()).save_file_path_change,
+                preset_list.at(CurrentSelectedPreset()).saveFilePathChange().toStdString(),
                 ui.lineEdit_AbsolutePath->text().toStdString()
             );
         }));
@@ -1664,14 +1673,14 @@ void BatchItImage::UiConnections()
                 save_options_change_tracker = TrackOptionChanges(
                     save_options_change_tracker,
                     Option.lineEdit_AbsolutePath,
-                    preset_list.at(CurrentSelectedPreset()).save_file_path_change,
+                    preset_list.at(CurrentSelectedPreset()).saveFilePathChange().toStdString(),
                     ui.lineEdit_AbsolutePath->text().toStdString()
                 );
             }
         }));
     Q_ASSERT(connect(ui.groupBox_ChangeFormat, &QGroupBox::toggled, this,
         [=](int value) {
-            int preset_value = preset_list.at(CurrentSelectedPreset()).format_changed;
+            int preset_value = preset_list.at(CurrentSelectedPreset()).formatChanged();
             save_options_change_tracker = TrackOptionChanges(save_options_change_tracker,
                 Option.comboBox_BlurFilter, preset_value, (value) ? 1 : 0
             );
@@ -1691,7 +1700,7 @@ void BatchItImage::UiConnections()
             EnableSpecificFormatOptions();
             save_options_change_tracker = TrackOptionChanges(
                 save_options_change_tracker, Option.comboBox_ImageFormat,
-                preset_list.at(CurrentSelectedPreset()).format_extension, index
+                preset_list.at(CurrentSelectedPreset()).formatExtensionIndex(), index
             );
         }));
     Q_ASSERT(connect(ui.comboBox_FormatFlags, &QComboBox::currentIndexChanged, this,
@@ -1712,7 +1721,7 @@ void BatchItImage::UiConnections()
             }
             save_options_change_tracker = TrackOptionChanges(
                 save_options_change_tracker, Option.comboBox_FormatFlags,
-                preset_list.at(CurrentSelectedPreset()).format_format_flag, index
+                preset_list.at(CurrentSelectedPreset()).formatFormatFlagIndex(), index
             );
 
         }));
@@ -1720,42 +1729,42 @@ void BatchItImage::UiConnections()
         [=](int value) {
             save_options_change_tracker = TrackOptionChanges(
                 save_options_change_tracker, Option.horizontalSlider_Quality,
-                preset_list.at(CurrentSelectedPreset()).format_quality, value
+                preset_list.at(CurrentSelectedPreset()).formatQuality(), value
             );
         }));
     Q_ASSERT(connect(ui.checkBox_Optimize, &QCheckBox::stateChanged, this,
         [=](int value) {
             save_options_change_tracker = TrackOptionChanges(
                 save_options_change_tracker, Option.checkBox_Optimize,
-                preset_list.at(CurrentSelectedPreset()).format_optimize, (value) ? 1 : 0
+                preset_list.at(CurrentSelectedPreset()).formatOptimize(), (value) ? 1 : 0
             );
         }));
     Q_ASSERT(connect(ui.checkBox_Progressive, &QCheckBox::stateChanged, this,
         [=](int value) {
             save_options_change_tracker = TrackOptionChanges(
                 save_options_change_tracker, Option.checkBox_Progressive,
-                preset_list.at(CurrentSelectedPreset()).format_progressive, (value) ? 1 : 0
+                preset_list.at(CurrentSelectedPreset()).formatProgressive(), (value) ? 1 : 0
             );
         }));
     Q_ASSERT(connect(ui.spinBox_Compression, &QSpinBox::valueChanged, this,
         [=](int value) {
             save_options_change_tracker = TrackOptionChanges(
                 save_options_change_tracker, Option.spinBox_Compression,
-                preset_list.at(CurrentSelectedPreset()).format_compression, value
+                preset_list.at(CurrentSelectedPreset()).formatCompression(), value
             );
         }));
     Q_ASSERT(connect(ui.spinBox_ExtraSetting1, &QSpinBox::valueChanged, this,
         [=](int value) {
             save_options_change_tracker = TrackOptionChanges(
                 save_options_change_tracker, Option.spinBox_ExtraSetting1,
-                preset_list.at(CurrentSelectedPreset()).format_extra1, value
+                preset_list.at(CurrentSelectedPreset()).formatExtra1(), value
             );
         }));
     Q_ASSERT(connect(ui.spinBox_ExtraSetting2, &QSpinBox::valueChanged, this,
         [=](int value) {
             save_options_change_tracker = TrackOptionChanges(
                 save_options_change_tracker, Option.spinBox_ExtraSetting2,
-                preset_list.at(CurrentSelectedPreset()).format_extra2, value
+                preset_list.at(CurrentSelectedPreset()).formatExtra2(), value
             );
         }));
 
@@ -1956,10 +1965,10 @@ void BatchItImage::EnableSpecificBlurOptions(bool loading_preset)
             }
         };
 
-    if (blur_filter_selected == ImageEditor::BLUR_FILTER) {
+    if (blur_filter_selected == ImageEditor::BlurFilter::BLUR_FILTER) {
         // Unused, BOX_FILTER covers anything BLUR_FILTER can do.
     }
-    else if (blur_filter_selected == ImageEditor::BOX_FILTER) {
+    else if (blur_filter_selected == ImageEditor::BlurFilter::BOX_FILTER) {
         enableOptions(NORMALIZE + X1 + Y1 + X2 + Y2 + DEPTH);
         ui.verticalSlider_BlurX1->setRange(0, 100);
         ui.verticalSlider_BlurY1->setRange(0, 100);
@@ -2013,7 +2022,7 @@ void BatchItImage::EnableSpecificBlurOptions(bool loading_preset)
             ui.verticalSlider_BlurD->setValue(-1);
         }
     }
-    else if (blur_filter_selected == ImageEditor::BILATERAL_FILTER) {
+    else if (blur_filter_selected == ImageEditor::BlurFilter::BILATERAL_FILTER) {
         enableOptions(X1 + X2 + Y2);
         ui.verticalSlider_BlurX1->setRange(0, 12);
         ui.verticalSlider_BlurX2->setRange(0, 300);
@@ -2024,7 +2033,7 @@ void BatchItImage::EnableSpecificBlurOptions(bool loading_preset)
             ui.verticalSlider_BlurY2->setValue(0);
         }
     }
-    else if (blur_filter_selected == ImageEditor::GAUSSIAN_BLUR) {
+    else if (blur_filter_selected == ImageEditor::BlurFilter::GAUSSIAN_BLUR) {
         enableOptions(X1 + Y1 + X2 + Y2);
         ui.verticalSlider_BlurX1->forceSingleStepInterval(true);
         ui.verticalSlider_BlurX1->setRange(1, 99);
@@ -2043,7 +2052,7 @@ void BatchItImage::EnableSpecificBlurOptions(bool loading_preset)
             ui.verticalSlider_BlurY2->setValue(0.0);
         }
     }
-    else if (blur_filter_selected == ImageEditor::MEDIAN_BLUR) {
+    else if (blur_filter_selected == ImageEditor::BlurFilter::MEDIAN_BLUR) {
         enableOptions(X1);
         ui.verticalSlider_BlurX1->forceSingleStepInterval(true);
         ui.verticalSlider_BlurX1->setRange(3, 99);
@@ -2052,10 +2061,10 @@ void BatchItImage::EnableSpecificBlurOptions(bool loading_preset)
             ui.verticalSlider_BlurX1->setValue(3);
         }
     }
-    else if (blur_filter_selected == ImageEditor::PYR_DOWN_BLUR) {
+    else if (blur_filter_selected == ImageEditor::BlurFilter::PYR_DOWN_BLUR) {
         enableOptions(NONE);
     }
-    else if (blur_filter_selected == ImageEditor::PYR_UP_BLUR) {
+    else if (blur_filter_selected == ImageEditor::BlurFilter::PYR_UP_BLUR) {
         enableOptions(NONE);
     }
     else {
@@ -2579,11 +2588,67 @@ void BatchItImage::ChangePreset(int index)
 
 void BatchItImage::SavePreset(bool save_all)
 {
-    qDebug() << "SavePresets->current_selected_preset:" << current_selected_preset;
+    //qDebug() << "SavePresets->current_selected_preset:" << current_selected_preset;
 
     //QStringList recent_image_files;
     //recent_image_files.resize(20);
     // TODO: record time file added, sort descending, when adding to "recent_image_files" create new QStringList and join with old.
+
+    int save_option;
+    if (ui.radioButton_Overwrite->isChecked()) {
+        save_option = ImageSaver::SaveOptionFlag::OVERWRITE;
+    }
+    else if (ui.radioButton_RenameOriginal->isChecked()) {
+        save_option = ImageSaver::SaveOptionFlag::RENAME_ORIGINAL;
+    }
+    else {
+        save_option = ImageSaver::SaveOptionFlag::NEW_NAME;
+    }
+    bool save_path_relative = ui.radioButton_RelativePath->isChecked();
+
+    // Update current preset in list then save it in settings
+    preset_list.at(current_selected_preset).setPresetIndex(current_selected_preset);
+    //preset_list.at(current_selected_preset).setPresetDescription(ui.comboBox_Preset_1->itemText(current_selected_preset)); // Updated in ChangePresetDescription()
+    preset_list.at(current_selected_preset).setWidthModifierIndex(ui.comboBox_WidthMod->currentIndex());
+    preset_list.at(current_selected_preset).setWidthNumber(ui.spinBox_WidthNumber->value());
+    preset_list.at(current_selected_preset).setHeightModifierIndex(ui.comboBox_HeightMod->currentIndex());
+    preset_list.at(current_selected_preset).setHeightNumber(ui.spinBox_HeightNumber->value());
+    preset_list.at(current_selected_preset).setKeepAspectRatio(ui.checkBox_KeepAspectRatio->isChecked());
+    preset_list.at(current_selected_preset).setResamplingFilterIndex(ui.comboBox_Resample->currentIndex());
+    preset_list.at(current_selected_preset).setBorderTypeIndex(ui.comboBox_BorderType->currentIndex());
+    preset_list.at(current_selected_preset).setBackgroundColor(background_color);
+    preset_list.at(current_selected_preset).setBlurFilterIndex(ui.comboBox_BlurFilter->currentIndex());
+    preset_list.at(current_selected_preset).setBlurNormalize(ui.checkBox_BlurNormalize->isChecked());
+    preset_list.at(current_selected_preset).setBlurX(ui.verticalSlider_BlurX1->value());
+    preset_list.at(current_selected_preset).setBlurY(ui.verticalSlider_BlurY1->value());
+    preset_list.at(current_selected_preset).setBlurSX(ui.verticalSlider_BlurX2->value());
+    preset_list.at(current_selected_preset).setBlurSY(ui.verticalSlider_BlurY2->value());
+    preset_list.at(current_selected_preset).setBlurDepth(ui.verticalSlider_BlurD->value());
+    preset_list.at(current_selected_preset).setRotationDegrees(ui.dial_Rotation->value());
+    preset_list.at(current_selected_preset).setIncreaseBoundaries(ui.checkBox_IncreaseBounds->isChecked());
+    preset_list.at(current_selected_preset).setFlipImage(ui.checkBox_FlipImage->isChecked());
+    preset_list.at(current_selected_preset).setWatermarkAdded(ui.groupBox_Watermark->isChecked());
+    preset_list.at(current_selected_preset).setWatermarkPath(ui.lineEdit_WatermarkPath->text());
+    preset_list.at(current_selected_preset).setWatermarkLocationIndex(ui.comboBox_WatermarkLocation->currentIndex());
+    preset_list.at(current_selected_preset).setWatermarkTransparency(ui.spinBox_WatermarkTransparency->value());
+    preset_list.at(current_selected_preset).setWatermarkOffsetX(ui.spinBox_WatermarkOffsetX->value());
+    preset_list.at(current_selected_preset).setWatermarkOffsetY(ui.spinBox_WatermarkOffsetY->value());
+    preset_list.at(current_selected_preset).setFormatChanged(ui.groupBox_ChangeFormat->isChecked());
+    preset_list.at(current_selected_preset).setFormatExtensionIndex(ui.comboBox_ImageFormat->currentIndex());
+    preset_list.at(current_selected_preset).setFormatFormatFlagIndex(ui.comboBox_FormatFlags->currentIndex());
+    preset_list.at(current_selected_preset).setFormatQuality(ui.horizontalSlider_Quality->value());
+    preset_list.at(current_selected_preset).setFormatOptimize(ui.checkBox_Optimize->isChecked());
+    preset_list.at(current_selected_preset).setFormatProgressive(ui.checkBox_Progressive->isChecked());
+    preset_list.at(current_selected_preset).setFormatCompression(ui.spinBox_Compression->value());
+    preset_list.at(current_selected_preset).setFormatExtra1(ui.spinBox_ExtraSetting1->value());
+    preset_list.at(current_selected_preset).setFormatExtra2(ui.spinBox_ExtraSetting2->value());
+    preset_list.at(current_selected_preset).setSaveFileProcedureIndex(save_option);
+    preset_list.at(current_selected_preset).setSaveFileNameChange(ui.lineEdit_FileName->text().toStdString());
+    preset_list.at(current_selected_preset).setSavePathRelative(save_path_relative);
+    if (save_path_relative)
+        preset_list.at(current_selected_preset).setSaveFilePathChange(ui.lineEdit_RelativePath->text());
+    else
+        preset_list.at(current_selected_preset).setSaveFilePathChange(ui.lineEdit_AbsolutePath->text());
 
     QSettings settings(preset_settings_file, QSettings::IniFormat);
     settings.beginGroup("Settings");
@@ -2591,76 +2656,14 @@ void BatchItImage::SavePreset(bool save_all)
     settings.endGroup();
 
     if (save_all) {
-        qDebug() << "Saving All Settings Presets (Defaults)";
+        qDebug() << "Saving All Presets to Settings File";
         for (int i = 0; i < preset_list.size(); i++) {
             SavePresetToSettingsFile(i);
         }
         ui.statusbar->showMessage("All Presets Saved!", 5000);
     }
     else {
-        qDebug() << "Update Settings Preset #" << current_selected_preset;
-
-        int save_option;
-        if (ui.radioButton_Overwrite->isChecked()) {
-            save_option = ImageSaver::OVERWRITE;
-        }
-        else if (ui.radioButton_RenameOriginal->isChecked()) {
-            save_option = ImageSaver::RENAME_ORIGINAL;
-        }
-        else {
-            save_option = ImageSaver::NEW_NAME;
-        }
-        bool save_path_relative = ui.radioButton_RelativePath->isChecked();
-
-        // Update current preset in list then save it in settings
-        preset_list.at(current_selected_preset).index = current_selected_preset;
-        //preset_list.at(current_selected_preset).description = ui.comboBox_Preset_1->itemText(current_selected_preset); // Updated in ChangePresetDescription()
-        preset_list.at(current_selected_preset).width_modifier = ui.comboBox_WidthMod->currentIndex();
-        preset_list.at(current_selected_preset).width_number = ui.spinBox_WidthNumber->value();
-        preset_list.at(current_selected_preset).height_modifier = ui.comboBox_HeightMod->currentIndex();
-        preset_list.at(current_selected_preset).height_number = ui.spinBox_HeightNumber->value();
-        preset_list.at(current_selected_preset).keep_aspect_ratio = ui.checkBox_KeepAspectRatio->isChecked();
-        preset_list.at(current_selected_preset).resampling_filter = ui.comboBox_Resample->currentIndex();
-        preset_list.at(current_selected_preset).border_type = ui.comboBox_BorderType->currentIndex();
-        preset_list.at(current_selected_preset).background_color_blue = background_color.blue();
-        preset_list.at(current_selected_preset).background_color_green = background_color.green();
-        preset_list.at(current_selected_preset).background_color_red = background_color.red();
-        preset_list.at(current_selected_preset).background_color_alpha = background_color.alpha();
-        preset_list.at(current_selected_preset).blur_filter = ui.comboBox_BlurFilter->currentIndex();
-        preset_list.at(current_selected_preset).blur_normalize = ui.checkBox_BlurNormalize->isChecked();
-        preset_list.at(current_selected_preset).blur_x = ui.verticalSlider_BlurX1->value();
-        preset_list.at(current_selected_preset).blur_y = ui.verticalSlider_BlurY1->value();
-        preset_list.at(current_selected_preset).blur_sx = ui.verticalSlider_BlurX2->value();
-        preset_list.at(current_selected_preset).blur_sy = ui.verticalSlider_BlurY2->value();
-        preset_list.at(current_selected_preset).blur_depth = ui.verticalSlider_BlurD->value();
-        preset_list.at(current_selected_preset).rotation_degrees = ui.dial_Rotation->value();
-        preset_list.at(current_selected_preset).increase_boundaries = ui.checkBox_IncreaseBounds->isChecked();
-        preset_list.at(current_selected_preset).flip_image = ui.checkBox_FlipImage->isChecked();
-        preset_list.at(current_selected_preset).watermark_added = ui.groupBox_Watermark->isChecked();
-        //preset_list.at(current_selected_preset).watermark_path = (ui.groupBox_Watermark->isChecked())
-        //    ? ui.lineEdit_WatermarkPath->text().toStdString() : "";
-        preset_list.at(current_selected_preset).watermark_path = ui.lineEdit_WatermarkPath->text().toStdString();
-        preset_list.at(current_selected_preset).watermark_location = ui.comboBox_WatermarkLocation->currentIndex();
-        preset_list.at(current_selected_preset).watermark_transparency = ui.spinBox_WatermarkTransparency->value();
-        preset_list.at(current_selected_preset).watermark_offset_x = ui.spinBox_WatermarkOffsetX->value();
-        preset_list.at(current_selected_preset).watermark_offset_y = ui.spinBox_WatermarkOffsetY->value();
-        preset_list.at(current_selected_preset).format_changed = ui.groupBox_ChangeFormat->isChecked();
-        preset_list.at(current_selected_preset).format_extension = ui.comboBox_ImageFormat->currentIndex();
-        preset_list.at(current_selected_preset).format_format_flag = ui.comboBox_FormatFlags->currentIndex();
-        preset_list.at(current_selected_preset).format_optimize = ui.checkBox_Optimize->isChecked();
-        preset_list.at(current_selected_preset).format_progressive = ui.checkBox_Progressive->isChecked();
-        preset_list.at(current_selected_preset).format_quality = ui.horizontalSlider_Quality->value();
-        preset_list.at(current_selected_preset).format_compression = ui.spinBox_Compression->value();
-        preset_list.at(current_selected_preset).format_extra1 = ui.spinBox_ExtraSetting1->value();
-        preset_list.at(current_selected_preset).format_extra2 = ui.spinBox_ExtraSetting2->value();
-        preset_list.at(current_selected_preset).save_file_procedure = save_option;
-        preset_list.at(current_selected_preset).save_file_name_change = ui.lineEdit_FileName->text().toStdString();
-        preset_list.at(current_selected_preset).save_path_relative = save_path_relative;
-        if (save_path_relative)
-            preset_list.at(current_selected_preset).save_file_path_change = ui.lineEdit_RelativePath->text().toStdString();
-        else
-            preset_list.at(current_selected_preset).save_file_path_change = ui.lineEdit_AbsolutePath->text().toStdString();
-
+        qDebug() << "Saving Preset #" << current_selected_preset << "to Settings File";
         SavePresetToSettingsFile(current_selected_preset);
     }
     RemoveOptionsChanged();
@@ -2671,113 +2674,110 @@ void BatchItImage::SavePresetToSettingsFile(int index)
     QSettings settings(preset_settings_file, QSettings::IniFormat);
 
     settings.beginGroup("Preset" + std::to_string(index));
-    settings.setValue("description", preset_list.at(index).description);
-    settings.setValue("width_modifier", preset_list.at(index).width_modifier);
-    settings.setValue("width_number", preset_list.at(index).width_number);
-    settings.setValue("height_modifier", preset_list.at(index).height_modifier);
-    settings.setValue("height_number", preset_list.at(index).height_number);
-    settings.setValue("keep_aspect_ratio", preset_list.at(index).keep_aspect_ratio);
-    settings.setValue("resampling_filter", preset_list.at(index).resampling_filter);
-    settings.setValue("border_type", preset_list.at(index).border_type);
-    settings.setValue("background_color_blue", preset_list.at(index).background_color_blue);
-    settings.setValue("background_color_green", preset_list.at(index).background_color_green);
-    settings.setValue("background_color_red", preset_list.at(index).background_color_red);
-    settings.setValue("background_color_alpha", preset_list.at(index).background_color_alpha);
-    settings.setValue("blur_filter", preset_list.at(index).blur_filter);
-    settings.setValue("blur_normalize", preset_list.at(index).blur_normalize);
-    settings.setValue("blur_x", preset_list.at(index).blur_x);
-    settings.setValue("blur_y", preset_list.at(index).blur_y);
-    settings.setValue("blur_sx", preset_list.at(index).blur_sx);
-    settings.setValue("blur_sy", preset_list.at(index).blur_sy);
-    settings.setValue("blur_depth", preset_list.at(index).blur_depth);
-    settings.setValue("rotation_degrees", preset_list.at(index).rotation_degrees);
-    settings.setValue("increase_boundaries", preset_list.at(index).increase_boundaries);
-    settings.setValue("flip_image", preset_list.at(index).flip_image);
-    settings.setValue("watermark_added", preset_list.at(index).watermark_added);
-    settings.setValue("watermark_path", QString::fromStdString(preset_list.at(index).watermark_path));
-    settings.setValue("watermark_location", preset_list.at(index).watermark_location);
-    settings.setValue("watermark_transparency", preset_list.at(index).watermark_transparency);
-    settings.setValue("watermark_offset_x", preset_list.at(index).watermark_offset_x);
-    settings.setValue("watermark_offset_y", preset_list.at(index).watermark_offset_y);
-    settings.setValue("format_changed", preset_list.at(index).format_changed);
-    settings.setValue("format_extension", preset_list.at(index).format_extension);
-    settings.setValue("format_format_flag", preset_list.at(index).format_format_flag);
-    settings.setValue("format_optimize", preset_list.at(index).format_optimize);
-    settings.setValue("format_progressive", preset_list.at(index).format_progressive);
-    settings.setValue("format_quality", preset_list.at(index).format_quality);
-    settings.setValue("format_compression", preset_list.at(index).format_compression);
-    settings.setValue("format_extra1", preset_list.at(index).format_extra1);
-    settings.setValue("format_extra2", preset_list.at(index).format_extra2);
-    settings.setValue("save_file_procedure", preset_list.at(index).save_file_procedure);
-    settings.setValue("save_file_name_change", QString::fromStdString(preset_list.at(index).save_file_name_change));
-    settings.setValue("save_path_relative", preset_list.at(index).save_path_relative);
-    settings.setValue("save_file_path_change", QString::fromStdString(preset_list.at(index).save_file_path_change));
+    settings.setValue("presetDescription", preset_list.at(index).presetDescription());
+    settings.setValue("widthModifierIndex", preset_list.at(index).widthModifierIndex());
+    settings.setValue("widthNumber", preset_list.at(index).widthNumber());
+    settings.setValue("heightModifierIndex", preset_list.at(index).heightModifierIndex());
+    settings.setValue("heightModifierIndex", preset_list.at(index).heightModifierIndex());
+    settings.setValue("keepAspectRatio", preset_list.at(index).keepAspectRatio());
+    settings.setValue("resamplingFilterIndex", preset_list.at(index).resamplingFilterIndex());
+    settings.setValue("borderTypeIndex", preset_list.at(index).borderTypeIndex());
+    settings.setValue("background_color_blue", preset_list.at(index).backgroundColor().blue());
+    settings.setValue("background_color_green", preset_list.at(index).backgroundColor().green());
+    settings.setValue("background_color_red", preset_list.at(index).backgroundColor().red());
+    settings.setValue("background_color_alpha", preset_list.at(index).backgroundColor().alpha());
+    settings.setValue("blurFilterIndex", preset_list.at(index).blurFilterIndex());
+    settings.setValue("blurNormalize", preset_list.at(index).blurNormalize());
+    settings.setValue("blurX", preset_list.at(index).blurX());
+    settings.setValue("blurY", preset_list.at(index).blurY());
+    settings.setValue("blurSX", preset_list.at(index).blurSX());
+    settings.setValue("blurSY", preset_list.at(index).blurSY());
+    settings.setValue("blurDepth", preset_list.at(index).blurDepth());
+    settings.setValue("rotationDegrees", preset_list.at(index).rotationDegrees());
+    settings.setValue("increaseBoundaries", preset_list.at(index).increaseBoundaries());
+    settings.setValue("flipImage", preset_list.at(index).flipImage());
+    settings.setValue("watermarkAdded", preset_list.at(index).watermarkAdded());
+    settings.setValue("watermarkPath", preset_list.at(index).watermarkPath());
+    settings.setValue("watermarkLocationIndex", preset_list.at(index).watermarkLocationIndex());
+    settings.setValue("watermarkTransparency", preset_list.at(index).watermarkTransparency());
+    settings.setValue("watermarkOffsetX", preset_list.at(index).watermarkOffsetX());
+    settings.setValue("watermarkOffsetY", preset_list.at(index).watermarkOffsetY());
+    settings.setValue("formatChanged", preset_list.at(index).formatChanged());
+    settings.setValue("formatExtension", preset_list.at(index).formatExtensionIndex());
+    settings.setValue("formatFormatFlagIndex", preset_list.at(index).formatFormatFlagIndex());
+    settings.setValue("formatQuality", preset_list.at(index).formatQuality());
+    settings.setValue("formatOptimize", preset_list.at(index).formatOptimize());
+    settings.setValue("formatProgressive", preset_list.at(index).formatProgressive());
+    settings.setValue("formatCompression", preset_list.at(index).formatCompression());
+    settings.setValue("formatExtra1", preset_list.at(index).formatExtra1());
+    settings.setValue("formatExtra2", preset_list.at(index).formatExtra2());
+    settings.setValue("saveFileProcedureIndex", preset_list.at(index).saveFileProcedureIndex());
+    settings.setValue("saveFileNameChange", QString::fromStdString(preset_list.at(index).saveFileNameChange()));
+    settings.setValue("savePathRelative", preset_list.at(index).savePathRelative());
+    settings.setValue("saveFilePathChange", preset_list.at(index).saveFilePathChange());
     settings.endGroup();
 }
 
 void BatchItImage::LoadPreset(Preset preset)
 {
-    ui.comboBox_WidthMod->setCurrentIndex(preset.width_modifier);
-    ui.spinBox_WidthNumber->setValue(preset.width_number);
-    ui.comboBox_HeightMod->setCurrentIndex(preset.height_modifier);
-    ui.spinBox_HeightNumber->setValue(preset.height_number);
-    ui.comboBox_Resample->setCurrentIndex(preset.resampling_filter);
-    ui.checkBox_KeepAspectRatio->setChecked(preset.keep_aspect_ratio);
-    ui.comboBox_BorderType->setCurrentIndex(preset.border_type);
-    background_color = QColor(
-        preset.background_color_blue, preset.background_color_green,
-        preset.background_color_red, preset.background_color_alpha
-    );
-    SetColorPreviewStyleSheet();
-    ui.comboBox_BlurFilter->setCurrentIndex(preset.blur_filter);
-    ui.checkBox_BlurNormalize->setChecked(preset.blur_normalize);
-    ui.verticalSlider_BlurX1->setValue(preset.blur_x);
-    ui.verticalSlider_BlurY1->setValue(preset.blur_y);
-    ui.verticalSlider_BlurX2->setValue(preset.blur_sx);
-    ui.verticalSlider_BlurY2->setValue(preset.blur_sy);
-    ui.verticalSlider_BlurD->setValue(preset.blur_depth);
-    ui.dial_Rotation->setValue(preset.rotation_degrees);
-    ui.lcdNumber_Rotation->display(preset.rotation_degrees);
-    ui.checkBox_IncreaseBounds->setChecked(preset.increase_boundaries);
-    ui.checkBox_FlipImage->setChecked(preset.flip_image);
-    ui.groupBox_Watermark->setChecked(preset.watermark_added);
-    ui.lineEdit_WatermarkPath->setText(QString::fromStdString(preset.watermark_path));
-    ui.comboBox_WatermarkLocation->setCurrentIndex(preset.watermark_location);
-    ui.spinBox_WatermarkTransparency->setValue(preset.watermark_transparency);
-    ui.spinBox_WatermarkOffsetX->setValue(preset.watermark_offset_x);
-    ui.spinBox_WatermarkOffsetY->setValue(preset.watermark_offset_y);
-    ui.groupBox_ChangeFormat->setChecked(preset.format_changed);
-    ui.comboBox_ImageFormat->setCurrentIndex(preset.format_extension);
-    ui.comboBox_FormatFlags->setCurrentIndex(preset.format_format_flag);
-    ui.checkBox_Optimize->setChecked(preset.format_optimize);
-    ui.checkBox_Progressive->setChecked(preset.format_progressive);
-    ui.horizontalSlider_Quality->setValue(preset.format_quality);
-    ui.spinBox_Compression->setValue(preset.format_compression);
-    ui.spinBox_ExtraSetting1->setValue(preset.format_extra1);
-    ui.spinBox_ExtraSetting2->setValue(preset.format_extra2);
-    ui.lineEdit_FileName->setText(QString::fromStdString(preset.save_file_name_change));
-    int save_option = preset.save_file_procedure;
-    if (save_option == ImageSaver::OVERWRITE) {
+    ui.comboBox_WidthMod->setCurrentIndex(preset.widthModifierIndex());
+    ui.spinBox_WidthNumber->setValue(preset.widthNumber());
+    ui.comboBox_HeightMod->setCurrentIndex(preset.heightModifierIndex());
+    ui.spinBox_HeightNumber->setValue(preset.heightNumber());
+    ui.comboBox_Resample->setCurrentIndex(preset.resamplingFilterIndex());
+    ui.checkBox_KeepAspectRatio->setChecked(preset.keepAspectRatio());
+    ui.comboBox_BorderType->setCurrentIndex(preset.borderTypeIndex());
+    background_color = preset.backgroundColor();
+    ui.comboBox_BlurFilter->setCurrentIndex(preset.blurFilterIndex());
+    ui.checkBox_BlurNormalize->setChecked(preset.blurNormalize());
+    ui.verticalSlider_BlurX1->setValue(preset.blurX());
+    ui.verticalSlider_BlurY1->setValue(preset.blurY());
+    ui.verticalSlider_BlurX2->setValue(preset.blurSX());
+    ui.verticalSlider_BlurY2->setValue(preset.blurSY());
+    ui.verticalSlider_BlurD->setValue(preset.blurDepth());
+    ui.dial_Rotation->setValue(preset.rotationDegrees());
+    ui.lcdNumber_Rotation->display(preset.rotationDegrees());
+    ui.checkBox_IncreaseBounds->setChecked(preset.increaseBoundaries());
+    ui.checkBox_FlipImage->setChecked(preset.flipImage());
+    ui.groupBox_Watermark->setChecked(preset.watermarkAdded());
+    ui.lineEdit_WatermarkPath->setText(preset.watermarkPath());
+    ui.comboBox_WatermarkLocation->setCurrentIndex(preset.watermarkLocationIndex());
+    ui.spinBox_WatermarkTransparency->setValue(preset.watermarkTransparency());
+    ui.spinBox_WatermarkOffsetX->setValue(preset.watermarkOffsetX());
+    ui.spinBox_WatermarkOffsetY->setValue(preset.watermarkOffsetY());
+    ui.groupBox_ChangeFormat->setChecked(preset.formatChanged());
+    ui.comboBox_ImageFormat->setCurrentIndex(preset.formatExtensionIndex());
+    ui.comboBox_FormatFlags->setCurrentIndex(preset.formatFormatFlagIndex());
+    ui.horizontalSlider_Quality->setValue(preset.formatQuality());
+    ui.checkBox_Optimize->setChecked(preset.formatOptimize());
+    ui.checkBox_Progressive->setChecked(preset.formatProgressive());
+    ui.spinBox_Compression->setValue(preset.formatCompression());
+    ui.spinBox_ExtraSetting1->setValue(preset.formatExtra1());
+    ui.spinBox_ExtraSetting2->setValue(preset.formatExtra2());
+    ui.lineEdit_FileName->setText(QString::fromStdString(preset.saveFileNameChange()));
+    int save_option = preset.saveFileProcedureIndex();
+    if (save_option == ImageSaver::SaveOptionFlag::OVERWRITE) {
         ui.radioButton_Overwrite->setChecked(true);
     }
-    else if (save_option == ImageSaver::RENAME_ORIGINAL) {
+    else if (save_option == ImageSaver::SaveOptionFlag::RENAME_ORIGINAL) {
         ui.radioButton_RenameOriginal->setChecked(true);
     }
     else { // save_option == NEW_NAME
         ui.radioButton_NewFileName->setChecked(true);
     }
-    bool save_path_relative = preset.save_path_relative;
+    bool save_path_relative = preset.savePathRelative();
     ui.radioButton_RelativePath->setChecked(save_path_relative);
     ui.radioButton_AbsolutePath->setChecked(not save_path_relative);
     if (save_path_relative)
-        ui.lineEdit_RelativePath->setText(QString::fromStdString(preset.save_file_path_change));
+        ui.lineEdit_RelativePath->setText(preset.saveFilePathChange());
     else
-        ui.lineEdit_AbsolutePath->setText(QString::fromStdString(preset.save_file_path_change));
+        ui.lineEdit_AbsolutePath->setText(preset.saveFilePathChange());
 
+    SetColorPreviewStyleSheet();
     UpdateLineEditTextTips(ui.lineEdit_FileName);
     UpdateLineEditTextTips(ui.lineEdit_RelativePath);
     UpdateLineEditTextTips(ui.lineEdit_AbsolutePath);
-    EnableOptionGroup(ui.groupBox_Watermark->children(), preset.watermark_added);
+    EnableOptionGroup(ui.groupBox_Watermark->children(), preset.watermarkAdded());
     EnableSpecificBlurOptions(true);
     EnableSpecificFormatOptions(true);
 }
@@ -2788,42 +2788,27 @@ void BatchItImage::LoadPresets()
     preset_list.clear();
     int cspi = 0;
 
-    // Default Presets (will be used when none are found in the settings file.)
+    // Default Presets (will be loaded when none are found in the settings file.)
     Preset preset1;
-    preset1.index = 0;
-    preset1.description = "(Default) Create New 600x600 Image.";
-    preset1.width_modifier = ImageEditor::CHANGE_TO;
-    preset1.width_number = 600;
-    preset1.height_modifier = ImageEditor::CHANGE_TO;
-    preset1.height_number = 600;
-    //preset1.keep_aspect_ratio = true;
-    preset1.resampling_filter = cv::InterpolationFlags::INTER_CUBIC;
-    //preset1.rotation_degrees = 0;
-    //preset1.format_changed = false;
-    //preset1.format_extension = 0;
-    //preset1.format_format_flag = 1;
-    //preset1.format_optimize = false;
-    //preset1.format_progressive = false;
-    //preset1.format_quality = 95;
-    //preset1.format_compression = 0;
-    //preset1.format_extra1 = -1;
-    //preset1.format_extra2 = -1;
-    //preset1.save_file_procedure = NEW_NAME;
-    //preset1.save_file_name_change = "<FILE_NAME>__new";
-    //preset1.save_path_relative = true;
-    //preset1.save_file_path_change = "";
+    preset1.setPresetIndex(0);
+    preset1.setPresetDescription("(Default) Create New 600x600 Image.");
+    preset1.setWidthModifierIndex(ImageEditor::SizeModifier::CHANGE_TO);
+    preset1.setWidthNumber(600);
+    preset1.setHeightModifierIndex(ImageEditor::SizeModifier::CHANGE_TO);
+    preset1.setHeightNumber(600);
+    preset1.setResamplingFilterIndex(cv::InterpolationFlags::INTER_CUBIC);
 
     Preset preset2;
-    preset2.index = 1;
-    preset2.description = "(Default) Resize Image 200x200 and Rename Original.";
-    preset2.width_modifier = ImageEditor::CHANGE_TO;
-    preset2.width_number = 200;
-    preset2.height_modifier = ImageEditor::CHANGE_TO;
-    preset2.height_number = 200;
-    preset2.keep_aspect_ratio = false;
-    preset2.resampling_filter = cv::InterpolationFlags::INTER_CUBIC;
-    preset2.save_file_procedure = ImageSaver::RENAME_ORIGINAL;
-    preset2.save_file_name_change = "<FILE_NAME>__org";
+    preset2.setPresetIndex(1);
+    preset2.setPresetDescription("(Default) Resize Image 200x200 and Rename Original.");
+    preset2.setWidthModifierIndex(ImageEditor::SizeModifier::CHANGE_TO);
+    preset2.setWidthNumber(200);
+    preset2.setHeightModifierIndex(ImageEditor::SizeModifier::CHANGE_TO);
+    preset2.setHeightNumber(200);
+    preset2.setKeepAspectRatio(false);
+    preset2.setResamplingFilterIndex(cv::InterpolationFlags::INTER_CUBIC);
+    preset2.setSaveFileProcedureIndex(ImageSaver::SaveOptionFlag::RENAME_ORIGINAL);
+    preset2.setSaveFileNameChange(ImageSaver::MetadataIdentifiers.at(ImageSaver::MetadataFlags::FILE_NAME) + "__org");
 
     if (settings.contains("Preset0")) {
         // TODO: load presets from settings to preset_list
@@ -2832,48 +2817,49 @@ void BatchItImage::LoadPresets()
             qDebug() << "Found Preset#" + std::to_string(i) + " in Settings";
             settings.beginGroup("Preset" + std::to_string(i));
             Preset preset;
-            preset.index = i;
-            preset.description = settings.value("description").toString();
-            preset.width_modifier = settings.value("width_modifier").toInt();
-            preset.width_number = settings.value("width_number").toInt();
-            preset.height_modifier = settings.value("height_modifier").toInt();
-            preset.height_number = settings.value("height_number").toInt();
-            preset.resampling_filter = settings.value("resampling_filter").toInt();
-            preset.keep_aspect_ratio = settings.value("keep_aspect_ratio").toBool();
-            preset.border_type = settings.value("border_type").toInt();
-            preset.background_color_blue = settings.value("background_color_blue").toInt();
-            preset.background_color_green = settings.value("background_color_green").toInt();
-            preset.background_color_red = settings.value("background_color_red").toInt();
-            preset.background_color_alpha = settings.value("background_color_alpha").toInt();
-            preset.blur_filter = settings.value("blur_filter").toInt();
-            preset.blur_normalize = settings.value("blur_normalize").toBool();
-            preset.blur_x = settings.value("blur_x").toInt();
-            preset.blur_y = settings.value("blur_y").toInt();
-            preset.blur_sx = settings.value("blur_sx").toInt();
-            preset.blur_sx = settings.value("blur_sx").toInt();
-            preset.blur_depth = settings.value("blur_depth").toInt();
-            preset.rotation_degrees = settings.value("rotation_degrees").toInt();
-            preset.increase_boundaries = settings.value("increase_boundaries").toBool();
-            preset.flip_image = settings.value("flip_image").toBool();
-            preset.watermark_added = settings.value("watermark_added").toBool();
-            preset.watermark_path = settings.value("watermark_path").toString().toStdString();
-            preset.watermark_location = settings.value("watermark_location").toInt();
-            preset.watermark_transparency = settings.value("watermark_transparency").toInt();
-            preset.watermark_offset_x = settings.value("watermark_offset_x").toInt();
-            preset.watermark_offset_y = settings.value("watermark_offset_y").toInt();
-            preset.format_changed = settings.value("format_changed").toBool();
-            preset.format_extension = settings.value("format_extension").toInt();
-            preset.format_format_flag = settings.value("format_format_flag").toInt();
-            preset.format_optimize = settings.value("format_optimize").toBool();
-            preset.format_progressive = settings.value("format_progressive").toBool();
-            preset.format_quality = settings.value("format_quality").toInt();
-            preset.format_compression = settings.value("format_compression").toInt();
-            preset.format_extra1 = settings.value("format_extra1").toInt();
-            preset.format_extra2 = settings.value("format_extra2").toInt();
-            preset.save_file_procedure = settings.value("save_file_procedure").toInt();
-            preset.save_file_name_change = settings.value("save_file_name_change").toString().toStdString();
-            preset.save_path_relative = settings.value("save_path_relative").toBool();
-            preset.save_file_path_change = settings.value("save_file_path_change").toString().toStdString();
+            preset.setPresetIndex(i);
+            preset.setPresetDescription(settings.value("description").toString());
+            preset.setWidthModifierIndex(settings.value("width_modifier").toInt());
+            preset.setWidthNumber(settings.value("width_number").toInt());
+            preset.setHeightModifierIndex(settings.value("height_modifier").toInt());
+            preset.setHeightNumber(settings.value("height_number").toInt());
+            preset.setResamplingFilterIndex(settings.value("resamplingFilter").toInt());
+            preset.setKeepAspectRatio(settings.value("keepAspectRatio").toBool());
+            preset.setBorderTypeIndex(settings.value("borderTypeIndex").toInt());
+            preset.setBackgroundColor(
+                settings.value("background_color_red").toInt(),
+                settings.value("background_color_green").toInt(),
+                settings.value("background_color_blue").toInt(),
+                settings.value("background_color_alpha").toInt());
+            preset.setBlurFilterIndex(settings.value("blurFilterIndex").toInt());
+            preset.setBlurNormalize(settings.value("blurNormalize").toBool());
+            preset.setBlurX(settings.value("blurX").toInt());
+            preset.setBlurY(settings.value("blurY").toInt());
+            preset.setBlurSX(settings.value("blurSX").toInt());
+            preset.setBlurSX(settings.value("blurSX").toInt());
+            preset.setBlurDepth(settings.value("blurDepth").toInt());
+            preset.setRotationDegrees(settings.value("rotationDegrees").toInt());
+            preset.setIncreaseBoundaries(settings.value("increaseBoundaries").toBool());
+            preset.setFlipImage(settings.value("flipImage").toBool());
+            preset.setWatermarkAdded(settings.value("watermarkAdded").toBool());
+            preset.setWatermarkPath(settings.value("watermarkPath").toString());
+            preset.setWatermarkLocationIndex(settings.value("watermarkLocationIndex").toInt());
+            preset.setWatermarkTransparency(settings.value("watermarkTransparency").toInt());
+            preset.setWatermarkOffsetX(settings.value("watermarkOffsetX").toInt());
+            preset.setWatermarkOffsetY(settings.value("watermarkOffsetY").toInt());
+            preset.setFormatChanged(settings.value("formatChanged").toBool());
+            preset.setFormatExtensionIndex(settings.value("formatExtension").toInt());
+            preset.setFormatFormatFlagIndex(settings.value("formatFormatFlagIndex").toInt());
+            preset.setFormatQuality(settings.value("formatQuality").toInt());
+            preset.setFormatOptimize(settings.value("formatOptimize").toBool());
+            preset.setFormatProgressive(settings.value("formatProgressive").toBool());
+            preset.setFormatCompression(settings.value("formatCompression").toInt());
+            preset.setFormatExtra1(settings.value("formatExtra1").toInt());
+            preset.setFormatExtra2(settings.value("formatExtra2").toInt());
+            preset.setSaveFileProcedureIndex(settings.value("saveFileProcedure").toInt());
+            preset.setSaveFileNameChange(settings.value("saveFileNameChange").toString().toStdString());
+            preset.setSavePathRelative(settings.value("savePathRelative").toBool());
+            preset.setSaveFilePathChange(settings.value("saveFilePathChange").toString());
             //preset_list.push_back({ preset });
             settings.endGroup();
 
@@ -2893,7 +2879,7 @@ void BatchItImage::LoadPresets()
         qDebug() << "Loading Default Presets";
         preset_list.push_back({ preset1 });
         preset_list.push_back({ preset2 });
-        SavePreset(true);
+        //SavePreset(true);
     }
 
     // Insert preset titles into all preset combo boxes.
@@ -2913,8 +2899,8 @@ void BatchItImage::CreateNewPreset()
     qDebug() << "CreateNewPreset:" << new_preset_index;
     
     Preset new_preset;
-    new_preset.index = new_preset_index;
-    new_preset.description = "New Preset";
+    new_preset.setPresetIndex(new_preset_index);
+    new_preset.setPresetDescription("New Preset");
     preset_list.push_back({ new_preset });
 
     ChangePresetDescription(
@@ -3022,8 +3008,8 @@ bool BatchItImage::SavePresetDialog(bool include_cancel_buttons, bool closing)
                     bool abort = true;
                     *abort_p = abort;
                 }
-                else if (QDialogButtonBox::RejectRole == button_role_clicked or 
-                    QDialogButtonBox::DestructiveRole == button_role_clicked) { // Don't Save and Don't Continue
+                else if (QDialogButtonBox::RejectRole == button_role_clicked
+                    or QDialogButtonBox::DestructiveRole == button_role_clicked) { // Don't Save and Don't Continue
                     qDebug() << "DestructiveRole";
                     bool abort = true;
                     *abort_p = abort;
@@ -3047,7 +3033,10 @@ void BatchItImage::ChangePresetDescription(int selected_preset_index, QString ti
 
     auto* change_preset_desc_dialog = new DialogEditPresetDesc(title, message, &preset_list, *preset_index, this);
     Q_ASSERT(connect(change_preset_desc_dialog, &DialogEditPresetDesc::presetIndexSelected, this,
-        [=](int index) { *preset_index = index; change_preset_desc_dialog->deleteLater(); }));
+        [=](int index) {
+            *preset_index = index;
+            change_preset_desc_dialog->deleteLater();
+        }));
 
     change_preset_desc_dialog->exec();
 
@@ -3070,15 +3059,15 @@ void BatchItImage::AddPresetsToComboBox(std::vector<Preset>* preset_list, std::v
             QString preset_text = "[Preset #" + QVariant(i + 1).toString() + "] ";
 
             preset_cb.at(x)->insertItem(i,
-                preset_text + preset_list->at(i).description,
+                preset_text + preset_list->at(i).presetDescription(),
                 QString::fromStdString("Preset" + std::to_string(i))
             );
             preset_cb.at(x)->setItemData(i,
-                preset_list->at(i).description,
+                preset_list->at(i).presetDescription(),
                 Qt::ToolTipRole
             );
             preset_cb.at(x)->setItemData(i,
-                preset_list->at(i).description,
+                preset_list->at(i).presetDescription(),
                 Qt::StatusTipRole
             );
         }
@@ -3103,9 +3092,9 @@ void BatchItImage::EditAndSave()
         qDebug() << "Edit And Save... Aborted";
         return;
     }
-    ui.enhancedProgressBar->restartProgressBar(file_count, 3.0f);
-
-    // TODO: start log: create header (if not already created) and add preset settings.
+    ui.enhancedProgressBar->restartProgressBar(file_count, 3.0f, function_PrintBatchImageLog);
+    image_edit_start_time = std::chrono::system_clock::now();
+    StartBatchImageLog();
 
     for (int i = 0; i < file_count; i++) {
         //qDebug().noquote() << current_file_metadata_list.at(i).to_string();
@@ -3142,12 +3131,12 @@ void BatchItImage::EditAndSave()
         );
 
         // Add Callback function when edit finishes, send data to SaveImageFile()
-        //new_ie->AddFinishedCallback(std::bind(&BatchItImage::SaveImageFile, this, std::placeholders::_1, std::placeholders::_2, i, new_ie));
-        new_ie->AddFinishedCallback(std::bind(&BatchItImage::SaveImageFile, this, i, new_ie));
+        //new_ie->addFinishedCallback(std::bind(&BatchItImage::SaveImageFile, this, std::placeholders::_1, std::placeholders::_2, i, new_ie));
+        new_ie->addFinishedCallback(std::bind(&BatchItImage::SaveImageFile, this, i, new_ie));
 
         // Start the image edit process on another thread
-        //std::future<uint> worker_thread = std::async(&ImageEditor::StartEditProcess, new_ie);
-        auto worker_thread = std::thread(&ImageEditor::StartEditProcess, new_ie);
+        //std::future<uint> worker_thread = std::async(&ImageEditor::startEditProcess, new_ie);
+        auto worker_thread = std::thread(&ImageEditor::startEditProcess, new_ie);
  
         //int image_edits_made = worker_thread.get();
         //qDebug() << "Done:" <<  image_edits_made;
@@ -3160,11 +3149,11 @@ void BatchItImage::EditAndSave()
 
 void BatchItImage::SaveImageFile(int image_index, ImageEditor* image_editor)
 {
-    qDebug() << "SaveImageFile:" << image_index << "  Edit-Code:" << image_editor->GetImageEditsMade();
+    qDebug() << "SaveImageFile:" << image_index << "  Edit-Code:" << image_editor->imageEditsMade();
     
     emit progressMade();
 
-    int save_file_option_flag = ImageSaver::OVERWRITE;
+    int save_file_option_flag = ImageSaver::SaveOptionFlag::OVERWRITE;
     std::string save_file_path_change;
     bool use_relative_save_path = ui.radioButton_RelativePath->isChecked();
     std::string extension = "";
@@ -3177,10 +3166,10 @@ void BatchItImage::SaveImageFile(int image_index, ImageEditor* image_editor)
     int extra2 = ui.spinBox_ExtraSetting2->value();
     
     if (ui.radioButton_RenameOriginal->isChecked()) {
-        save_file_option_flag = ImageSaver::RENAME_ORIGINAL;
+        save_file_option_flag = ImageSaver::SaveOptionFlag::RENAME_ORIGINAL;
     }
     else if (ui.radioButton_NewFileName->isChecked()) {
-        save_file_option_flag = ImageSaver::NEW_NAME;
+        save_file_option_flag = ImageSaver::SaveOptionFlag::NEW_NAME;
     }
     if (use_relative_save_path) {
         save_file_path_change = ui.lineEdit_RelativePath->text().toStdString();
@@ -3192,7 +3181,7 @@ void BatchItImage::SaveImageFile(int image_index, ImageEditor* image_editor)
         extension = ui.comboBox_ImageFormat->currentData().toString().toStdString();
     }
     ImageSaver* image_saver = new ImageSaver(
-        image_editor->GetImage(),
+        image_editor->editedImage(),
         current_file_metadata_list.at(image_index).path,
         save_file_option_flag,
         use_relative_save_path,
@@ -3201,38 +3190,425 @@ void BatchItImage::SaveImageFile(int image_index, ImageEditor* image_editor)
         extension,
         image_index + 1
     );
-    image_saver->PushFormatParameters(format_flag, quality, optimize, progressive, compression, extra1, extra2);
+    image_saver->pushFormatParameters(format_flag, quality, optimize, progressive, compression, extra1, extra2);
 
     // Add Callback function when saving finishes, send data to UpdateLog().
-    image_saver->AddFinishedCallback(std::bind(&BatchItImage::UpdateLog, this, image_editor, image_saver));
+    image_saver->addFinishedCallback(std::bind(&BatchItImage::UpdateLog, this, image_editor, image_saver));
 
     // Start the image saving process on another thread
-    //std::future<bool> worker_thread = std::async(&ImageSaver::SaveImageFile, image_saver);
-    auto worker_thread = std::thread(&ImageSaver::SaveImageFile, image_saver);
+    //std::future<bool> worker_thread = std::async(&ImageSaver::saveImageFile, image_saver);
+    auto worker_thread = std::thread(&ImageSaver::saveImageFile, image_saver);
     
     worker_thread.detach();
 }
 
+void BatchItImage::StartBatchImageLog()
+{
+    qDebug() << "StartBatchImageLog";
+
+    // Create Header, if not already created.
+    if (log_lines.empty()) {
+        std::chrono::zoned_time session_start_time_zt{ std::chrono::current_zone(), session_start_time };
+        log_lines.push_back("==================================="); // TODO: UIData / Text Data
+        log_lines.push_back("= BatchItImage Generated Log File =");
+        log_lines.push_back("===================================");
+        log_lines.push_back("Session Start: " + std::format("{0:%Y.%m.%d %H:%M:%OS}", session_start_time_zt));
+        log_lines.push_back("Session End:   ##");
+        log_lines.push_back("");
+    }
+
+    // Add Batch Summary
+    log_lines.push_back("------------------------------------");
+    log_lines.push_back("Batch #" + std::to_string(++log_batch_number)); log_batch_line = log_lines.size();
+    log_lines.push_back("------------------------------------");
+    log_lines.push_back(" ## Images Edited and Saved");
+    log_lines.push_back(" ## Images Not Saved (Errors)");
+    log_lines.push_back(" Time to Completion: ##");
+    log_lines.push_back("------------------------------------");
+
+    // Add Settings Used
+    if (edit_options_change_tracker or save_options_change_tracker) {
+        log_lines.push_back(" Using Unsaved Settings");
+    }
+    else {
+        log_lines.push_back(" " + ui.comboBox_Preset_1->currentText().toStdString());
+    }
+    log_lines.push_back("");
+
+    // Width / Height
+    if (ui.comboBox_WidthMod->currentIndex() > ImageEditor::SizeModifier::NO_CHANGE
+        or ui.comboBox_HeightMod->currentIndex() > ImageEditor::SizeModifier::NO_CHANGE)
+    {
+        log_lines.push_back(
+            " " + ui.comboBox_WidthMod->currentText().toStdString() + " " + std::to_string(ui.spinBox_WidthNumber->value())
+        );
+        log_lines.push_back(
+            " " + ui.comboBox_HeightMod->currentText().toStdString() + " " + std::to_string(ui.spinBox_HeightNumber->value())
+        );
+    }
+
+    // Resample
+    if (ui.comboBox_WidthMod->currentIndex() > ImageEditor::SizeModifier::NO_CHANGE
+        or ui.comboBox_HeightMod->currentIndex() > ImageEditor::SizeModifier::NO_CHANGE
+        or ui.dial_Rotation->value() > 0)
+    {
+        log_lines.push_back(
+            " " + ui.comboBox_Resample->currentText().toStdString()
+        );
+    }
+
+    // Keep Aspect Ratio
+    if (ui.checkBox_KeepAspectRatio->isChecked()) {
+        log_lines.push_back(
+            " " + ui.checkBox_KeepAspectRatio->text().toStdString()
+        );
+    }
+
+    // Border / Background Color
+    if (ui.dial_Rotation->value() > 0) {
+        log_lines.push_back(
+            " " + ui.comboBox_BorderType->currentText().toStdString()
+        );
+        log_lines.push_back(
+            " " + ui.pushButton_ColorDialog->text().toStdString() + ": RGBA(" + \
+            std::to_string(background_color.red()) + ", " + \
+            std::to_string(background_color.green()) + ", " + \
+            std::to_string(background_color.blue()) + ", " + \
+            std::to_string(background_color.alpha()) + ")"
+        );
+    }
+
+    // Blur
+    if (ui.comboBox_BlurFilter->currentIndex() > ImageEditor::BlurFilter::NO_FILTER) {
+        log_lines.push_back(
+            " " + ui.comboBox_BlurFilter->currentText().toStdString()
+        );
+        if (ui.comboBox_BlurFilter->currentIndex() == ImageEditor::BlurFilter::BOX_FILTER
+            and ui.checkBox_BlurNormalize->isChecked())
+        {
+            log_lines.push_back(
+                " " + ui.checkBox_BlurNormalize->text().toStdString()
+            );
+        }
+        if (ui.comboBox_BlurFilter->currentIndex() == ImageEditor::BlurFilter::BOX_FILTER
+            or ui.comboBox_BlurFilter->currentIndex() == ImageEditor::BlurFilter::BILATERAL_FILTER
+            or ui.comboBox_BlurFilter->currentIndex() == ImageEditor::BlurFilter::GAUSSIAN_BLUR
+            or ui.comboBox_BlurFilter->currentIndex() == ImageEditor::BlurFilter::MEDIAN_BLUR)
+        {
+            log_lines.push_back(
+                " " + ui.label_BlurX1->text().toStdString() + ": " + std::to_string(ui.verticalSlider_BlurX1->value())
+            );
+        }
+        if (ui.comboBox_BlurFilter->currentIndex() == ImageEditor::BlurFilter::BOX_FILTER
+            or ui.comboBox_BlurFilter->currentIndex() == ImageEditor::BlurFilter::GAUSSIAN_BLUR)
+        {
+            log_lines.push_back(
+                " " + ui.label_BlurY1->text().toStdString() + ": " + std::to_string(ui.verticalSlider_BlurY1->value())
+            );
+        }
+        if (ui.comboBox_BlurFilter->currentIndex() == ImageEditor::BlurFilter::BOX_FILTER
+            or ui.comboBox_BlurFilter->currentIndex() == ImageEditor::BlurFilter::BILATERAL_FILTER
+            or ui.comboBox_BlurFilter->currentIndex() == ImageEditor::BlurFilter::GAUSSIAN_BLUR)
+        {
+            log_lines.push_back(
+                " " + ui.label_BlurX2->text().toStdString() + ": " + std::to_string(ui.verticalSlider_BlurX2->value())
+            );
+        }
+        if (ui.comboBox_BlurFilter->currentIndex() == ImageEditor::BlurFilter::BOX_FILTER
+            or ui.comboBox_BlurFilter->currentIndex() == ImageEditor::BlurFilter::BILATERAL_FILTER
+            or ui.comboBox_BlurFilter->currentIndex() == ImageEditor::BlurFilter::GAUSSIAN_BLUR)
+        {
+            log_lines.push_back(
+                " " + ui.label_BlurY2->text().toStdString() + ": " + std::to_string(ui.verticalSlider_BlurY2->value())
+            );
+        }
+        if (ui.comboBox_BlurFilter->currentIndex() == ImageEditor::BlurFilter::BOX_FILTER) {
+            log_lines.push_back(
+                " " + ui.label_BlurD->text().toStdString() + ": " + std::to_string(ui.verticalSlider_BlurD->value())
+            );
+        }
+    }
+
+    // Rotation
+    if (ui.dial_Rotation->value() > 0) {
+        log_lines.push_back(
+            " " + ui.groupBox_Rotation->title().toStdString() + " " + std::to_string(ui.dial_Rotation->value())
+        );
+        log_lines.push_back(
+            " " + ui.checkBox_IncreaseBounds->text().toStdString()
+        );
+    }
+    if (ui.checkBox_FlipImage->isChecked()) {
+        log_lines.push_back(
+            " " + ui.checkBox_FlipImage->text().toStdString()
+        );
+    }
+
+    // Watermark
+    if (ui.groupBox_Watermark->isChecked() and ui.lineEdit_WatermarkPath->text().length() > 0) {
+        log_lines.push_back(
+            " " + ui.groupBox_Watermark->title().toStdString() + " " + ui.lineEdit_WatermarkPath->text().toStdString()
+        );
+        log_lines.push_back(
+            " " + ui.label_WatermarkLocation->text().toStdString() + " " + ui.comboBox_WatermarkLocation->currentText().toStdString()
+        );
+        log_lines.push_back(
+            " " + ui.label_WatermarkTransparency->text().toStdString() + " " + std::to_string(ui.spinBox_WatermarkTransparency->value())
+        );
+        log_lines.push_back(
+            " " + ui.label_WatermarkOffset->text().toStdString() + " " + \
+            std::to_string(ui.spinBox_WatermarkOffsetX->value()) + ", " + \
+            std::to_string(ui.spinBox_WatermarkOffsetX->value())
+        );
+    }
+
+    // File Name
+    if (ui.checkBox_Overwrite->isChecked()) {
+        log_lines.push_back(
+            " " + ui.checkBox_Overwrite->text().toStdString()
+        );
+    }
+    else if (ui.radioButton_RenameOriginal->isChecked()) {
+        log_lines.push_back(
+            " " + ui.radioButton_RenameOriginal->text().toStdString() + ": " + ui.lineEdit_FileName->text().toStdString()
+        );
+    }
+    else if (ui.radioButton_NewFileName->isChecked()) {
+        log_lines.push_back(
+            " " + ui.radioButton_NewFileName->text().toStdString() + ": " + ui.lineEdit_FileName->text().toStdString()
+        );
+    }
+
+    // File Path
+    if (ui.radioButton_RelativePath->isChecked()) {
+        log_lines.push_back(
+            " " + ui.radioButton_RelativePath->text().toStdString() + " " + ui.lineEdit_RelativePath->text().toStdString()
+        );
+    }
+    else if (ui.radioButton_AbsolutePath->isChecked()) {
+        log_lines.push_back(
+            " " + ui.radioButton_AbsolutePath->text().toStdString() + " " + ui.lineEdit_AbsolutePath->text().toStdString()
+        );
+    }
+
+    // File Format/Extension
+    if (ui.groupBox_ChangeFormat->isChecked()) {
+        log_lines.push_back(
+            " " + ui.label_ImageFormat->text().toStdString() + " " + ui.comboBox_ImageFormat->currentText().toStdString()
+        );
+        if (ui.comboBox_ImageFormat->currentIndex() == ImageSaver::SupportedImageFormats::jpeg
+            or ui.comboBox_ImageFormat->currentIndex() == ImageSaver::SupportedImageFormats::jpg
+            or ui.comboBox_ImageFormat->currentIndex() == ImageSaver::SupportedImageFormats::jpe
+            or ui.comboBox_ImageFormat->currentIndex() == ImageSaver::SupportedImageFormats::png
+            or ui.comboBox_ImageFormat->currentIndex() == ImageSaver::SupportedImageFormats::pam
+            or ui.comboBox_ImageFormat->currentIndex() == ImageSaver::SupportedImageFormats::tiff
+            or ui.comboBox_ImageFormat->currentIndex() == ImageSaver::SupportedImageFormats::tif
+            or ui.comboBox_ImageFormat->currentIndex() == ImageSaver::SupportedImageFormats::exr
+            or ui.comboBox_ImageFormat->currentIndex() == ImageSaver::SupportedImageFormats::hdr)
+        {
+            log_lines.push_back(
+                " " + ui.label_FormatFlags->text().toStdString() + " " + ui.comboBox_FormatFlags->currentText().toStdString()
+            );
+        }
+        if (ui.comboBox_ImageFormat->currentIndex() == ImageSaver::SupportedImageFormats::jpeg
+            or ui.comboBox_ImageFormat->currentIndex() == ImageSaver::SupportedImageFormats::jpg
+            or ui.comboBox_ImageFormat->currentIndex() == ImageSaver::SupportedImageFormats::jpe
+            or ui.comboBox_ImageFormat->currentIndex() == ImageSaver::SupportedImageFormats::webp
+            or ui.comboBox_ImageFormat->currentIndex() == ImageSaver::SupportedImageFormats::avif
+            or ui.comboBox_ImageFormat->currentIndex() == ImageSaver::SupportedImageFormats::tiff
+            or ui.comboBox_ImageFormat->currentIndex() == ImageSaver::SupportedImageFormats::tif)
+        {
+            log_lines.push_back(
+                " " + ui.label_Quality->text().toStdString() + " " + std::to_string(ui.horizontalSlider_Quality->value())
+            );
+        }
+
+        if (ui.comboBox_ImageFormat->currentIndex() == ImageSaver::SupportedImageFormats::jpeg
+            or ui.comboBox_ImageFormat->currentIndex() == ImageSaver::SupportedImageFormats::jpg
+            or ui.comboBox_ImageFormat->currentIndex() == ImageSaver::SupportedImageFormats::jpe
+            or ui.comboBox_ImageFormat->currentIndex() == ImageSaver::SupportedImageFormats::png
+            or ui.comboBox_ImageFormat->currentIndex() == ImageSaver::SupportedImageFormats::pbm
+            or ui.comboBox_ImageFormat->currentIndex() == ImageSaver::SupportedImageFormats::pgm
+            or ui.comboBox_ImageFormat->currentIndex() == ImageSaver::SupportedImageFormats::ppm
+            or ui.comboBox_ImageFormat->currentIndex() == ImageSaver::SupportedImageFormats::pxm
+            or ui.comboBox_ImageFormat->currentIndex() == ImageSaver::SupportedImageFormats::exr)
+        {
+            if (ui.checkBox_Optimize->isChecked()) {
+                log_lines.push_back(
+                    " " + ui.checkBox_Optimize->text().toStdString()
+                );
+            }
+        }
+        if (ui.comboBox_ImageFormat->currentIndex() == ImageSaver::SupportedImageFormats::jpeg
+            or ui.comboBox_ImageFormat->currentIndex() == ImageSaver::SupportedImageFormats::jpg
+            or ui.comboBox_ImageFormat->currentIndex() == ImageSaver::SupportedImageFormats::jpe
+            or ui.comboBox_ImageFormat->currentIndex() == ImageSaver::SupportedImageFormats::exr)
+        {
+            if (ui.checkBox_Progressive->isChecked()) {
+                log_lines.push_back(
+                    " " + ui.checkBox_Progressive->text().toStdString()
+                );
+            }
+        }
+        if (ui.comboBox_ImageFormat->currentIndex() == ImageSaver::SupportedImageFormats::jpeg
+            or ui.comboBox_ImageFormat->currentIndex() == ImageSaver::SupportedImageFormats::jpg
+            or ui.comboBox_ImageFormat->currentIndex() == ImageSaver::SupportedImageFormats::jpe
+            or ui.comboBox_ImageFormat->currentIndex() == ImageSaver::SupportedImageFormats::jp2
+            or ui.comboBox_ImageFormat->currentIndex() == ImageSaver::SupportedImageFormats::png
+            or ui.comboBox_ImageFormat->currentIndex() == ImageSaver::SupportedImageFormats::avif
+            or ui.comboBox_ImageFormat->currentIndex() == ImageSaver::SupportedImageFormats::exr)
+        {
+            log_lines.push_back(
+                " " + ui.label_Compression->text().toStdString() + " " + std::to_string(ui.spinBox_Compression->value())
+            );
+        }
+        // ExtraSetting1
+        if (ui.comboBox_ImageFormat->currentIndex() == ImageSaver::SupportedImageFormats::jpeg
+            or ui.comboBox_ImageFormat->currentIndex() == ImageSaver::SupportedImageFormats::jpg
+            or ui.comboBox_ImageFormat->currentIndex() == ImageSaver::SupportedImageFormats::jpe)
+        {
+            if (ui.spinBox_ExtraSetting1->value() > -1) {
+                log_lines.push_back(
+                    " " + ui.label_ExtraSetting1->text().toStdString() + " " + std::to_string(ui.spinBox_ExtraSetting1->value())
+                );
+            }
+        }
+        else if (ui.comboBox_ImageFormat->currentIndex() == ImageSaver::SupportedImageFormats::tiff
+            or ui.comboBox_ImageFormat->currentIndex() == ImageSaver::SupportedImageFormats::tif)
+        {
+            log_lines.push_back(
+                " " + ui.label_ExtraSetting1->text().toStdString() + " " + std::to_string(ui.spinBox_ExtraSetting1->value())
+            );
+        }
+        // ExtraSetting2
+        if (ui.comboBox_ImageFormat->currentIndex() == ImageSaver::SupportedImageFormats::jpeg
+            or ui.comboBox_ImageFormat->currentIndex() == ImageSaver::SupportedImageFormats::jpg
+            or ui.comboBox_ImageFormat->currentIndex() == ImageSaver::SupportedImageFormats::jpe)
+        {
+            if (ui.spinBox_ExtraSetting2->value() > -1) {
+                log_lines.push_back(
+                    " " + ui.label_ExtraSetting2->text().toStdString() + " " + std::to_string(ui.spinBox_ExtraSetting2->value())
+                );
+            }
+        }
+        else if (ui.comboBox_ImageFormat->currentIndex() == ImageSaver::SupportedImageFormats::avif
+            or ui.comboBox_ImageFormat->currentIndex() == ImageSaver::SupportedImageFormats::tiff
+            or ui.comboBox_ImageFormat->currentIndex() == ImageSaver::SupportedImageFormats::tif)
+        {
+            log_lines.push_back(
+                " " + ui.label_ExtraSetting2->text().toStdString() + " " + std::to_string(ui.spinBox_ExtraSetting2->value())
+            );
+        }
+    }
+    log_lines.push_back("------------------------------------");
+    log_lines.push_back("");
+}
+
 void BatchItImage::UpdateLog(ImageEditor* edited_image, ImageSaver* saved_image)
 {
-    qDebug() << "UpdateLog: TODO";
-    //std::vector<std::string> log_line;
+    qDebug() << "UpdateLog";
 
-    std::vector<std::string>* edit_errors = edited_image->GetErrors();
-    if (not edit_errors->empty()) {
-        qDebug() << edit_errors->at(0);
+    log_lines.push_back("Image #" + std::to_string(saved_image->imageCount()));
+    log_lines.push_back(saved_image->originalImagePath());
+    log_lines.push_back(saved_image->imageSavePath());
+    std::vector<std::string>* edit_errors = edited_image->errorMessages();
+    std::string* save_error = saved_image->errorMessage();
 
+    if (edit_errors->empty()) {
+        successful_image_edits++;
     }
-
-    std::string save_error = saved_image->GetErrorMessage();
-    if (save_error != "") {
-        qDebug() << save_error;
-
+    else {
+        for (auto& error : *edit_errors) {
+            log_lines.push_back("-- " + error);
+        }
     }
+    if (save_error->empty()) {
+        successful_image_saves++;
+        log_lines.push_back("-- Image Edited and Saved Successfully"); // TODO: UIData / Text Data
+    }
+    else {
+        log_lines.push_back("-- " + *save_error);
+    }
+    log_lines.push_back("");
 
     emit progressMade();
     delete edited_image;
     delete saved_image;
+}
+
+void BatchItImage::PrintBatchImageLog()
+{
+    qDebug() << "PrintBatchImageLog";
+
+    auto image_edit_end_time = std::chrono::system_clock::now();
+    auto session_end_time = std::chrono::system_clock::now();
+    std::chrono::zoned_time session_start_time_zt{ std::chrono::current_zone(), session_start_time };
+    std::chrono::zoned_time session_end_time_zt{ std::chrono::current_zone(), session_end_time };
+    auto time_elapsed = image_edit_end_time - image_edit_start_time;
+    auto session_time_elapsed = session_end_time - session_start_time;
+
+    qDebug() << time_elapsed.count();
+    qDebug() << session_time_elapsed.count();
+
+    auto time_elapsed_formatted = std::chrono::hh_mm_ss{
+        std::chrono::duration_cast<std::chrono::milliseconds>(time_elapsed)
+    };
+
+    std::string completion_time = std::to_string(time_elapsed_formatted.hours().count()) + ":" + \
+        std::to_string(time_elapsed_formatted.minutes().count()) + ":" + \
+        std::to_string(time_elapsed_formatted.seconds().count()) + "." + \
+        std::to_string(time_elapsed_formatted.subseconds().count());
+
+    log_lines.at(4) = ReplaceAll(
+        log_lines.at(4), "##", std::format("{0:%Y.%m.%d %H:%M:%OS}", session_end_time_zt)
+    );
+    log_lines.at(log_batch_line + 1) = ReplaceAll(
+        log_lines.at(log_batch_line + 1), "##", std::to_string(successful_image_saves)
+    );
+    log_lines.at(log_batch_line + 2) = ReplaceAll(
+        log_lines.at(log_batch_line + 2), "##", std::to_string(current_file_metadata_list.size() - successful_image_saves)
+    );
+    log_lines.at(log_batch_line + 3) = ReplaceAll(
+        log_lines.at(log_batch_line + 3), "##", completion_time
+    );
+
+    const auto log_file_name = "log_" + std::format("{0:%Y%m%d_%H%M%OS}", session_start_time_zt) + ".txt";
+    const auto log_file_path = default_path / "logs";
+
+    try { // Create missing directories
+        std::filesystem::create_directories(log_file_path);
+    }
+    catch (const std::exception& err) {
+        qWarning() << "Error: Log Directory Creation Failed - " << err.what();
+        return;
+    }
+
+
+    // TODO: Create new directory iterator to build list of log file paths and creation times
+    // sort by time desc and delete all after 10/20/etc
+    /*QStringList all_log_files = IterateDirectory(std::filesystem::directory_iterator(log_file_path));
+    for (const auto& file : all_log_files) {
+        struct stat t_stat;
+        stat(file.toStdString().data(), &t_stat);
+        t_stat.st_size;
+        t_stat.st_ctime;
+        t_stat.st_mtime;
+    }*/
+
+
+    std::ofstream log_file(log_file_path / log_file_name, std::ios::out | std::ios::app);
+    if (log_file.is_open()) {
+        //for (auto& line : log_lines) {
+        for (uint i = log_end_line; i < log_lines.size(); i++) {
+            log_file << log_lines.at(i) << "\n";
+        }
+        log_file.close();
+    }
+    else qWarning() << "Error: Unable to open and write to log file.";
+
+    log_end_line = log_lines.size();
+    successful_image_edits = 0;
+    successful_image_saves = 0;
 }
 
 void BatchItImage::LoadImageFiles()
@@ -3281,9 +3657,7 @@ void BatchItImage::AddNewFiles(QStringList file_list)
             else
                 files_from_dir = IterateDirectory(std::filesystem::directory_iterator(file_path));
             updated_file_list.append(files_from_dir);
-            //std::filesystem::directory_iterator(file_path)->path().string();
             //qDebug() << "File:" << std::filesystem::directory_iterator(file_path)->path().string();
-
         }
         else {
             updated_file_list.append(file);
@@ -3446,9 +3820,6 @@ void BatchItImage::LoadFileIntoTree(int file_index, int sorted_column)
     strftime(date_created, sizeof(date_created), "%x %I:%M%p", file_ctime);
     struct tm* file_mtime = localtime(&t_stat.st_mtime);
     strftime(date_modified, sizeof(date_modified), "%x %I:%M%p", file_mtime);
-    //QString qdate_created = date_created;
-    //QString qdate_modified = date_modified;
-
 
     QTreeWidgetItem* new_item = new QTreeWidgetItem(ui.treeWidget_FileInfo);
     
@@ -3946,10 +4317,9 @@ void BatchItImage::CheckWatermarkPath()
             DialogMessage::CustomButton::NoCustomButton,
             this
         );
-        QString last_verified_watermark_path = (last_existing_wm_path.length() > 0) ? last_existing_wm_path :
-            QString::fromStdString(
-                preset_list.at(CurrentSelectedPreset()).watermark_path
-            );
+        QString last_verified_watermark_path = (last_existing_wm_path.length() > 0)
+            ? last_existing_wm_path : preset_list.at(CurrentSelectedPreset()).watermarkPath();
+        
         if (check_wm_path_dialog->exec()) {
             ui.lineEdit_WatermarkPath->setText(GetImageFile(last_verified_watermark_path));
             last_existing_wm_path = ui.lineEdit_WatermarkPath->text();
