@@ -17,19 +17,22 @@ class DialogMessage : public QDialog
 {
     Q_OBJECT
 public:
+    typedef uint CustomButtons;
     const struct CustomButton {
-        const static uint NoCustomButton = 0;
-        const static uint SaveContinue = 1;
-        const static uint Continue = 2;
-        const static uint ResetCancel = 4;
-        //const static uint Cancel = 8;
-        const static uint SaveClose = 8;
-        const static uint Close = 16;
-        const static uint Delete = 32;
+        static const CustomButtons NoCustomButton = 0;
+        static const CustomButtons SaveContinue = 1;
+        static const CustomButtons Continue = 2;
+        static const CustomButtons ResetCancel = 4;
+        //static const CustomButtons Cancel = 8;
+        static const CustomButtons SaveClose = 8;
+        static const CustomButtons Close = 16;
+        static const CustomButtons Delete = 32;
+        static const CustomButtons OpenLog = 64;
+        static const CustomButtons SaveLogAs = 128;
     };
     DialogMessage(QString title, QString message,
         const QFlags<QDialogButtonBox::StandardButton> buttons = QDialogButtonBox::StandardButton::NoButton,
-        const uint custom_buttons = CustomButton::NoCustomButton,
+        const DialogMessage::CustomButtons custom_buttons = CustomButton::NoCustomButton,
         QWidget* parent = nullptr, bool bold_message_text = false);
     ~DialogMessage();
     Ui::Dialog_Message ui;
@@ -218,6 +221,9 @@ public slots:
     /// Start editing and saving images in file tree (in another thread).
     /// </summary>
     void EditAndSave();
+
+    void CancelAllImageEditing();
+
     /// <summary>
     /// Show open file dialog allowing user to load one or more image files.
     /// </summary>
@@ -514,11 +520,13 @@ private:
     const struct FormatHdrOptions { enum { label_FormatFlags, COUNT }; };
     const struct OtherOptions { enum { tab_1, tab_2, tab_3, checkBox_SearchSubDirs, pushButton_EditAndSave, COUNT }; };
     const struct DialogMessages {
-        enum { delete_dialog, delete_dialog_clear, CreateNewPreset, ChangePresetDescription, save_preset_dialog,
-            save_preset_dialog_closing, remove_preset_dialog, remove_preset_dialog_halted, non_image_file_dialog, check_wm_path_dialog, check_path_dialog, COUNT };
+        enum { delete_dialog, delete_dialog_clear, CreateNewPreset, ChangePresetDescription, save_preset_dialog, save_preset_dialog_closing,
+            remove_preset_dialog, remove_preset_dialog_halted, non_image_file_dialog, check_wm_path_dialog, check_path_dialog, log_created_dialog, COUNT };
     };
-    const struct FileDialogTitles {
-        enum { LoadImageFiles, GetImageFile, GetSaveDirectoryPath, COUNT };
+    const struct FileDialogTitles { enum { LoadImageFiles, GetImageFile, GetSaveDirectoryPath, COUNT }; };
+    const struct LogFileLines {
+        enum { ThickDivider, ThinDivider, Title, SessionStart, SessionEnd, Batch, SummarySuccesses, SummaryErrors, SummaryTime,
+            UnsavedSettings, ImageNumber, SaveSuccess, SaveCanceled, EditError, SaveError, COUNT };
     };
 
     // UI Data to be added to an object/widget
@@ -575,6 +583,7 @@ private:
     std::array<UIData, 6> blur_depth_selections;
     std::array <QString, FileDialogTitles::COUNT> file_dialog_titles;
     std::array <QString, ImageSaver::SupportedImageFormats::COUNT> extension_list;
+    std::array <std::string, LogFileLines::COUNT> log_text; // TODO
     QString supported_image_extensions_dialog_str = ""; // Built from extension_list
     QColor background_color = QColor(0, 0, 0, 255);
 
@@ -616,10 +625,12 @@ private:
     std::chrono::time_point<std::chrono::system_clock> session_start_time;
     std::chrono::time_point<std::chrono::system_clock> image_edit_start_time;
     uint log_batch_number = 0;
-    uint log_batch_line = 0;
+    uint log_batch_summary = 0;
     uint log_end_line = 0;
     uint successful_image_edits = 0;
     uint successful_image_saves = 0;
+
+    std::vector<ImageEditor*> ie_pointer_list;
 
     const std::function<void()> function_ResizeFileTreeColumns = std::bind(&BatchItImage::ResizeFileTreeColumns, this);
     const std::function<void()> function_PrintBatchImageLog = std::bind(&BatchItImage::PrintBatchImageLog, this);
@@ -717,8 +728,9 @@ private:
     /// </summary>
     /// <typeparam name="DirectoryIter"></typeparam>
     /// <param name="iterator">--"directory_iterator" or "recursive_directory_iterator"</param>
+    /// <param name="matching_extension_list">--All files returned must match extensions in this list.</param>
     /// <returns>QStringList of file paths.</returns>
-    template<typename DirectoryIter>QStringList IterateDirectory(DirectoryIter iterator);
+    template<typename DirectoryIter, std::size_t array_size>QStringList IterateDirectory(DirectoryIter iterator, std::array<QString, array_size>& matching_extension_list);
     /// <summary>
     /// Delete all widget objects in a widget tree's row or every row if "row_index" is not set.
     /// </summary>
