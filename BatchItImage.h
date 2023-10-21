@@ -521,9 +521,12 @@ private:
     const struct OtherOptions { enum { tab_1, tab_2, tab_3, checkBox_SearchSubDirs, pushButton_EditAndSave, COUNT }; };
     const struct DialogMessages {
         enum { delete_dialog, delete_dialog_clear, CreateNewPreset, ChangePresetDescription, save_preset_dialog, save_preset_dialog_closing,
-            remove_preset_dialog, remove_preset_dialog_halted, non_image_file_dialog, check_wm_path_dialog, check_path_dialog, log_created_dialog, COUNT };
+            remove_preset_dialog, remove_preset_dialog_halted, non_image_file_dialog, check_wm_path_dialog, check_path_dialog, log_created_dialog,
+            log_created_dialog_updated, COUNT };
     };
-    const struct FileDialogTitles { enum { LoadImageFiles, GetImageFile, GetSaveDirectoryPath, COUNT }; };
+    const struct FileDialogTitles { 
+        enum { LoadImageFiles, GetImageFile, GetSaveDirectoryPath, log_file_new_save_path, log_file_new_save_path_extensions, COUNT };
+    };
     const struct LogFileLines {
         enum { ThickDivider, ThinDivider, Title, SessionStart, SessionEnd, Batch, SummarySuccesses, SummaryErrors, SummaryTime,
             UnsavedSettings, ImageNumber, SaveSuccess, SaveCanceled, EditError, SaveError, COUNT };

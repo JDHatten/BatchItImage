@@ -5,15 +5,20 @@ TODO:
     Log Actions
     Holding right click scrolls left to right
     Track changes to undo file list deletes or image edit ui changes
-    Image File Filter... show/edit only PNG files, files > 1 MB, etc.
-    A cancel button to abort image editing durring image processing.
+    Image File Filter... show/edit only PNG files, files > 1 MB, etc. Via right click context menu?
     Application Settings Dialog
+    Menu Item: Recent image files loaded
+    Edit only selected files, add second edit button, add "Select All/None" context menu item
+    Priority Sort those selected to top. Context menu?
+
 
 */
 
 
 DialogMessage::DialogMessage(QString title, QString message,
-    QFlags<QDialogButtonBox::StandardButton> buttons, const uint custom_buttons, QWidget* parent, bool bold_message_text)
+    const QFlags<QDialogButtonBox::StandardButton> buttons,
+    const DialogMessage::CustomButtons custom_buttons,
+    QWidget* parent, bool bold_message_text)
     : QDialog(parent)
 {
     ui.setupUi(this);
@@ -39,7 +44,11 @@ DialogMessage::DialogMessage(QString title, QString message,
         ui.buttonBox->addButton(new QPushButton("&Close Without Saving", this), QDialogButtonBox::AcceptRole);
     if (custom_buttons & CustomButton::Delete)
         ui.buttonBox->addButton(new QPushButton("&Delete", this), QDialogButtonBox::AcceptRole);
-    
+    if (custom_buttons & CustomButton::OpenLog)
+        ui.buttonBox->addButton(new QPushButton("&Open Log", this), QDialogButtonBox::ActionRole);
+    if (custom_buttons & CustomButton::SaveLogAs)
+        ui.buttonBox->addButton(new QPushButton("&Save Log As", this), QDialogButtonBox::ApplyRole);
+
     ui.buttonBox->setStandardButtons(buttons);
     Q_ASSERT(connect(ui.buttonBox, SIGNAL(clicked(QAbstractButton*)), this, SLOT(buttonBoxClicked(QAbstractButton*))));
 }
@@ -271,7 +280,10 @@ BatchItImage::BatchItImage(QWidget* parent) : QMainWindow(parent)
     current_file_metadata_list.reserve(30);
     deleted_file_metadata_list.reserve(10);
 
-    ui.enhancedProgressBar->setVisible(false);
+    //ui.enhancedProgressBar->setVisible(false);
+    ui.enhancedProgressBar->setParentContainer(ui.widget_EnhancedProgressBar);
+    ui.enhancedProgressBar->setCancelButton(ui.pushButton_CancelProgress);
+    ui.pushButton_CancelProgress->setIcon(QIcon(":/BatchItImage/res/x-24850.svg"));
 
     ui.dial_Rotation->setInvertedAppearance(true);
     ui.dial_Rotation->setInvertedControls(true);
@@ -327,9 +339,9 @@ BatchItImage::BatchItImage(QWidget* parent) : QMainWindow(parent)
 
     session_start_time = std::chrono::system_clock::now();
     qDebug().noquote() << std::format("{0:%Y.%m.%d %H:%M:%OS}", session_start_time);
-    std::chrono::zoned_time zt{ std::chrono::current_zone(), session_start_time };
-    qDebug().noquote() << "Session Start (Local Time-Zone):" << std::format("{0:%Y.%m.%d %H:%M:%OS}", zt) << '\n';
-
+    std::chrono::zoned_time session_start_time_zt{ std::chrono::current_zone(), session_start_time };
+    qDebug().noquote() << "Session Start Time (Local Time-Zone):"
+        << std::format("{0:%Y.%m.%d %H:%M:%OS}", session_start_time_zt) << '\n';
 
     /***************************
         Testing
@@ -346,6 +358,9 @@ BatchItImage::BatchItImage(QWidget* parent) : QMainWindow(parent)
     // TODO: Status Bar
     //QString status_message = "BatchItImage";
     //ui.statusbar->showMessage(status_message, -1);
+
+    //qDebug().noquote() << Option.printAllTrackerFlags();
+
 }
 
 BatchItImage::~BatchItImage() {}
@@ -1144,11 +1159,35 @@ void BatchItImage::LoadInUiData()
     dialog_messages.at(DialogMessages::check_path_dialog).data = 0;
     dialog_messages.at(DialogMessages::check_path_dialog).name = "Invalid Directory Path";
     dialog_messages.at(DialogMessages::check_path_dialog).desc = "The directory path provided does not exist. Open directory dialog window and find new path?";
+    dialog_messages.at(DialogMessages::log_created_dialog).data = 0;
+    dialog_messages.at(DialogMessages::log_created_dialog).name = "Image Editing Finished";
+    dialog_messages.at(DialogMessages::log_created_dialog).desc = "A new log file created with the details of the last batch of images edited.";
+    dialog_messages.at(DialogMessages::log_created_dialog_updated).data = 0;
+    dialog_messages.at(DialogMessages::log_created_dialog_updated).name = "Image Editing Finished";
+    dialog_messages.at(DialogMessages::log_created_dialog_updated).desc = "Log file updated with the details of the latest batch of images edited.";
 
     file_dialog_titles.at(FileDialogTitles::LoadImageFiles) = "Select one or more image files to edit...";
     file_dialog_titles.at(FileDialogTitles::GetImageFile) = "Select an image file to use...";
     file_dialog_titles.at(FileDialogTitles::GetSaveDirectoryPath) = "Select a directory path...";
+    file_dialog_titles.at(FileDialogTitles::log_file_new_save_path) = "Save Log File As...";
+    file_dialog_titles.at(FileDialogTitles::log_file_new_save_path_extensions) = "Log Files";
 
+    // Log File Text:  ##  =  Auto-Generated Date/Time, Number or Error Message
+    log_text.at(LogFileLines::ThickDivider) = "===================================";
+    log_text.at(LogFileLines::ThinDivider) = "-----------------------------------";
+    log_text.at(LogFileLines::Title) = "= BatchItImage Generated Log File =";
+    log_text.at(LogFileLines::SessionStart) = "Session Start: ##";
+    log_text.at(LogFileLines::SessionEnd) = "Session End:   ##";
+    log_text.at(LogFileLines::Batch) = "Batch ##";
+    log_text.at(LogFileLines::SummarySuccesses) = " ## Images Edited and Saved";
+    log_text.at(LogFileLines::SummaryErrors) = " ## Images Not Saved (Errors)";
+    log_text.at(LogFileLines::SummaryTime) = " Time to Completion: ##";
+    log_text.at(LogFileLines::UnsavedSettings) = " Using Unsaved Settings";
+    log_text.at(LogFileLines::ImageNumber) = "Image ##";
+    log_text.at(LogFileLines::SaveSuccess) = "--> [Canceled] The image editing and saving process was canceled before it could finish.";
+    log_text.at(LogFileLines::SaveCanceled) = "--> [Success] The image was edited and saved successfully.";
+    log_text.at(LogFileLines::EditError) = "--> [Edit Error] ##";
+    log_text.at(LogFileLines::SaveError) = "--> [Save Error] ##";
 }
 
 void BatchItImage::SetupFileTree()
@@ -1771,8 +1810,7 @@ void BatchItImage::UiConnections()
     // Other Widgets
     Q_ASSERT(connect(ui.pushButton_EditAndSave, SIGNAL(clicked(bool)), this, SLOT(EditAndSave())));
     Q_ASSERT(connect(this, SIGNAL(progressMade(float)), ui.enhancedProgressBar, SLOT(updateProgressBar(float))));
-
-    qDebug().noquote() << Option.printAllTrackerFlags();
+    Q_ASSERT(connect(ui.pushButton_CancelProgress, SIGNAL(clicked(bool)), this, SLOT(CancelAllImageEditing())));
 }
 
 ulong BatchItImage::TrackOptionChanges(ulong tracker, uint tracked_option, int preset_value, int changed_option_value)
@@ -2961,14 +2999,13 @@ bool BatchItImage::SavePresetDialog(bool include_cancel_buttons, bool closing)
         QString title;
         QString message;
         QDialogButtonBox::StandardButtons buttons = QDialogButtonBox::NoButton;
-        uint custom_buttons = DialogMessage::CustomButton::NoCustomButton;
+        DialogMessage::CustomButtons custom_buttons = DialogMessage::CustomButton::NoCustomButton;
 
         if (closing) {
             title = ReplaceAll(dialog_messages.at(DialogMessages::save_preset_dialog_closing).name, "##", preset_number);
             message = ReplaceAll(dialog_messages.at(DialogMessages::save_preset_dialog_closing).desc, "##", preset_number);
             buttons = QDialogButtonBox::Cancel;
-            custom_buttons = DialogMessage::CustomButton::SaveClose
-                | DialogMessage::CustomButton::Close;
+            custom_buttons = DialogMessage::CustomButton::SaveClose | DialogMessage::CustomButton::Close;
         }
         else {
             title = ReplaceAll(dialog_messages.at(DialogMessages::save_preset_dialog).name, "##", preset_number);
@@ -3084,16 +3121,17 @@ uint BatchItImage::CurrentSelectedPreset()
 
 void BatchItImage::EditAndSave()
 {
-    qDebug() << "Edit And Save...";
     int file_count = current_file_metadata_list.size();
+    qDebug() << "Edit And Save" << file_count << "Images";
     
     // If current preset settings are not saved, ask to save them now before editing images.
     if (SavePresetDialog(true) or file_count == 0) {
         qDebug() << "Edit And Save... Aborted";
         return;
     }
-    ui.enhancedProgressBar->restartProgressBar(file_count, 3.0f, function_PrintBatchImageLog);
+    ui.enhancedProgressBar->restartProgressBar(file_count, 3.0f, true, function_PrintBatchImageLog);
     image_edit_start_time = std::chrono::system_clock::now();
+    ie_pointer_list.clear();
     StartBatchImageLog();
 
     for (int i = 0; i < file_count; i++) {
@@ -3141,10 +3179,23 @@ void BatchItImage::EditAndSave()
         //int image_edits_made = worker_thread.get();
         //qDebug() << "Done:" <<  image_edits_made;
 
+        ie_pointer_list.push_back(new_ie);
+
         emit progressMade();
 
         worker_thread.detach();
     }
+}
+
+void BatchItImage::CancelAllImageEditing()
+{
+    qDebug().noquote() << "CancelAllImageEditing";
+    for (auto& ie : ie_pointer_list) {
+        if (ie) {
+            ie->cancelEditProcess();
+        }
+    }
+    ie_pointer_list.clear();
 }
 
 void BatchItImage::SaveImageFile(int image_index, ImageEditor* image_editor)
@@ -3192,6 +3243,12 @@ void BatchItImage::SaveImageFile(int image_index, ImageEditor* image_editor)
     );
     image_saver->pushFormatParameters(format_flag, quality, optimize, progressive, compression, extra1, extra2);
 
+    // If edit process canceled or errors made, do not save, jump to updating log.
+    //if (image_editor->editedImage()->empty() or image_editor->errorMessages()->size() > 0) {
+    if (image_editor->isEditProcessCanceled()) {
+        image_saver->cancelImageSave();
+    }
+
     // Add Callback function when saving finishes, send data to UpdateLog().
     image_saver->addFinishedCallback(std::bind(&BatchItImage::UpdateLog, this, image_editor, image_saver));
 
@@ -3209,26 +3266,31 @@ void BatchItImage::StartBatchImageLog()
     // Create Header, if not already created.
     if (log_lines.empty()) {
         std::chrono::zoned_time session_start_time_zt{ std::chrono::current_zone(), session_start_time };
-        log_lines.push_back("==================================="); // TODO: UIData / Text Data
-        log_lines.push_back("= BatchItImage Generated Log File =");
-        log_lines.push_back("===================================");
-        log_lines.push_back("Session Start: " + std::format("{0:%Y.%m.%d %H:%M:%OS}", session_start_time_zt));
-        log_lines.push_back("Session End:   ##");
+        log_lines.push_back(log_text.at(LogFileLines::ThickDivider));
+        log_lines.push_back(log_text.at(LogFileLines::Title));
+        log_lines.push_back(log_text.at(LogFileLines::ThickDivider));
+        log_lines.push_back(
+            ReplaceAll(log_text.at(LogFileLines::SessionStart), "##", std::format("{0:%Y.%m.%d %H:%M:%OS}", session_start_time_zt))
+        );
+        log_lines.push_back(log_text.at(LogFileLines::SessionEnd));
         log_lines.push_back("");
     }
 
     // Add Batch Summary
-    log_lines.push_back("------------------------------------");
-    log_lines.push_back("Batch #" + std::to_string(++log_batch_number)); log_batch_line = log_lines.size();
-    log_lines.push_back("------------------------------------");
-    log_lines.push_back(" ## Images Edited and Saved");
-    log_lines.push_back(" ## Images Not Saved (Errors)");
-    log_lines.push_back(" Time to Completion: ##");
-    log_lines.push_back("------------------------------------");
+    log_lines.push_back(log_text.at(LogFileLines::ThinDivider));
+    log_lines.push_back(
+        ReplaceAll(log_text.at(LogFileLines::Batch), "##", "#" + std::to_string(++log_batch_number))
+    );
+    log_batch_summary = log_lines.size();
+    log_lines.push_back(log_text.at(LogFileLines::ThinDivider));
+    log_lines.push_back(log_text.at(LogFileLines::SummarySuccesses));
+    log_lines.push_back(log_text.at(LogFileLines::SummaryErrors));
+    log_lines.push_back(log_text.at(LogFileLines::SummaryTime));
+    log_lines.push_back(log_text.at(LogFileLines::ThinDivider));
 
     // Add Settings Used
     if (edit_options_change_tracker or save_options_change_tracker) {
-        log_lines.push_back(" Using Unsaved Settings");
+        log_lines.push_back(log_text.at(LogFileLines::UnsavedSettings));
     }
     else {
         log_lines.push_back(" " + ui.comboBox_Preset_1->currentText().toStdString());
@@ -3500,7 +3562,7 @@ void BatchItImage::StartBatchImageLog()
             );
         }
     }
-    log_lines.push_back("------------------------------------");
+    log_lines.push_back(log_text.at(LogFileLines::ThinDivider));
     log_lines.push_back("");
 }
 
@@ -3508,26 +3570,32 @@ void BatchItImage::UpdateLog(ImageEditor* edited_image, ImageSaver* saved_image)
 {
     qDebug() << "UpdateLog";
 
-    log_lines.push_back("Image #" + std::to_string(saved_image->imageCount()));
-    log_lines.push_back(saved_image->originalImagePath());
-    log_lines.push_back(saved_image->imageSavePath());
     std::vector<std::string>* edit_errors = edited_image->errorMessages();
     std::string* save_error = saved_image->errorMessage();
 
-    if (edit_errors->empty()) {
-        successful_image_edits++;
+    log_lines.push_back(ReplaceAll(log_text.at(LogFileLines::ImageNumber), "##", "#" + std::to_string(saved_image->imageCount())));
+    log_lines.push_back(saved_image->originalImagePath());
+    log_lines.push_back(saved_image->imageSavePath());
+
+    if (saved_image->isImageSaveCanceled()) {
+        log_lines.push_back(log_text.at(LogFileLines::SaveSuccess));
     }
     else {
-        for (auto& error : *edit_errors) {
-            log_lines.push_back("-- " + error);
+        if (edit_errors->empty()) {
+            successful_image_edits++;
         }
-    }
-    if (save_error->empty()) {
-        successful_image_saves++;
-        log_lines.push_back("-- Image Edited and Saved Successfully"); // TODO: UIData / Text Data
-    }
-    else {
-        log_lines.push_back("-- " + *save_error);
+        else {
+            for (auto& error : *edit_errors) {
+                log_lines.push_back(ReplaceAll(log_text.at(LogFileLines::EditError), "##", error));
+            }
+        }
+        if (save_error->empty()) {
+            successful_image_saves++;
+            log_lines.push_back(log_text.at(LogFileLines::SaveCanceled));
+        }
+        else {
+            log_lines.push_back(ReplaceAll(log_text.at(LogFileLines::SaveError), "##", *save_error));
+        }
     }
     log_lines.push_back("");
 
@@ -3538,8 +3606,6 @@ void BatchItImage::UpdateLog(ImageEditor* edited_image, ImageSaver* saved_image)
 
 void BatchItImage::PrintBatchImageLog()
 {
-    qDebug() << "PrintBatchImageLog";
-
     auto image_edit_end_time = std::chrono::system_clock::now();
     auto session_end_time = std::chrono::system_clock::now();
     std::chrono::zoned_time session_start_time_zt{ std::chrono::current_zone(), session_start_time };
@@ -3547,64 +3613,106 @@ void BatchItImage::PrintBatchImageLog()
     auto time_elapsed = image_edit_end_time - image_edit_start_time;
     auto session_time_elapsed = session_end_time - session_start_time;
 
-    qDebug() << time_elapsed.count();
+    qDebug() << "PrintBatchImageLog (Time Elapsed):" << time_elapsed.count();
     qDebug() << session_time_elapsed.count();
 
     auto time_elapsed_formatted = std::chrono::hh_mm_ss{
         std::chrono::duration_cast<std::chrono::milliseconds>(time_elapsed)
     };
-
     std::string completion_time = std::to_string(time_elapsed_formatted.hours().count()) + ":" + \
         std::to_string(time_elapsed_formatted.minutes().count()) + ":" + \
         std::to_string(time_elapsed_formatted.seconds().count()) + "." + \
         std::to_string(time_elapsed_formatted.subseconds().count());
 
-    log_lines.at(4) = ReplaceAll(
+    log_lines.at(4) = ReplaceAll( // Session End
         log_lines.at(4), "##", std::format("{0:%Y.%m.%d %H:%M:%OS}", session_end_time_zt)
     );
-    log_lines.at(log_batch_line + 1) = ReplaceAll(
-        log_lines.at(log_batch_line + 1), "##", std::to_string(successful_image_saves)
+    log_lines.at(log_batch_summary + 1) = ReplaceAll(
+        log_lines.at(log_batch_summary + 1), "##", std::to_string(successful_image_saves)
     );
-    log_lines.at(log_batch_line + 2) = ReplaceAll(
-        log_lines.at(log_batch_line + 2), "##", std::to_string(current_file_metadata_list.size() - successful_image_saves)
+    log_lines.at(log_batch_summary + 2) = ReplaceAll(
+        log_lines.at(log_batch_summary + 2), "##", std::to_string(current_file_metadata_list.size() - successful_image_saves)
     );
-    log_lines.at(log_batch_line + 3) = ReplaceAll(
-        log_lines.at(log_batch_line + 3), "##", completion_time
+    log_lines.at(log_batch_summary + 3) = ReplaceAll(
+        log_lines.at(log_batch_summary + 3), "##", completion_time
     );
 
-    const auto log_file_name = "log_" + std::format("{0:%Y%m%d_%H%M%OS}", session_start_time_zt) + ".txt";
+    // Create Log File Name and Path
+    const auto log_file_name = "log_" + std::format("{0:%Y%m%d%H%M%OS}", session_start_time_zt) + ".txt";
     const auto log_file_path = default_path / "logs";
-
     try { // Create missing directories
-        std::filesystem::create_directories(log_file_path);
+        if (not std::filesystem::exists(log_file_path))
+            std::filesystem::create_directories(log_file_path);
     }
     catch (const std::exception& err) {
         qWarning() << "Error: Log Directory Creation Failed - " << err.what();
         return;
     }
 
-
-    // TODO: Create new directory iterator to build list of log file paths and creation times
-    // sort by time desc and delete all after 10/20/etc
-    /*QStringList all_log_files = IterateDirectory(std::filesystem::directory_iterator(log_file_path));
-    for (const auto& file : all_log_files) {
-        struct stat t_stat;
-        stat(file.toStdString().data(), &t_stat);
-        t_stat.st_size;
-        t_stat.st_ctime;
-        t_stat.st_mtime;
-    }*/
-
-
+    // Write To Log File
     std::ofstream log_file(log_file_path / log_file_name, std::ios::out | std::ios::app);
     if (log_file.is_open()) {
-        //for (auto& line : log_lines) {
         for (uint i = log_end_line; i < log_lines.size(); i++) {
             log_file << log_lines.at(i) << "\n";
         }
         log_file.close();
     }
-    else qWarning() << "Error: Unable to open and write to log file.";
+    else {
+        qWarning() << "Error: Unable to open and write to log file.";
+        return;
+    }
+
+    // Delete Old Log Files (past the maximum allowed)
+    std::array<QString, 2> log_extensions = { ".txt", ".log" };
+    QStringList all_log_files = IterateDirectory(std::filesystem::directory_iterator(log_file_path), log_extensions);
+    all_log_files.sort();
+    uint max_log_files = 20; // TODO: Make User Setting
+    if (all_log_files.size() > max_log_files) {
+        all_log_files.erase(all_log_files.end() - max_log_files, all_log_files.end());
+        for (const auto& file : all_log_files) {
+            qDebug() << "Deleted:" << file;
+            std::filesystem::remove(file.toStdString());
+        }
+    }
+
+    // Show dialog informing user that editing and saving is finished and a log file was created.
+    QString title;
+    QString message;
+    QDialogButtonBox::StandardButtons buttons = QDialogButtonBox::Ok;
+    DialogMessage::CustomButtons custom_buttons = DialogMessage::CustomButton::OpenLog | DialogMessage::CustomButton::SaveLogAs;
+
+    if (log_end_line) {
+        title = dialog_messages.at(DialogMessages::log_created_dialog_updated).name;
+        message = dialog_messages.at(DialogMessages::log_created_dialog_updated).desc;
+    }
+    else {
+        title = dialog_messages.at(DialogMessages::log_created_dialog).name;
+        message = dialog_messages.at(DialogMessages::log_created_dialog).desc;
+    }
+    auto* log_created_dialog = new DialogMessage(title, message, buttons, custom_buttons, this);
+    Q_ASSERT(connect(log_created_dialog, &DialogMessage::buttonRoleClicked, this,
+        [=](QDialogButtonBox::ButtonRole button_clicked) {
+            if (QDialogButtonBox::ButtonRole::ActionRole == button_clicked) { // Open Log
+                // Windows Only (Mac: open, Win: notepad)
+                const std::string open_log_file_path = "start notepad \"" + (log_file_path / log_file_name).string() + "\"";
+                qDebug() << open_log_file_path;
+                std::system(open_log_file_path.c_str());
+            }
+            else if (QDialogButtonBox::ButtonRole::ApplyRole == button_clicked) { // Save Log File
+                std::string log_file_new_save_path = QFileDialog::getSaveFileName( this,
+                    file_dialog_titles.at(FileDialogTitles::log_file_new_save_path),
+                    QString::fromStdString((log_file_path / log_file_name).string()),
+                    file_dialog_titles.at(FileDialogTitles::log_file_new_save_path_extensions) + \
+                    " (*" + log_extensions[0] + " *" + log_extensions[1] + ")"
+                ).toStdString();
+                qDebug() << "Save:" << log_file_new_save_path;
+                if (std::filesystem::exists(std::filesystem::path(log_file_new_save_path).parent_path()))
+                    std::filesystem::copy_file(log_file_path / log_file_name, log_file_new_save_path);
+            }
+        }
+    ));
+    log_created_dialog->exec();
+    log_created_dialog->deleteLater();
 
     log_end_line = log_lines.size();
     successful_image_edits = 0;
@@ -3653,9 +3761,9 @@ void BatchItImage::AddNewFiles(QStringList file_list)
         if (std::filesystem::is_directory(file_path)) {
             QStringList files_from_dir;
             if (ui.checkBox_SearchSubDirs->isChecked())
-                files_from_dir = IterateDirectory(std::filesystem::recursive_directory_iterator(file_path));
+                files_from_dir = IterateDirectory(std::filesystem::recursive_directory_iterator(file_path), extension_list);
             else
-                files_from_dir = IterateDirectory(std::filesystem::directory_iterator(file_path));
+                files_from_dir = IterateDirectory(std::filesystem::directory_iterator(file_path), extension_list);
             updated_file_list.append(files_from_dir);
             //qDebug() << "File:" << std::filesystem::directory_iterator(file_path)->path().string();
         }
@@ -3667,15 +3775,16 @@ void BatchItImage::AddNewFiles(QStringList file_list)
     //DebugPrintList(current_file_metadata_list, "current_file_metadata_list");
 }
 
-template<typename DirectoryIter>QStringList BatchItImage::IterateDirectory(DirectoryIter iterator)
+template<typename DirectoryIter, std::size_t array_size>
+QStringList BatchItImage::IterateDirectory(DirectoryIter iterator, std::array<QString, array_size>& matching_extension_list)
 {
     QStringList updated_file_list;
     for (auto const& dir_entry : iterator) {
         if (std::filesystem::is_regular_file(dir_entry)) {
-            qDebug() << "File:" <<  dir_entry.path().string();
+            qDebug() << "File Found:" <<  dir_entry.path().string();
             std::string file_ext = dir_entry.path().extension().string();
-            for (const auto& img_format : extension_list) {
-                std::string ext = img_format.toStdString();
+            for (const auto& matching_extension : matching_extension_list) {
+                std::string ext = matching_extension.toStdString();
                 if (ext == file_ext) {
                     QString file = QString::fromStdString(dir_entry.path().string());
                     updated_file_list.append(file);
@@ -3684,7 +3793,7 @@ template<typename DirectoryIter>QStringList BatchItImage::IterateDirectory(Direc
             }
         }
         else {
-            qDebug() << "Not a file:" <<  dir_entry.path().string();
+            qDebug() << "Sub-Directory or Non File Found:" <<  dir_entry.path().string();
         }
     }
     return updated_file_list;
@@ -4093,7 +4202,7 @@ void BatchItImage::DeleteConfirmationPopup(bool clear_all)
             else {
                 delete_dialog = new DialogMessage(
                     dialog_messages.at(DialogMessages::delete_dialog).name,
-                    dialog_messages.at(DialogMessages::delete_dialog).name,
+                    dialog_messages.at(DialogMessages::delete_dialog).desc,
                     QDialogButtonBox::Yes | QDialogButtonBox::YesToAll | QDialogButtonBox::Cancel,
                     DialogMessage::CustomButton::NoCustomButton,
                     this
