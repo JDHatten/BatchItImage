@@ -1,16 +1,23 @@
 #include "BatchItImage.h"
 
 /*
-TODO: 
+TODOs: 
     Log Actions
     Holding right click scrolls left to right
     Track changes to undo file list deletes or image edit ui changes
     Image File Filter... show/edit only PNG files, files > 1 MB, etc. Via right click context menu?
     Application Settings Dialog
     Menu Item: Recent image files loaded
-    Edit only selected files, add second edit button, add "Select All/None" context menu item
     Priority Sort those selected to top. Context menu?
+    Handle extensions not matching the format used?
 
+Long-Term TODOs:
+    Image Viewer/Previewer
+    Image Combiner
+    Shear Image
+    Crop Image
+    Add Text To Image
+    Custom Reordering of Images Files (Drag'n'Drop)
 
 */
 
@@ -261,7 +268,7 @@ BatchItImage::BatchItImage(QWidget* parent) : QMainWindow(parent)
     AddUiDataTo(ui.pushButton_AddBackOneDir, file_path_options->at(FilePathOptions::pushButton_AddBackOneDir));
     AddUiDataTo(ui.pushButton_FindAbsolutePath, file_path_options->at(FilePathOptions::pushButton_FindAbsolutePath));
     AddUiDataTo(ui.checkBox_SearchSubDirs, other_options->at(OtherOptions::checkBox_SearchSubDirs));
-    AddUiDataTo(ui.pushButton_EditAndSave, other_options->at(OtherOptions::pushButton_EditAndSave));
+    AddUiDataTo(ui.pushButton_EditSaveAll, other_options->at(OtherOptions::pushButton_EditSaveAll));
 
     PopulateComboBox(ui.comboBox_WidthMod, *width_selections);
     PopulateComboBox(ui.comboBox_HeightMod, *height_selections);
@@ -306,7 +313,7 @@ BatchItImage::BatchItImage(QWidget* parent) : QMainWindow(parent)
     ui.lineEdit_AbsolutePath->setValidator(file_path_validator);
 
     // Create image extension string for "open file dialog".
-    supported_image_extensions_dialog_str.append("Images: (");
+    supported_image_extensions_dialog_str.append("Images: ("); // TODO: -> Text Data
     for (const auto& ext : extension_list) {
         supported_image_extensions_dialog_str.append("*" + ext + " ");
     }
@@ -407,6 +414,15 @@ void BatchItImage::LoadInUiData()
     file_tree_menu_items->at(ActionMenu::action_select).data = 0;
     file_tree_menu_items->at(ActionMenu::action_select).name = "Select Image";
     file_tree_menu_items->at(ActionMenu::action_select).desc = "Select or check image file currently highlighted.";
+    file_tree_menu_items->at(ActionMenu::action_unselect).data = 0;
+    file_tree_menu_items->at(ActionMenu::action_unselect).name = "Unselect Image";
+    file_tree_menu_items->at(ActionMenu::action_unselect).desc = "Unselect or uncheck image file currently highlighted.";
+    file_tree_menu_items->at(ActionMenu::action_select_all).data = 0;
+    file_tree_menu_items->at(ActionMenu::action_select_all).name = "Select All Images";
+    file_tree_menu_items->at(ActionMenu::action_select_all).desc = "Select or check all image files.";
+    file_tree_menu_items->at(ActionMenu::action_select_none).data = 0;
+    file_tree_menu_items->at(ActionMenu::action_select_none).name = "Unselect All Image";
+    file_tree_menu_items->at(ActionMenu::action_select_none).desc = "Unselect or uncheck all image files.";
     file_tree_menu_items->at(ActionMenu::action_view).data = 0;
     file_tree_menu_items->at(ActionMenu::action_view).name = "View Image";
     file_tree_menu_items->at(ActionMenu::action_view).desc = "View image file currently highlighted.";
@@ -414,6 +430,9 @@ void BatchItImage::LoadInUiData()
     file_tree_menu_items->at(ActionMenu::action_preview).name = "Preview Modified Image";
     file_tree_menu_items->at(ActionMenu::action_preview).desc = "Preview a modified version of the image file currently highlighted using the current selected preset.\n" \
         "This modified image will only be a preview the edits will not be saved to file.";
+
+    select_text = file_tree_menu_items->at(ActionMenu::action_select).name;
+    unselect_text = file_tree_menu_items->at(ActionMenu::action_unselect).name;
 
     file_tree_other_text.at(FileColumn::FILE_LOAD_ORDER) = "Load Order: ";
     file_tree_other_text.at(FileColumn::FILE_NAME) = "File Path: ";
@@ -695,9 +714,11 @@ void BatchItImage::LoadInUiData()
     file_name_creation->at(ImageSaver::MetadataFlags::HEIGHT).data = ImageSaver::MetadataFlags::HEIGHT;
     file_name_creation->at(ImageSaver::MetadataFlags::HEIGHT).name = "Image Height";
     file_name_creation->at(ImageSaver::MetadataFlags::HEIGHT).desc = "Add the height of the modified image into the creation of a new file name.";
-
-    extension_list = { ".jpeg", ".jpg", ".jpe", ".jp2", ".png", ".webp", ".bmp", ".dib", ".avif", ".pbm",
-        ".pgm", ".ppm", ".pxm", ".pnm", ".pfm", ".pam", ".sr", ".ras", ".tiff", ".tif", ".exr", ".hdr", ".pic" };
+    
+    // Cast a list of std::strings to QStrings
+    for (uint i = 0; i < ImageSaver::ExtensionList.size(); i++) {
+        extension_list.at(i) = QString::fromStdString(ImageSaver::ExtensionList.at(i));
+    }
 
     // comboBox_ImageFormat
     image_formats->at(ImageSaver::SupportedImageFormats::jpeg).data = ImageSaver::SupportedImageFormats::jpeg;
@@ -800,7 +821,7 @@ void BatchItImage::LoadInUiData()
     image_formats->at(ImageSaver::SupportedImageFormats::exr).data = ImageSaver::SupportedImageFormats::exr;
     image_formats->at(ImageSaver::SupportedImageFormats::exr).name = "OpenEXR Image Files - *.exr";
     image_formats->at(ImageSaver::SupportedImageFormats::exr).desc = "OpenEXR is a high-dynamic range, multi-channel raster file format, created under a free\n" \
-        "software license similar to the BSD license.  It supports multiple channels of potentially\n" \
+        "software license similar to the BSD license. It supports multiple channels of potentially\n" \
         "different pixel sizes, including 32-bit unsigned integer, 32-bit and 16-bit floating point\n" \
         "values, as well as various compression techniques which include lossless and lossy\n" \
         "compression algorithms. It also has arbitrary channels and encodes multiple points of view\n" \
@@ -1122,9 +1143,16 @@ void BatchItImage::LoadInUiData()
     other_options->at(OtherOptions::checkBox_SearchSubDirs).name = "When Searching Directories Search Sub-Directories As Well";
     other_options->at(OtherOptions::checkBox_SearchSubDirs).desc = "When file directories/folders are dropped into the image file viewer an image file search will begin\n" \
                                                                    "in the directory, and it this is checked, all its sub-directories too.";
-    other_options->at(OtherOptions::pushButton_EditAndSave).data = 0;
-    other_options->at(OtherOptions::pushButton_EditAndSave).name = "Start Editing And Saving Images";
-    other_options->at(OtherOptions::pushButton_EditAndSave).desc = "";
+    other_options->at(OtherOptions::label_EditSave).data = 0;
+    other_options->at(OtherOptions::label_EditSave).name = "Start Editing And Saving:";
+    other_options->at(OtherOptions::label_EditSave).desc = "\"All Images\" means all images loaded into file tree. \"Only Selected Images\" means only\n" \
+                                                           "images in file tree that have their checkboxes checked.";
+    other_options->at(OtherOptions::pushButton_EditSaveAll).data = 0;
+    other_options->at(OtherOptions::pushButton_EditSaveAll).name = "All Images";
+    other_options->at(OtherOptions::pushButton_EditSaveAll).desc = "";
+    other_options->at(OtherOptions::pushButton_EditSaveSelected).data = 0;
+    other_options->at(OtherOptions::pushButton_EditSaveSelected).name = "Selected Images";
+    other_options->at(OtherOptions::pushButton_EditSaveSelected).desc = "";
     
     dialog_messages.at(DialogMessages::delete_dialog).data = 0; // 1 = bold message/desc text. | ## = #[current preset number]
     dialog_messages.at(DialogMessages::delete_dialog).name = "Delete?";
@@ -1165,6 +1193,9 @@ void BatchItImage::LoadInUiData()
     dialog_messages.at(DialogMessages::log_created_dialog_updated).data = 0;
     dialog_messages.at(DialogMessages::log_created_dialog_updated).name = "Image Editing Finished";
     dialog_messages.at(DialogMessages::log_created_dialog_updated).desc = "Log file updated with the details of the latest batch of images edited.";
+    dialog_messages.at(DialogMessages::log_created_dialog_error).data = 0;
+    dialog_messages.at(DialogMessages::log_created_dialog_error).name = "Image Editing Finished";
+    dialog_messages.at(DialogMessages::log_created_dialog_error).desc = "While image editing has finished (possibly with errors), the log file could not be created or written too.";
 
     file_dialog_titles.at(FileDialogTitles::LoadImageFiles) = "Select one or more image files to edit...";
     file_dialog_titles.at(FileDialogTitles::GetImageFile) = "Select an image file to use...";
@@ -1808,7 +1839,8 @@ void BatchItImage::UiConnections()
         }));
 
     // Other Widgets
-    Q_ASSERT(connect(ui.pushButton_EditAndSave, SIGNAL(clicked(bool)), this, SLOT(EditAndSave())));
+    Q_ASSERT(connect(ui.pushButton_EditSaveAll, &QPushButton::clicked, this, [this] { EditAndSave(false); }));
+    Q_ASSERT(connect(ui.pushButton_EditSaveSelected, &QPushButton::clicked, this, [this] { EditAndSave(true); }));
     Q_ASSERT(connect(this, SIGNAL(progressMade(float)), ui.enhancedProgressBar, SLOT(updateProgressBar(float))));
     Q_ASSERT(connect(ui.pushButton_CancelProgress, SIGNAL(clicked(bool)), this, SLOT(CancelAllImageEditing())));
 }
@@ -2496,35 +2528,38 @@ void BatchItImage::SetupFileTreeContextMenu()
     action_delete = new QAction(file_tree_menu_items->at(ActionMenu::action_delete).name, this);
     action_clear = new QAction(file_tree_menu_items->at(ActionMenu::action_clear).name, this);
     action_select = new QAction(file_tree_menu_items->at(ActionMenu::action_select).name, this);
+    action_select_all = new QAction(file_tree_menu_items->at(ActionMenu::action_select_all).name, this);
+    action_select_none = new QAction(file_tree_menu_items->at(ActionMenu::action_select_none).name, this);
     action_view = new QAction(file_tree_menu_items->at(ActionMenu::action_view).name, this);
     action_preview = new QAction(file_tree_menu_items->at(ActionMenu::action_preview).name, this);
-
-    action_add->setToolTip(file_tree_menu_items->at(ActionMenu::action_add).desc);
-    action_delete->setToolTip(file_tree_menu_items->at(ActionMenu::action_delete).desc);
-    action_clear->setToolTip(file_tree_menu_items->at(ActionMenu::action_clear).desc);
-    action_select->setToolTip(file_tree_menu_items->at(ActionMenu::action_select).desc);
-    action_view->setToolTip(file_tree_menu_items->at(ActionMenu::action_view).desc);
-    action_preview->setToolTip(file_tree_menu_items->at(ActionMenu::action_preview).desc);
 
     auto action_line_1 = new QAction(this);
     action_line_1->setSeparator(true);
     auto action_line_2 = new QAction(this);
     action_line_2->setSeparator(true);
+    auto action_line_3 = new QAction(this);
+    action_line_3->setSeparator(true);
 
-    connect(action_add, SIGNAL(triggered()), this, SLOT(LoadImageFiles()));
-    connect(action_delete, SIGNAL(triggered()), this, SLOT(DeleteConfirmationPopup()));
-    connect(action_clear, &QAction::triggered, [this] { DeleteConfirmationPopup(true); });
-    connect(action_view, SIGNAL(triggered()), this, SLOT(Test())); // TODO
-    connect(action_preview, SIGNAL(triggered()), this, SLOT(Test())); // TODO
-    connect(action_select, &QAction::triggered,
-        [this] {
-            int current_file_tree_row = GetCurrentFileTreeRow();
-            if (current_file_tree_row > -1) {
-                Qt::CheckState toggle = (current_file_metadata_list.at(current_file_tree_row).selected) ? Qt::Unchecked : Qt::Checked;
-                qobject_cast<QCheckBox*>(ui.treeWidget_FileInfo->itemWidget(ui.treeWidget_FileInfo->currentItem(), 0))->setCheckState(toggle);
-            }
-        });
+    auto action_submenu_filter = new QAction("Selection Filter", this);
 
+    action_add->setToolTip(file_tree_menu_items->at(ActionMenu::action_add).desc);
+    action_delete->setToolTip(file_tree_menu_items->at(ActionMenu::action_delete).desc);
+    action_clear->setToolTip(file_tree_menu_items->at(ActionMenu::action_clear).desc);
+    action_select->setToolTip(file_tree_menu_items->at(ActionMenu::action_select).desc);
+    action_select_all->setToolTip(file_tree_menu_items->at(ActionMenu::action_select_all).desc);
+    action_select_none->setToolTip(file_tree_menu_items->at(ActionMenu::action_select_none).desc);
+    action_view->setToolTip(file_tree_menu_items->at(ActionMenu::action_view).desc);
+    action_preview->setToolTip(file_tree_menu_items->at(ActionMenu::action_preview).desc);
+
+    Q_ASSERT(connect(action_add, SIGNAL(triggered()), this, SLOT(LoadImageFiles())));
+    Q_ASSERT(connect(action_delete, SIGNAL(triggered()), this, SLOT(DeleteConfirmationPopup())));
+    Q_ASSERT(connect(action_clear, &QAction::triggered, [this] { DeleteConfirmationPopup(true); }));
+    Q_ASSERT(connect(action_select, &QAction::triggered, this, [this] { FileSelectionToggle(GetCurrentFileTreeRow()); }));
+    Q_ASSERT(connect(action_select_all, &QAction::triggered, this, [this] { FileSelectionToggleAll(true); }));
+    Q_ASSERT(connect(action_select_none, &QAction::triggered, this, [this] { FileSelectionToggleAll(false); }));
+    Q_ASSERT(connect(action_view, SIGNAL(triggered()), this, SLOT(Test()))); // TODO
+    Q_ASSERT(connect(action_preview, SIGNAL(triggered()), this, SLOT(Test()))); // TODO
+    
     // Enabled later when files are loaded into tree.
     ToggleFileTreeContextMenuItems(false);
 
@@ -2532,11 +2567,15 @@ void BatchItImage::SetupFileTreeContextMenu()
     ui.treeWidget_FileInfo->setContextMenuPolicy(Qt::ActionsContextMenu);
     //ui.treeWidget_FileInfo->setContextMenuPolicy(Qt::CustomContextMenu);
     ui.treeWidget_FileInfo->addActions({ 
-        action_add, action_delete, action_clear, action_line_1, 
-        action_select, action_line_2, action_view, action_preview 
+        action_add, action_delete, action_clear, action_line_1,
+        action_select, action_select_all, action_select_none, action_submenu_filter, action_line_2,
+        action_view, action_preview, 
         });
 
 #ifdef _DEBUG
+    auto action_line_D = new QAction(this);
+    action_line_D->setSeparator(true);
+
     QAction* action_debug_quick_load = new QAction("Debug Quick Load", this);
     QStringList testing_file_list;
     //testing_file_list.append(qdefault_path + R"(/test_images/01.jpg)"); // large file
@@ -2545,13 +2584,13 @@ void BatchItImage::SetupFileTreeContextMenu()
     testing_file_list.append(qdefault_path + R"(/test_images/AC01.png)");
     testing_file_list.append(qdefault_path + R"(/test_images/AC02.png)");
     connect(action_debug_quick_load, &QAction::triggered, [this, testing_file_list] { AddNewFiles(testing_file_list); });
-    ui.treeWidget_FileInfo->addAction(action_debug_quick_load);
     
     QAction* action_debug_large_load = new QAction("Debug Large Load", this);
     QStringList testing_folder_list;
     testing_folder_list.append(qdefault_path + R"(/test_images)");
     connect(action_debug_large_load, &QAction::triggered, [this, testing_folder_list] { AddNewFiles(testing_folder_list); });
-    ui.treeWidget_FileInfo->addAction(action_debug_large_load);
+    
+    ui.treeWidget_FileInfo->addActions({ action_line_D, action_debug_quick_load, action_debug_large_load });
 #endif // _DEBUG
 }
 
@@ -2560,12 +2599,16 @@ void BatchItImage::ToggleFileTreeContextMenuItems(bool enable)
     action_delete->setEnabled(enable);
     action_clear->setEnabled(enable);
     action_select->setEnabled(enable);
+    action_select_all->setEnabled(enable);
+    action_select_none->setEnabled(enable);
     action_view->setEnabled(enable);
     action_preview->setEnabled(enable);
     if (enable) {
         action_delete->setFont(*font_default);
         action_clear->setFont(*font_default);
         action_select->setFont(*font_default);
+        action_select_all->setFont(*font_default);
+        action_select_none->setFont(*font_default);
         action_view->setFont(*font_default);
         action_preview->setFont(*font_default);
     }
@@ -2573,6 +2616,8 @@ void BatchItImage::ToggleFileTreeContextMenuItems(bool enable)
         action_delete->setFont(*font_default_light);
         action_clear->setFont(*font_default_light);
         action_select->setFont(*font_default_light);
+        action_select_all->setFont(*font_default_light);
+        action_select_none->setFont(*font_default_light);
         action_view->setFont(*font_default_light);
         action_preview->setFont(*font_default_light);
     }
@@ -3119,7 +3164,7 @@ uint BatchItImage::CurrentSelectedPreset()
     return current_selected_preset;
 }
 
-void BatchItImage::EditAndSave()
+void BatchItImage::EditAndSave(bool selected_only)
 {
     int file_count = current_file_metadata_list.size();
     qDebug() << "Edit And Save" << file_count << "Images";
@@ -3136,6 +3181,11 @@ void BatchItImage::EditAndSave()
 
     for (int i = 0; i < file_count; i++) {
         //qDebug().noquote() << current_file_metadata_list.at(i).to_string();
+
+        if (selected_only and not current_file_metadata_list.at(i).selected) {
+            emit progressMade(3.0f);
+            continue;
+        }
 
         // Setup the image editor with a file path and all the edits to be done.
         ImageEditor* new_ie = new ImageEditor(
@@ -3175,7 +3225,7 @@ void BatchItImage::EditAndSave()
         // Start the image edit process on another thread
         //std::future<uint> worker_thread = std::async(&ImageEditor::startEditProcess, new_ie);
         auto worker_thread = std::thread(&ImageEditor::startEditProcess, new_ie);
- 
+
         //int image_edits_made = worker_thread.get();
         //qDebug() << "Done:" <<  image_edits_made;
 
@@ -3594,6 +3644,7 @@ void BatchItImage::UpdateLog(ImageEditor* edited_image, ImageSaver* saved_image)
             log_lines.push_back(log_text.at(LogFileLines::SaveCanceled));
         }
         else {
+            image_save_errors++;
             log_lines.push_back(ReplaceAll(log_text.at(LogFileLines::SaveError), "##", *save_error));
         }
     }
@@ -3606,6 +3657,18 @@ void BatchItImage::UpdateLog(ImageEditor* edited_image, ImageSaver* saved_image)
 
 void BatchItImage::PrintBatchImageLog()
 {
+    // If no attempt to edit any images was made (none selected or canceled immediately).
+    // Note: This will be called as soon as any progress (bar) is made and finished.
+    if (successful_image_saves == 0 and image_save_errors == 0) {
+        log_lines.erase(log_lines.begin() + log_end_line, log_lines.end());
+        log_batch_number--;
+        successful_image_edits = 0;
+        successful_image_saves = 0;
+        image_save_errors = 0;
+        return; 
+    }
+
+    // Finish entering the last pieces of data to log.
     auto image_edit_end_time = std::chrono::system_clock::now();
     auto session_end_time = std::chrono::system_clock::now();
     std::chrono::zoned_time session_start_time_zt{ std::chrono::current_zone(), session_start_time };
@@ -3631,13 +3694,14 @@ void BatchItImage::PrintBatchImageLog()
         log_lines.at(log_batch_summary + 1), "##", std::to_string(successful_image_saves)
     );
     log_lines.at(log_batch_summary + 2) = ReplaceAll(
-        log_lines.at(log_batch_summary + 2), "##", std::to_string(current_file_metadata_list.size() - successful_image_saves)
+        log_lines.at(log_batch_summary + 2), "##", std::to_string(image_save_errors)
     );
     log_lines.at(log_batch_summary + 3) = ReplaceAll(
         log_lines.at(log_batch_summary + 3), "##", completion_time
     );
 
     // Create Log File Name and Path
+    bool log_error = false;
     const auto log_file_name = "log_" + std::format("{0:%Y%m%d%H%M%OS}", session_start_time_zt) + ".txt";
     const auto log_file_path = default_path / "logs";
     try { // Create missing directories
@@ -3646,20 +3710,22 @@ void BatchItImage::PrintBatchImageLog()
     }
     catch (const std::exception& err) {
         qWarning() << "Error: Log Directory Creation Failed - " << err.what();
-        return;
+        log_error = true;
     }
 
     // Write To Log File
-    std::ofstream log_file(log_file_path / log_file_name, std::ios::out | std::ios::app);
-    if (log_file.is_open()) {
-        for (uint i = log_end_line; i < log_lines.size(); i++) {
-            log_file << log_lines.at(i) << "\n";
+    if (not log_error) {
+        std::ofstream log_file(log_file_path / log_file_name, std::ios::out | std::ios::app);
+        if (log_file.is_open()) {
+            for (uint i = log_end_line; i < log_lines.size(); i++) {
+                log_file << log_lines.at(i) << "\n";
+            }
+            log_file.close();
         }
-        log_file.close();
-    }
-    else {
-        qWarning() << "Error: Unable to open and write to log file.";
-        return;
+        else {
+            qWarning() << "Error: Unable to open and write to log file.";
+            log_error = true;
+        }
     }
 
     // Delete Old Log Files (past the maximum allowed)
@@ -3675,13 +3741,19 @@ void BatchItImage::PrintBatchImageLog()
         }
     }
 
-    // Show dialog informing user that editing and saving is finished and a log file was created.
+    // Show dialog informing user that editing and saving is finished and a log file was (or wasn't) created.
     QString title;
     QString message;
     QDialogButtonBox::StandardButtons buttons = QDialogButtonBox::Ok;
     DialogMessage::CustomButtons custom_buttons = DialogMessage::CustomButton::OpenLog | DialogMessage::CustomButton::SaveLogAs;
 
-    if (log_end_line) {
+    if (log_error) {
+        title = dialog_messages.at(DialogMessages::log_created_dialog_error).name;
+        message = dialog_messages.at(DialogMessages::log_created_dialog_error).desc;
+        buttons = QDialogButtonBox::Ok;
+        custom_buttons = DialogMessage::CustomButton::NoCustomButton;
+    }
+    else if (log_end_line) {
         title = dialog_messages.at(DialogMessages::log_created_dialog_updated).name;
         message = dialog_messages.at(DialogMessages::log_created_dialog_updated).desc;
     }
@@ -3691,14 +3763,14 @@ void BatchItImage::PrintBatchImageLog()
     }
     auto* log_created_dialog = new DialogMessage(title, message, buttons, custom_buttons, this);
     Q_ASSERT(connect(log_created_dialog, &DialogMessage::buttonRoleClicked, this,
-        [=](QDialogButtonBox::ButtonRole button_clicked) {
-            if (QDialogButtonBox::ButtonRole::ActionRole == button_clicked) { // Open Log
+        [=](QDialogButtonBox::ButtonRole button_role_clicked) {
+            if (QDialogButtonBox::ButtonRole::ActionRole == button_role_clicked) { // Open Log
                 // Windows Only (Mac: open, Win: notepad)
                 const std::string open_log_file_path = "start notepad \"" + (log_file_path / log_file_name).string() + "\"";
                 qDebug() << open_log_file_path;
                 std::system(open_log_file_path.c_str());
             }
-            else if (QDialogButtonBox::ButtonRole::ApplyRole == button_clicked) { // Save Log File
+            else if (QDialogButtonBox::ButtonRole::ApplyRole == button_role_clicked) { // Save Log File
                 std::string log_file_new_save_path = QFileDialog::getSaveFileName( this,
                     file_dialog_titles.at(FileDialogTitles::log_file_new_save_path),
                     QString::fromStdString((log_file_path / log_file_name).string()),
@@ -3717,6 +3789,7 @@ void BatchItImage::PrintBatchImageLog()
     log_end_line = log_lines.size();
     successful_image_edits = 0;
     successful_image_saves = 0;
+    image_save_errors = 0;
 }
 
 void BatchItImage::LoadImageFiles()
@@ -3937,7 +4010,10 @@ void BatchItImage::LoadFileIntoTree(int file_index, int sorted_column)
     file_selected_check_box->setChecked(file.selected);
     file_selected_check_box->setStatusTip(file_tree_other_text[FileColumn::FILE_LOAD_ORDER] + QVariant(file.load_order).toString());
     
-    connect(file_selected_check_box, SIGNAL(toggled(bool)), this, SLOT(FileSelectionChange(bool)));
+    connect(file_selected_check_box, &QCheckBox::toggled, this,
+        [=] (bool toggle) {
+            FileSelectionChange(file_index, toggle);
+        });
 
     ui.treeWidget_FileInfo->setItemWidget(new_item, FileColumn::FILE_SELECTED, file_selected_check_box);
     new_item->setToolTip(FileColumn::FILE_SELECTED, file_tree_other_text[FileColumn::FILE_LOAD_ORDER] + QVariant(file.load_order).toString());
@@ -3990,11 +4066,36 @@ int BatchItImage::GetCurrentFileTreeRow()
     return current_file_tree_row;
 }
 
-void BatchItImage::FileSelectionChange(bool checked)
+void BatchItImage::FileSelectionChange(uint index, bool toggle)
 {
-    int current_file_tree_row = ui.treeWidget_FileInfo->currentIndex().row();
-    qDebug() << "Row:" << current_file_tree_row << "  Checked:" << checked;
-    current_file_metadata_list.at(current_file_tree_row).selected = checked;
+    //int current_file_tree_row = ui.treeWidget_FileInfo->currentIndex().row();
+    qDebug() << "Row:" << index << "  Checked:" << toggle;
+    current_file_metadata_list.at(index).selected = toggle;
+}
+
+void BatchItImage::FileSelectionToggle(int index)
+{
+    qDebug() << "FileSelectionToggle:" << index + 1 << "of" << current_file_metadata_list.size();
+    if (index > -1 and index < current_file_metadata_list.size()) {
+        Qt::CheckState toggle = (current_file_metadata_list.at(index).selected)
+            ? Qt::Unchecked : Qt::Checked;
+        qDebug() << "FileSelectionToggle:" << toggle;
+        qobject_cast<QCheckBox*>(ui.treeWidget_FileInfo->itemWidget(
+            ui.treeWidget_FileInfo->topLevelItem(index), 0))->setCheckState(toggle);
+    }
+    else {
+        qDebug() << "WTF?";
+    }
+}
+
+void BatchItImage::FileSelectionToggleAll(bool toggle)
+{
+    qDebug() << "FileSelectionToggleAll:" << toggle;
+    Qt::CheckState checked_toggle = (toggle) ? Qt::Checked : Qt::Unchecked;
+    for (uint i = 0; i < ui.treeWidget_FileInfo->topLevelItemCount(); i++) {
+        qobject_cast<QCheckBox*>(ui.treeWidget_FileInfo->itemWidget(
+            ui.treeWidget_FileInfo->topLevelItem(i), 0))->setCheckState(checked_toggle);
+    }
 }
 
 void BatchItImage::ResizeFileTreeColumns()
@@ -4120,18 +4221,19 @@ void BatchItImage::SortFileTreeByColumn(int index)
 
 bool BatchItImage::eventFilter(QObject* watched, QEvent* event) 
 {
-    //qDebug() << "Object Watched:" << watched->objectName().toStdString() << "  eventFilter'd:" << event->type();
+    //qDebug() << "Object Watched:" << watched->objectName().toStdString() << "  eventFiltered:" << event->type();
     if (event->type() == QEvent::ContextMenu) {
         qDebug() << "ContextMenu Called";
     }
     if (event->type() == QEvent::ChildPolished) { // Used in-place of "no ActionsContextMenu event"
         qDebug() << "ActionsContextMenu Called?";
         int current_file_tree_row = ui.treeWidget_FileInfo->currentIndex().row();
+        //int current_file_tree_row = GetCurrentFileTreeRow();
         if (current_file_tree_row > -1) {
             if (current_file_metadata_list.at(current_file_tree_row).selected)
-                action_select->setText("Unselect Image");
+                action_select->setText(unselect_text);
             else
-                action_select->setText("Select Image");
+                action_select->setText(select_text);
         }
     }
     // Pass the event on to the parent class.
