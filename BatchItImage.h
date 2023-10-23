@@ -220,10 +220,13 @@ public slots:
     /// <summary>
     /// Start editing and saving images in file tree (in another thread).
     /// </summary>
-    void EditAndSave();
-
+    /// <param name="selected_only">--Only edit and save selected files in file tree.</param>
+    void EditAndSave(bool selected_only = false);
+    /// <summary>
+    /// Cancel and stop all image edit processes currently running. Images that have already finished editing and sent
+    /// off to be saved will still be saved and shown in logs as successful while others shown as canceled and not saved.
+    /// </summary>
     void CancelAllImageEditing();
-
     /// <summary>
     /// Show open file dialog allowing user to load one or more image files.
     /// </summary>
@@ -241,8 +244,9 @@ public slots:
     /// <summary>
     /// Slot event called when file tree check box changed.
     /// </summary>
-    /// <param name="checked">--Check box toggle.</param>
-    void FileSelectionChange(bool checked);
+    /// <param name="index">--Index of selected file in tree.</param>
+    /// <param name="toggle">--Check box toggle.</param>
+    void FileSelectionChange(uint index, bool toggle);
     /// <summary>
     /// Sort a column in the file tree widget by sorting the list of file metadata then reinserting it back into the file tree.
     /// </summary>
@@ -311,6 +315,16 @@ private slots:
     /// <param name="image_editor">--Pointer to the ImageEditor used to edit image.</param>
     /// <param name="saved_image">--Pointer the the ImageSaver used to save image.</param>
     void UpdateLog(ImageEditor* edited_image, ImageSaver* saved_image);
+    /// <summary>
+    /// Select (check) specific file in file tree.
+    /// </summary>
+    /// <param name="index">--Index of file in list.</param>
+    void FileSelectionToggle(int index);
+    /// <summary>
+    /// Select (check) "All" or "None" files in file tree.
+    /// </summary>
+    /// <param name="toggle">--All/true or None/false.</param>
+    void FileSelectionToggleAll(bool toggle);
     /// <summary>
     /// Resize all columns to fit content in file tree.
     /// </summary>
@@ -490,7 +504,10 @@ private:
         enum { FILE_LOAD_ORDER, FILE_PATH, IMAGE_SIZES, FILE_SIZES, DATE_FILE_CREATED, DATE_FILE_MODIFIED, FILE_COLUMN_COUNT };
     };
     const struct SortOrder { enum { ASCENDING1, DESCENDING1, ASCENDING2, DESCENDING2 }; };
-    const struct ActionMenu { enum { action_add, action_delete, action_clear, action_select, action_view, action_preview, COUNT }; };
+    const struct ActionMenu {
+        enum { action_add, action_delete, action_clear, action_select, action_unselect, action_select_all, action_select_none,
+            action_view, action_preview, COUNT };
+    };
     const struct ResizeOptions { enum { groupBox_Resize, checkBox_KeepAspectRatio, COUNT }; };
     const struct BackgroundOptions { enum { groupBox_Background, pushButton_ColorDialog, label_ColorPreview, COUNT }; };
     const struct BlurOptions {
@@ -518,11 +535,13 @@ private:
     const struct FormatTiffOptions { enum { label_FormatFlags, label_Quality, label_ExtraSetting1, label_ExtraSetting2, COUNT }; };
     const struct FormatExrOptions { enum { label_FormatFlags, checkBox_Optimize, checkBox_Progressive, label_Compression, COUNT }; };
     const struct FormatHdrOptions { enum { label_FormatFlags, COUNT }; };
-    const struct OtherOptions { enum { tab_1, tab_2, tab_3, checkBox_SearchSubDirs, pushButton_EditAndSave, COUNT }; };
+    const struct OtherOptions {
+        enum { tab_1, tab_2, tab_3, checkBox_SearchSubDirs, label_EditSave, pushButton_EditSaveAll, pushButton_EditSaveSelected, COUNT };
+    };
     const struct DialogMessages {
         enum { delete_dialog, delete_dialog_clear, CreateNewPreset, ChangePresetDescription, save_preset_dialog, save_preset_dialog_closing,
             remove_preset_dialog, remove_preset_dialog_halted, non_image_file_dialog, check_wm_path_dialog, check_path_dialog, log_created_dialog,
-            log_created_dialog_updated, COUNT };
+            log_created_dialog_updated, log_created_dialog_error, COUNT };
     };
     const struct FileDialogTitles { 
         enum { LoadImageFiles, GetImageFile, GetSaveDirectoryPath, log_file_new_save_path, log_file_new_save_path_extensions, COUNT };
@@ -543,6 +562,8 @@ private:
     std::array<UIData, FileColumn::COUNT>* file_tree_headers = new std::array<UIData, FileColumn::COUNT>;
     std::array<UIData, ActionMenu::COUNT>* file_tree_menu_items = new std::array<UIData, ActionMenu::COUNT>;
     std::array<QString, FileColumn::COUNT> file_tree_other_text;
+    QString select_text;
+    QString unselect_text;
 
     // Tab, Label, Check Box, and Button UIData
     std::array<UIData, FilePathOptions::COUNT>* file_path_options = new std::array<UIData, FilePathOptions::COUNT>;
@@ -585,8 +606,8 @@ private:
     std::array<UIData, DialogMessages::COUNT> dialog_messages;
     std::array<UIData, 6> blur_depth_selections;
     std::array <QString, FileDialogTitles::COUNT> file_dialog_titles;
-    std::array <QString, ImageSaver::SupportedImageFormats::COUNT> extension_list;
     std::array <std::string, LogFileLines::COUNT> log_text; // TODO
+    std::array <QString, ImageSaver::SupportedImageFormats::COUNT> extension_list;
     QString supported_image_extensions_dialog_str = ""; // Built from extension_list
     QColor background_color = QColor(0, 0, 0, 255);
 
@@ -603,6 +624,8 @@ private:
     QAction* action_delete;
     QAction* action_clear;
     QAction* action_select;
+    QAction* action_select_all;
+    QAction* action_select_none;
     QAction* action_view;
     QAction* action_preview;
 
@@ -632,6 +655,7 @@ private:
     uint log_end_line = 0;
     uint successful_image_edits = 0;
     uint successful_image_saves = 0;
+    uint image_save_errors = 0;
 
     std::vector<ImageEditor*> ie_pointer_list;
 
