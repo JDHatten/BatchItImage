@@ -5,7 +5,7 @@ TODOs:
     Log Actions
     Holding right click scrolls left to right
     Track changes to undo file list deletes or image edit ui changes
-    Image File Filter... show/edit only PNG files, files > 1 MB, etc. Via right click context menu?
+    Image File Filters... select: files > 100 width, < 1 MB, < 1/1/2021 date, etc. Via right click context menu?
     Application Settings Dialog
     Menu Item: Recent image files loaded
     Priority Sort those selected to top. Context menu?
@@ -237,13 +237,13 @@ BatchItImage::BatchItImage(QWidget* parent) : QMainWindow(parent)
     LoadInUiData();
     qDebug() << "LoadInUiData = Loaded";
 
-    ui.tabWidget->setCurrentIndex(other_options->at(OtherOptions::tab_1).data);
-    ui.tabWidget->setTabText(OtherOptions::tab_1, other_options->at(OtherOptions::tab_1).name);
-    ui.tab_1->setToolTip(other_options->at(OtherOptions::tab_1).desc);
-    ui.tabWidget->setTabText(OtherOptions::tab_2, other_options->at(OtherOptions::tab_2).name);
-    ui.tab_2->setToolTip(other_options->at(OtherOptions::tab_2).desc);
-    ui.tabWidget->setTabText(OtherOptions::tab_3, other_options->at(OtherOptions::tab_3).name);
-    ui.tab_3->setToolTip(other_options->at(OtherOptions::tab_3).desc);
+    ui.tabWidget->setCurrentIndex(other_options->at(UI::Other::tab_1).data);
+    ui.tabWidget->setTabText(UI::Other::tab_1, other_options->at(UI::Other::tab_1).name);
+    ui.tab_1->setToolTip(other_options->at(UI::Other::tab_1).desc);
+    ui.tabWidget->setTabText(UI::Other::tab_2, other_options->at(UI::Other::tab_2).name);
+    ui.tab_2->setToolTip(other_options->at(UI::Other::tab_2).desc);
+    ui.tabWidget->setTabText(UI::Other::tab_3, other_options->at(UI::Other::tab_3).name);
+    ui.tab_3->setToolTip(other_options->at(UI::Other::tab_3).desc);
 
     AddUiDataTo(*resize_options, std::vector<QWidget*>{
         ui.groupBox_Resize, ui.checkBox_KeepAspectRatio });
@@ -257,25 +257,25 @@ BatchItImage::BatchItImage(QWidget* parent) : QMainWindow(parent)
     AddUiDataTo(*watermark_options, std::vector<QWidget*>{
         ui.groupBox_Watermark, ui.comboBox_WatermarkLocation, ui.label_WatermarkLocation, ui.label_WatermarkTransparency, ui.label_WatermarkOffset
     });
-    AddUiDataTo(ui.groupBox_FileRename, file_path_options->at(FilePathOptions::groupBox_FileRename));
-    AddUiDataTo(ui.radioButton_Overwrite, file_path_options->at(FilePathOptions::radioButton_Overwrite));
-    AddUiDataTo(ui.radioButton_RenameOriginal, file_path_options->at(FilePathOptions::radioButton_RenameOriginal));
-    AddUiDataTo(ui.radioButton_NewFileName, file_path_options->at(FilePathOptions::radioButton_NewFileName));
-    AddUiDataTo(ui.label_Add, file_path_options->at(FilePathOptions::label_Add));
-    AddUiDataTo(ui.groupBox_SaveDir, file_path_options->at(FilePathOptions::groupBox_SaveDir));
-    AddUiDataTo(ui.radioButton_RelativePath, file_path_options->at(FilePathOptions::radioButton_RelativePath));
-    AddUiDataTo(ui.radioButton_AbsolutePath, file_path_options->at(FilePathOptions::radioButton_AbsolutePath));
-    AddUiDataTo(ui.pushButton_AddBackOneDir, file_path_options->at(FilePathOptions::pushButton_AddBackOneDir));
-    AddUiDataTo(ui.pushButton_FindAbsolutePath, file_path_options->at(FilePathOptions::pushButton_FindAbsolutePath));
-    AddUiDataTo(ui.checkBox_SearchSubDirs, other_options->at(OtherOptions::checkBox_SearchSubDirs));
-    AddUiDataTo(ui.pushButton_EditSaveAll, other_options->at(OtherOptions::pushButton_EditSaveAll));
+    AddUiDataTo(ui.groupBox_FileRename, file_path_options->at(UI::FileOption::FilePath::groupBox_FileRename));
+    AddUiDataTo(ui.radioButton_Overwrite, file_path_options->at(UI::FileOption::FilePath::radioButton_Overwrite));
+    AddUiDataTo(ui.radioButton_RenameOriginal, file_path_options->at(UI::FileOption::FilePath::radioButton_RenameOriginal));
+    AddUiDataTo(ui.radioButton_NewFileName, file_path_options->at(UI::FileOption::FilePath::radioButton_NewFileName));
+    AddUiDataTo(ui.label_Add, file_path_options->at(UI::FileOption::FilePath::label_Add));
+    AddUiDataTo(ui.groupBox_SaveDir, file_path_options->at(UI::FileOption::FilePath::groupBox_SaveDir));
+    AddUiDataTo(ui.radioButton_RelativePath, file_path_options->at(UI::FileOption::FilePath::radioButton_RelativePath));
+    AddUiDataTo(ui.radioButton_AbsolutePath, file_path_options->at(UI::FileOption::FilePath::radioButton_AbsolutePath));
+    AddUiDataTo(ui.pushButton_AddBackOneDir, file_path_options->at(UI::FileOption::FilePath::pushButton_AddBackOneDir));
+    AddUiDataTo(ui.pushButton_FindAbsolutePath, file_path_options->at(UI::FileOption::FilePath::pushButton_FindAbsolutePath));
+    AddUiDataTo(ui.checkBox_SearchSubDirs, other_options->at(UI::Other::checkBox_SearchSubDirs));
+    AddUiDataTo(ui.pushButton_EditSaveAll, other_options->at(UI::Other::pushButton_EditSaveAll));
 
     PopulateComboBox(ui.comboBox_WidthMod, *width_selections);
     PopulateComboBox(ui.comboBox_HeightMod, *height_selections);
     PopulateComboBox(ui.comboBox_Resample, *resampling_selections);
     PopulateComboBox(ui.comboBox_BorderType, *border_types);
     PopulateComboBox(ui.comboBox_BlurFilter, *blur_filters);
-    PopulateComboBox(ui.comboBox_WatermarkLocation, *watermark_locations, watermark_options->at(WatermarkOptions::label_WatermarkLocation).data);
+    PopulateComboBox(ui.comboBox_WatermarkLocation, *watermark_locations, watermark_options->at(UI::EditOption::Watermark::label_WatermarkLocation).data);
     PopulateComboBox(ui.comboBox_AddText, *file_name_creation, 0, ImageSaver::MetadataIdentifiers);
     PopulateComboBox(ui.comboBox_ImageFormat, *image_formats, 0, extension_list);
 
@@ -329,6 +329,7 @@ BatchItImage::BatchItImage(QWidget* parent) : QMainWindow(parent)
     // Delete all arrays on the heap that will not be reused after loading.
     delete file_tree_headers;
     delete file_tree_menu_items;
+    delete file_tree_sub_menu_formats;
     delete file_path_options;
     delete resize_options;
     //delete background_options;
@@ -383,70 +384,110 @@ void BatchItImage::Test()
 void BatchItImage::LoadInUiData()
 {
     // treeWidget_FileInfo
-    file_tree_headers->at(FileColumn::FILE_SELECTED).data = 1; // TODO: 1 = Initial Sort/Bold Text (after files loaded)?
-    file_tree_headers->at(FileColumn::FILE_SELECTED).name = "";
-    file_tree_headers->at(FileColumn::FILE_SELECTED).desc = "The load order of image files.";
-    file_tree_headers->at(FileColumn::FILE_NAME).data = 0;
-    file_tree_headers->at(FileColumn::FILE_NAME).name = "File Name";
-    file_tree_headers->at(FileColumn::FILE_NAME).desc = "The name of an image file, click an arrow to show full path.";
-    file_tree_headers->at(FileColumn::IMAGE_DIMENSIONS).data = 0;
-    file_tree_headers->at(FileColumn::IMAGE_DIMENSIONS).name = "Dimensions";
-    file_tree_headers->at(FileColumn::IMAGE_DIMENSIONS).desc = "Image Dimensions/Size (Width x Height).";
-    file_tree_headers->at(FileColumn::FILE_SIZE).data = 0;
-    file_tree_headers->at(FileColumn::FILE_SIZE).name = "File Size";
-    file_tree_headers->at(FileColumn::FILE_SIZE).desc = "The file size in bytes.";
-    file_tree_headers->at(FileColumn::DATE_CREATED).data = 0;
-    file_tree_headers->at(FileColumn::DATE_CREATED).name = "Date Created";
-    file_tree_headers->at(FileColumn::DATE_CREATED).desc = "The date a file was created.";
-    file_tree_headers->at(FileColumn::DATE_MODIFIED).data = 0;
-    file_tree_headers->at(FileColumn::DATE_MODIFIED).name = "Date Modified";
-    file_tree_headers->at(FileColumn::DATE_MODIFIED).desc = "The date a file was last modified.";
+    file_tree_headers->at(FileTree::Column::FILE_SELECTED).data = 1; // TODO: 1 = Initial Sort/Bold Text (after files loaded)?
+    file_tree_headers->at(FileTree::Column::FILE_SELECTED).name = "";
+    file_tree_headers->at(FileTree::Column::FILE_SELECTED).desc = "The load order of image files.";
+    file_tree_headers->at(FileTree::Column::FILE_NAME).data = 0;
+    file_tree_headers->at(FileTree::Column::FILE_NAME).name = "File Name";
+    file_tree_headers->at(FileTree::Column::FILE_NAME).desc = "The name of an image file, click an arrow to show full path.";
+    file_tree_headers->at(FileTree::Column::IMAGE_DIMENSIONS).data = 0;
+    file_tree_headers->at(FileTree::Column::IMAGE_DIMENSIONS).name = "Dimensions";
+    file_tree_headers->at(FileTree::Column::IMAGE_DIMENSIONS).desc = "Image Dimensions/Size (Width x Height).";
+    file_tree_headers->at(FileTree::Column::FILE_SIZE).data = 0;
+    file_tree_headers->at(FileTree::Column::FILE_SIZE).name = "File Size";
+    file_tree_headers->at(FileTree::Column::FILE_SIZE).desc = "The file size in bytes.";
+    file_tree_headers->at(FileTree::Column::DATE_CREATED).data = 0;
+    file_tree_headers->at(FileTree::Column::DATE_CREATED).name = "Date Created";
+    file_tree_headers->at(FileTree::Column::DATE_CREATED).desc = "The date a file was created.";
+    file_tree_headers->at(FileTree::Column::DATE_MODIFIED).data = 0;
+    file_tree_headers->at(FileTree::Column::DATE_MODIFIED).name = "Date Modified";
+    file_tree_headers->at(FileTree::Column::DATE_MODIFIED).desc = "The date a file was last modified.";
 
-    file_tree_menu_items->at(ActionMenu::action_add).data = 0; // TODO: 1 = Bold, default double click action?
-    file_tree_menu_items->at(ActionMenu::action_add).name = "Add Images";
-    file_tree_menu_items->at(ActionMenu::action_add).desc = "Add more images to this file viewer.";
-    file_tree_menu_items->at(ActionMenu::action_delete).data = 0;
-    file_tree_menu_items->at(ActionMenu::action_delete).name = "Delete Images";
-    file_tree_menu_items->at(ActionMenu::action_delete).desc = "Delete images from this file viewer (does not delete from system).";
-    file_tree_menu_items->at(ActionMenu::action_clear).data = 0;
-    file_tree_menu_items->at(ActionMenu::action_clear).name = "Clear List";
-    file_tree_menu_items->at(ActionMenu::action_clear).desc = "Clear entire list of files from file viewer.";
-    file_tree_menu_items->at(ActionMenu::action_select).data = 0;
-    file_tree_menu_items->at(ActionMenu::action_select).name = "Select Image";
-    file_tree_menu_items->at(ActionMenu::action_select).desc = "Select or check image file currently highlighted.";
-    file_tree_menu_items->at(ActionMenu::action_unselect).data = 0;
-    file_tree_menu_items->at(ActionMenu::action_unselect).name = "Unselect Image";
-    file_tree_menu_items->at(ActionMenu::action_unselect).desc = "Unselect or uncheck image file currently highlighted.";
-    file_tree_menu_items->at(ActionMenu::action_select_all).data = 0;
-    file_tree_menu_items->at(ActionMenu::action_select_all).name = "Select All Images";
-    file_tree_menu_items->at(ActionMenu::action_select_all).desc = "Select or check all image files.";
-    file_tree_menu_items->at(ActionMenu::action_select_none).data = 0;
-    file_tree_menu_items->at(ActionMenu::action_select_none).name = "Unselect All Image";
-    file_tree_menu_items->at(ActionMenu::action_select_none).desc = "Unselect or uncheck all image files.";
-    file_tree_menu_items->at(ActionMenu::action_view).data = 0;
-    file_tree_menu_items->at(ActionMenu::action_view).name = "View Image";
-    file_tree_menu_items->at(ActionMenu::action_view).desc = "View image file currently highlighted.";
-    file_tree_menu_items->at(ActionMenu::action_preview).data = 0;
-    file_tree_menu_items->at(ActionMenu::action_preview).name = "Preview Modified Image";
-    file_tree_menu_items->at(ActionMenu::action_preview).desc = "Preview a modified version of the image file currently highlighted using the current selected preset.\n" \
+    file_tree_other_text.at(FileTree::Column::FILE_LOAD_ORDER) = "Load Order: ";
+    file_tree_other_text.at(FileTree::Column::FILE_NAME) = "File Path: ";
+    file_tree_other_text.at(FileTree::Column::IMAGE_DIMENSIONS) = "Image [Width x Height]: ";
+    file_tree_other_text.at(FileTree::Column::FILE_SIZE) = "File Size: ";
+    file_tree_other_text.at(FileTree::Column::DATE_CREATED) = "Date File Created: ";
+    file_tree_other_text.at(FileTree::Column::DATE_MODIFIED) = "Date File Modified: ";
+
+    file_tree_menu_items->at(FileTree::ActionMenu::MainMenu::action_add).data = 0; // TODO: 1 = Bold, default double click action?
+    file_tree_menu_items->at(FileTree::ActionMenu::MainMenu::action_add).name = "Add Images";
+    file_tree_menu_items->at(FileTree::ActionMenu::MainMenu::action_add).desc = "Add more images to this file viewer.";
+    file_tree_menu_items->at(FileTree::ActionMenu::MainMenu::action_delete).data = 0;
+    file_tree_menu_items->at(FileTree::ActionMenu::MainMenu::action_delete).name = "Delete Images";
+    file_tree_menu_items->at(FileTree::ActionMenu::MainMenu::action_delete).desc = "Delete images from this file viewer (does not delete from system).";
+    file_tree_menu_items->at(FileTree::ActionMenu::MainMenu::action_clear).data = 0;
+    file_tree_menu_items->at(FileTree::ActionMenu::MainMenu::action_clear).name = "Clear List";
+    file_tree_menu_items->at(FileTree::ActionMenu::MainMenu::action_clear).desc = "Clear entire list of files from file viewer.";
+    file_tree_menu_items->at(FileTree::ActionMenu::MainMenu::action_select).data = 0;
+    file_tree_menu_items->at(FileTree::ActionMenu::MainMenu::action_select).name = "Select Image";
+    file_tree_menu_items->at(FileTree::ActionMenu::MainMenu::action_select).desc = "Select or check image file currently highlighted.";
+    file_tree_menu_items->at(FileTree::ActionMenu::MainMenu::action_unselect).data = 0;
+    file_tree_menu_items->at(FileTree::ActionMenu::MainMenu::action_unselect).name = "Unselect Image";
+    file_tree_menu_items->at(FileTree::ActionMenu::MainMenu::action_unselect).desc = "Unselect or uncheck image file currently highlighted.";
+    file_tree_menu_items->at(FileTree::ActionMenu::MainMenu::action_select_all).data = 0;
+    file_tree_menu_items->at(FileTree::ActionMenu::MainMenu::action_select_all).name = "Select All Images";
+    file_tree_menu_items->at(FileTree::ActionMenu::MainMenu::action_select_all).desc = "Select or check all image files.";
+    file_tree_menu_items->at(FileTree::ActionMenu::MainMenu::action_select_none).data = 0;
+    file_tree_menu_items->at(FileTree::ActionMenu::MainMenu::action_select_none).name = "Unselect All Image";
+    file_tree_menu_items->at(FileTree::ActionMenu::MainMenu::action_select_none).desc = "Unselect or uncheck all image files.";
+    file_tree_menu_items->at(FileTree::ActionMenu::MainMenu::action_view).data = 0;
+    file_tree_menu_items->at(FileTree::ActionMenu::MainMenu::action_view).name = "View Image";
+    file_tree_menu_items->at(FileTree::ActionMenu::MainMenu::action_view).desc = "View image file currently highlighted.";
+    file_tree_menu_items->at(FileTree::ActionMenu::MainMenu::action_preview).data = 0;
+    file_tree_menu_items->at(FileTree::ActionMenu::MainMenu::action_preview).name = "Preview Modified Image";
+    file_tree_menu_items->at(FileTree::ActionMenu::MainMenu::action_preview).desc = "Preview a modified version of the image file currently highlighted using the current selected preset.\n" \
         "This modified image will only be a preview the edits will not be saved to file.";
 
-    select_text = file_tree_menu_items->at(ActionMenu::action_select).name;
-    unselect_text = file_tree_menu_items->at(ActionMenu::action_unselect).name;
+    select_text = file_tree_menu_items->at(FileTree::ActionMenu::MainMenu::action_select).name;
+    unselect_text = file_tree_menu_items->at(FileTree::ActionMenu::MainMenu::action_unselect).name;
 
-    file_tree_other_text.at(FileColumn::FILE_LOAD_ORDER) = "Load Order: ";
-    file_tree_other_text.at(FileColumn::FILE_NAME) = "File Path: ";
-    file_tree_other_text.at(FileColumn::IMAGE_DIMENSIONS) = "Image [Width x Height]: ";
-    file_tree_other_text.at(FileColumn::FILE_SIZE) = "File Size: ";
-    file_tree_other_text.at(FileColumn::DATE_CREATED) = "Date File Created: ";
-    file_tree_other_text.at(FileColumn::DATE_MODIFIED) = "Date File Modified: ";
+    file_tree_sub_menu_formats->at(FileTree::ActionMenu::SubMenu::FilterImageFormats::action_submenu_filter).data = 0;
+    file_tree_sub_menu_formats->at(FileTree::ActionMenu::SubMenu::FilterImageFormats::action_submenu_filter).name = "Format Selection Filter";
+    file_tree_sub_menu_formats->at(FileTree::ActionMenu::SubMenu::FilterImageFormats::action_submenu_filter).desc = "Filter specific formats, selecting only those \"checked\".";
+    file_tree_sub_menu_formats->at(FileTree::ActionMenu::SubMenu::FilterImageFormats::action_submenu_undock).data = 0;
+    file_tree_sub_menu_formats->at(FileTree::ActionMenu::SubMenu::FilterImageFormats::action_submenu_undock).name = "[Undock Filter Menu]";
+    file_tree_sub_menu_formats->at(FileTree::ActionMenu::SubMenu::FilterImageFormats::action_submenu_undock).desc = "Undock this sub-menu allowing it to float above and stay on screen until closed.";
+    file_tree_sub_menu_formats->at(FileTree::ActionMenu::SubMenu::FilterImageFormats::action_filter_jpeg).data = 0;
+    file_tree_sub_menu_formats->at(FileTree::ActionMenu::SubMenu::FilterImageFormats::action_filter_jpeg).name = "Select All JPEG Images";
+    file_tree_sub_menu_formats->at(FileTree::ActionMenu::SubMenu::FilterImageFormats::action_filter_jpeg).desc = "";
+    file_tree_sub_menu_formats->at(FileTree::ActionMenu::SubMenu::FilterImageFormats::action_filter_jp2).data = 0;
+    file_tree_sub_menu_formats->at(FileTree::ActionMenu::SubMenu::FilterImageFormats::action_filter_jp2).name = "Select All JPEG 2000 Images";
+    file_tree_sub_menu_formats->at(FileTree::ActionMenu::SubMenu::FilterImageFormats::action_filter_jp2).desc = "";
+    file_tree_sub_menu_formats->at(FileTree::ActionMenu::SubMenu::FilterImageFormats::action_filter_png).data = 0;
+    file_tree_sub_menu_formats->at(FileTree::ActionMenu::SubMenu::FilterImageFormats::action_filter_png).name = "Select All PNG Images";
+    file_tree_sub_menu_formats->at(FileTree::ActionMenu::SubMenu::FilterImageFormats::action_filter_png).desc = "";
+    file_tree_sub_menu_formats->at(FileTree::ActionMenu::SubMenu::FilterImageFormats::action_filter_webp).data = 0;
+    file_tree_sub_menu_formats->at(FileTree::ActionMenu::SubMenu::FilterImageFormats::action_filter_webp).name = "Select All WebP Images";
+    file_tree_sub_menu_formats->at(FileTree::ActionMenu::SubMenu::FilterImageFormats::action_filter_webp).desc = "";
+    file_tree_sub_menu_formats->at(FileTree::ActionMenu::SubMenu::FilterImageFormats::action_filter_bmp).data = 0;
+    file_tree_sub_menu_formats->at(FileTree::ActionMenu::SubMenu::FilterImageFormats::action_filter_bmp).name = "Select All Bitmap Images";
+    file_tree_sub_menu_formats->at(FileTree::ActionMenu::SubMenu::FilterImageFormats::action_filter_bmp).desc = "";
+    file_tree_sub_menu_formats->at(FileTree::ActionMenu::SubMenu::FilterImageFormats::action_filter_avif).data = 0;
+    file_tree_sub_menu_formats->at(FileTree::ActionMenu::SubMenu::FilterImageFormats::action_filter_avif).name = "Select All AVIF Images";
+    file_tree_sub_menu_formats->at(FileTree::ActionMenu::SubMenu::FilterImageFormats::action_filter_avif).desc = "";
+    file_tree_sub_menu_formats->at(FileTree::ActionMenu::SubMenu::FilterImageFormats::action_filter_pbm).data = 0;
+    file_tree_sub_menu_formats->at(FileTree::ActionMenu::SubMenu::FilterImageFormats::action_filter_pbm).name = "Select All Netpbm Images";
+    file_tree_sub_menu_formats->at(FileTree::ActionMenu::SubMenu::FilterImageFormats::action_filter_pbm).desc = "";
+    file_tree_sub_menu_formats->at(FileTree::ActionMenu::SubMenu::FilterImageFormats::action_filter_sr).data = 0;
+    file_tree_sub_menu_formats->at(FileTree::ActionMenu::SubMenu::FilterImageFormats::action_filter_sr).name = "Select All Sun Raster Images";
+    file_tree_sub_menu_formats->at(FileTree::ActionMenu::SubMenu::FilterImageFormats::action_filter_sr).desc = "";
+    file_tree_sub_menu_formats->at(FileTree::ActionMenu::SubMenu::FilterImageFormats::action_filter_tiff).data = 0;
+    file_tree_sub_menu_formats->at(FileTree::ActionMenu::SubMenu::FilterImageFormats::action_filter_tiff).name = "Select All TIFF Images";
+    file_tree_sub_menu_formats->at(FileTree::ActionMenu::SubMenu::FilterImageFormats::action_filter_tiff).desc = "";
+    file_tree_sub_menu_formats->at(FileTree::ActionMenu::SubMenu::FilterImageFormats::action_filter_exr).data = 0;
+    file_tree_sub_menu_formats->at(FileTree::ActionMenu::SubMenu::FilterImageFormats::action_filter_exr).name = "Select All OpenEXR Images";
+    file_tree_sub_menu_formats->at(FileTree::ActionMenu::SubMenu::FilterImageFormats::action_filter_exr).desc = "";
+    file_tree_sub_menu_formats->at(FileTree::ActionMenu::SubMenu::FilterImageFormats::action_filter_hdr).data = 0;
+    file_tree_sub_menu_formats->at(FileTree::ActionMenu::SubMenu::FilterImageFormats::action_filter_hdr).name = "Select All Radiance HDR Images";
+    file_tree_sub_menu_formats->at(FileTree::ActionMenu::SubMenu::FilterImageFormats::action_filter_hdr).desc = "";
 
-    resize_options->at(ResizeOptions::groupBox_Resize).data = 0;
-    resize_options->at(ResizeOptions::groupBox_Resize).name = "Resize:";
-    resize_options->at(ResizeOptions::groupBox_Resize).desc = "Options to increase or decrease the dimensions of an image.";
-    resize_options->at(ResizeOptions::checkBox_KeepAspectRatio).data = 1;
-    resize_options->at(ResizeOptions::checkBox_KeepAspectRatio).name = "Keep Aspect Ratio";
-    resize_options->at(ResizeOptions::checkBox_KeepAspectRatio).desc = "In order to keep aspect ratio, either width or height must be set to \"No Change\" or \"0\".";
+    resize_options->at(UI::EditOption::Resize::groupBox_Resize).data = 0;
+    resize_options->at(UI::EditOption::Resize::groupBox_Resize).name = "Resize:";
+    resize_options->at(UI::EditOption::Resize::groupBox_Resize).desc = "Options to increase or decrease the dimensions of an image.";
+    resize_options->at(UI::EditOption::Resize::checkBox_KeepAspectRatio).data = 1;
+    resize_options->at(UI::EditOption::Resize::checkBox_KeepAspectRatio).name = "Keep Aspect Ratio";
+    resize_options->at(UI::EditOption::Resize::checkBox_KeepAspectRatio).desc = "In order to keep aspect ratio, either width or height must be set to \"No Change\" or \"0\".";
 
     // comboBox_WidthMod
     width_selections->at(0).data = ImageEditor::SizeModifier::NO_CHANGE;
@@ -504,15 +545,15 @@ void BatchItImage::LoadInUiData()
     resampling_selections->at(2).desc = "Bicubic Interpolation";
     // TODO: add more Resampling Filters
 
-    background_options.at(BackgroundOptions::groupBox_Background).data = 0;
-    background_options.at(BackgroundOptions::groupBox_Background).name = "Border Type / Background Color:";
-    background_options.at(BackgroundOptions::groupBox_Background).desc = "Options on how to handle images when a background must be shown.";
-    background_options.at(BackgroundOptions::pushButton_ColorDialog).data = 0;
-    background_options.at(BackgroundOptions::pushButton_ColorDialog).name = "Background Color Picker";
-    background_options.at(BackgroundOptions::pushButton_ColorDialog).desc = "Choose an Image Background Color (Alpha/Transparency is Format Dependant)";
-    background_options.at(BackgroundOptions::label_ColorPreview).data = 0;
-    background_options.at(BackgroundOptions::label_ColorPreview).name = "Background Color Preview";
-    background_options.at(BackgroundOptions::label_ColorPreview).desc = "Background of this label will be the color used in an image background if needed.";
+    background_options.at(UI::EditOption::Background::groupBox_Background).data = 0;
+    background_options.at(UI::EditOption::Background::groupBox_Background).name = "Border Type / Background Color:";
+    background_options.at(UI::EditOption::Background::groupBox_Background).desc = "Options on how to handle images when a background must be shown.";
+    background_options.at(UI::EditOption::Background::pushButton_ColorDialog).data = 0;
+    background_options.at(UI::EditOption::Background::pushButton_ColorDialog).name = "Background Color Picker";
+    background_options.at(UI::EditOption::Background::pushButton_ColorDialog).desc = "Choose an Image Background Color (Alpha/Transparency is Format Dependant)";
+    background_options.at(UI::EditOption::Background::label_ColorPreview).data = 0;
+    background_options.at(UI::EditOption::Background::label_ColorPreview).name = "Background Color Preview";
+    background_options.at(UI::EditOption::Background::label_ColorPreview).desc = "Background of this label will be the color used in an image background if needed.";
 
     // comboBox_BorderType
     border_types->at(0).data = cv::BORDER_CONSTANT;
@@ -537,27 +578,27 @@ void BatchItImage::LoadInUiData()
     border_types->at(6).name = "Isolated Border";
     border_types->at(6).desc = "Does not look outside of ROI |border|?";
     
-    blur_options->at(BlurOptions::groupBox_Blur).data = 0;
-    blur_options->at(BlurOptions::groupBox_Blur).name = "Blur Filters:";
-    blur_options->at(BlurOptions::groupBox_Blur).desc = "";
-    blur_options->at(BlurOptions::checkBox_BlurNormalize).data = 0;
-    blur_options->at(BlurOptions::checkBox_BlurNormalize).name = "Normalize";
-    blur_options->at(BlurOptions::checkBox_BlurNormalize).desc = "";
-    blur_options->at(BlurOptions::label_BlurX1).data = 0;
-    blur_options->at(BlurOptions::label_BlurX1).name = "  X";
-    blur_options->at(BlurOptions::label_BlurX1).desc = "";
-    blur_options->at(BlurOptions::label_BlurY1).data = 0;
-    blur_options->at(BlurOptions::label_BlurY1).name = "  Y";
-    blur_options->at(BlurOptions::label_BlurY1).desc = "";
-    blur_options->at(BlurOptions::label_BlurX2).data = 0;
-    blur_options->at(BlurOptions::label_BlurX2).name = " sX";
-    blur_options->at(BlurOptions::label_BlurX2).desc = "";
-    blur_options->at(BlurOptions::label_BlurY2).data = 0;
-    blur_options->at(BlurOptions::label_BlurY2).name = " sY";
-    blur_options->at(BlurOptions::label_BlurY2).desc = "";
-    blur_options->at(BlurOptions::label_BlurD).data = 0;
-    blur_options->at(BlurOptions::label_BlurD).name = "  D";
-    blur_options->at(BlurOptions::label_BlurD).desc = "";
+    blur_options->at(UI::EditOption::Blur::groupBox_Blur).data = 0;
+    blur_options->at(UI::EditOption::Blur::groupBox_Blur).name = "Blur Filters:";
+    blur_options->at(UI::EditOption::Blur::groupBox_Blur).desc = "";
+    blur_options->at(UI::EditOption::Blur::checkBox_BlurNormalize).data = 0;
+    blur_options->at(UI::EditOption::Blur::checkBox_BlurNormalize).name = "Normalize";
+    blur_options->at(UI::EditOption::Blur::checkBox_BlurNormalize).desc = "";
+    blur_options->at(UI::EditOption::Blur::label_BlurX1).data = 0;
+    blur_options->at(UI::EditOption::Blur::label_BlurX1).name = "  X";
+    blur_options->at(UI::EditOption::Blur::label_BlurX1).desc = "";
+    blur_options->at(UI::EditOption::Blur::label_BlurY1).data = 0;
+    blur_options->at(UI::EditOption::Blur::label_BlurY1).name = "  Y";
+    blur_options->at(UI::EditOption::Blur::label_BlurY1).desc = "";
+    blur_options->at(UI::EditOption::Blur::label_BlurX2).data = 0;
+    blur_options->at(UI::EditOption::Blur::label_BlurX2).name = " sX";
+    blur_options->at(UI::EditOption::Blur::label_BlurX2).desc = "";
+    blur_options->at(UI::EditOption::Blur::label_BlurY2).data = 0;
+    blur_options->at(UI::EditOption::Blur::label_BlurY2).name = " sY";
+    blur_options->at(UI::EditOption::Blur::label_BlurY2).desc = "";
+    blur_options->at(UI::EditOption::Blur::label_BlurD).data = 0;
+    blur_options->at(UI::EditOption::Blur::label_BlurD).name = "  D";
+    blur_options->at(UI::EditOption::Blur::label_BlurD).desc = "";
 
     // comboBox_BlurFilter
     blur_filters->at(0).data = ImageEditor::BlurFilter::NO_FILTER;
@@ -615,62 +656,62 @@ void BatchItImage::LoadInUiData()
     blur_depth_selections.at(5).name = "64-bit Floating Point";
     blur_depth_selections.at(5).desc = "";
 
-    rotation_options->at(RotationOptions::groupBox_Rotation).data = 0;
-    rotation_options->at(RotationOptions::groupBox_Rotation).name = "Rotation:";
-    rotation_options->at(RotationOptions::groupBox_Rotation).desc = "";
-    rotation_options->at(RotationOptions::checkBox_IncreaseBounds).data = 0;
-    rotation_options->at(RotationOptions::checkBox_IncreaseBounds).name = "Increase Image\nBoundaries";
-    rotation_options->at(RotationOptions::checkBox_IncreaseBounds).desc = "";
-    rotation_options->at(RotationOptions::checkBox_FlipImage).data = 0;
-    rotation_options->at(RotationOptions::checkBox_FlipImage).name = "Flip / Mirror";
-    rotation_options->at(RotationOptions::checkBox_FlipImage).desc = "";
+    rotation_options->at(UI::EditOption::Rotation::groupBox_Rotation).data = 0;
+    rotation_options->at(UI::EditOption::Rotation::groupBox_Rotation).name = "Rotation:";
+    rotation_options->at(UI::EditOption::Rotation::groupBox_Rotation).desc = "";
+    rotation_options->at(UI::EditOption::Rotation::checkBox_IncreaseBounds).data = 0;
+    rotation_options->at(UI::EditOption::Rotation::checkBox_IncreaseBounds).name = "Increase Image\nBoundaries";
+    rotation_options->at(UI::EditOption::Rotation::checkBox_IncreaseBounds).desc = "";
+    rotation_options->at(UI::EditOption::Rotation::checkBox_FlipImage).data = 0;
+    rotation_options->at(UI::EditOption::Rotation::checkBox_FlipImage).name = "Flip / Mirror";
+    rotation_options->at(UI::EditOption::Rotation::checkBox_FlipImage).desc = "";
 
-    file_path_options->at(FilePathOptions::groupBox_FileRename).data = 1;
-    file_path_options->at(FilePathOptions::groupBox_FileRename).name = "Modify Image File Names:";
-    file_path_options->at(FilePathOptions::groupBox_FileRename).desc = "";
-    file_path_options->at(FilePathOptions::radioButton_Overwrite).data = 0;
-    file_path_options->at(FilePathOptions::radioButton_Overwrite).name = "Overwrite Original File";
-    file_path_options->at(FilePathOptions::radioButton_Overwrite).desc = "If selected, this will overwrite the original image file with the new edited image file.";
-    file_path_options->at(FilePathOptions::radioButton_RenameOriginal).data = 0;
-    file_path_options->at(FilePathOptions::radioButton_RenameOriginal).name = "Rename Original File";
-    file_path_options->at(FilePathOptions::radioButton_RenameOriginal).desc = "If selected, this will rename the original image file, and use it's name for the new edited image file.";
-    file_path_options->at(FilePathOptions::radioButton_NewFileName).data = 1;
-    file_path_options->at(FilePathOptions::radioButton_NewFileName).name = "Create New File Name";
-    file_path_options->at(FilePathOptions::radioButton_NewFileName).desc = "If selected, a new file name will be used for the new edited image file.";
-    file_path_options->at(FilePathOptions::label_Add).data = 0;
-    file_path_options->at(FilePathOptions::label_Add).name = "Add:";
-    file_path_options->at(FilePathOptions::label_Add).desc = "Add metadata to file name edit text box (to be included in a new file name).";
-    file_path_options->at(FilePathOptions::groupBox_SaveDir).data = 1;
-    file_path_options->at(FilePathOptions::groupBox_SaveDir).name = "Save All Image Files In:";
-    file_path_options->at(FilePathOptions::groupBox_SaveDir).desc = "";
-    file_path_options->at(FilePathOptions::radioButton_RelativePath).data = 1;
-    file_path_options->at(FilePathOptions::radioButton_RelativePath).name = "Relative Paths:";
-    file_path_options->at(FilePathOptions::radioButton_RelativePath).desc = "Relative to the currently edited image file path.";
-    file_path_options->at(FilePathOptions::radioButton_AbsolutePath).data = 0;
-    file_path_options->at(FilePathOptions::radioButton_AbsolutePath).name = "Absolute Path:";
-    file_path_options->at(FilePathOptions::radioButton_AbsolutePath).desc = "The absolute path all edited images will be saved to.";
-    file_path_options->at(FilePathOptions::pushButton_AddBackOneDir).data = 0;
-    file_path_options->at(FilePathOptions::pushButton_AddBackOneDir).name = "Add \"Back One Directory\" For Relative Paths";
-    file_path_options->at(FilePathOptions::pushButton_AddBackOneDir).desc = "Start relative path up one directory level.";
-    file_path_options->at(FilePathOptions::pushButton_FindAbsolutePath).data = 0;
-    file_path_options->at(FilePathOptions::pushButton_FindAbsolutePath).name = "Search For An Absolute Path";
-    file_path_options->at(FilePathOptions::pushButton_FindAbsolutePath).desc = "Open dialog window to select a directory adding it to the absolute path text box.";
+    file_path_options->at(UI::FileOption::FilePath::groupBox_FileRename).data = 1;
+    file_path_options->at(UI::FileOption::FilePath::groupBox_FileRename).name = "Modify Image File Names:";
+    file_path_options->at(UI::FileOption::FilePath::groupBox_FileRename).desc = "";
+    file_path_options->at(UI::FileOption::FilePath::radioButton_Overwrite).data = 0;
+    file_path_options->at(UI::FileOption::FilePath::radioButton_Overwrite).name = "Overwrite Original File";
+    file_path_options->at(UI::FileOption::FilePath::radioButton_Overwrite).desc = "If selected, this will overwrite the original image file with the new edited image file.";
+    file_path_options->at(UI::FileOption::FilePath::radioButton_RenameOriginal).data = 0;
+    file_path_options->at(UI::FileOption::FilePath::radioButton_RenameOriginal).name = "Rename Original File";
+    file_path_options->at(UI::FileOption::FilePath::radioButton_RenameOriginal).desc = "If selected, this will rename the original image file, and use it's name for the new edited image file.";
+    file_path_options->at(UI::FileOption::FilePath::radioButton_NewFileName).data = 1;
+    file_path_options->at(UI::FileOption::FilePath::radioButton_NewFileName).name = "Create New File Name";
+    file_path_options->at(UI::FileOption::FilePath::radioButton_NewFileName).desc = "If selected, a new file name will be used for the new edited image file.";
+    file_path_options->at(UI::FileOption::FilePath::label_Add).data = 0;
+    file_path_options->at(UI::FileOption::FilePath::label_Add).name = "Add:";
+    file_path_options->at(UI::FileOption::FilePath::label_Add).desc = "Add metadata to file name edit text box (to be included in a new file name).";
+    file_path_options->at(UI::FileOption::FilePath::groupBox_SaveDir).data = 1;
+    file_path_options->at(UI::FileOption::FilePath::groupBox_SaveDir).name = "Save All Image Files In:";
+    file_path_options->at(UI::FileOption::FilePath::groupBox_SaveDir).desc = "";
+    file_path_options->at(UI::FileOption::FilePath::radioButton_RelativePath).data = 1;
+    file_path_options->at(UI::FileOption::FilePath::radioButton_RelativePath).name = "Relative Paths:";
+    file_path_options->at(UI::FileOption::FilePath::radioButton_RelativePath).desc = "Relative to the currently edited image file path.";
+    file_path_options->at(UI::FileOption::FilePath::radioButton_AbsolutePath).data = 0;
+    file_path_options->at(UI::FileOption::FilePath::radioButton_AbsolutePath).name = "Absolute Path:";
+    file_path_options->at(UI::FileOption::FilePath::radioButton_AbsolutePath).desc = "The absolute path all edited images will be saved to.";
+    file_path_options->at(UI::FileOption::FilePath::pushButton_AddBackOneDir).data = 0;
+    file_path_options->at(UI::FileOption::FilePath::pushButton_AddBackOneDir).name = "Add \"Back One Directory\" For Relative Paths";
+    file_path_options->at(UI::FileOption::FilePath::pushButton_AddBackOneDir).desc = "Start relative path up one directory level.";
+    file_path_options->at(UI::FileOption::FilePath::pushButton_FindAbsolutePath).data = 0;
+    file_path_options->at(UI::FileOption::FilePath::pushButton_FindAbsolutePath).name = "Search For An Absolute Path";
+    file_path_options->at(UI::FileOption::FilePath::pushButton_FindAbsolutePath).desc = "Open dialog window to select a directory adding it to the absolute path text box.";
 
-    watermark_options->at(WatermarkOptions::groupBox_Watermark).data = 0;
-    watermark_options->at(WatermarkOptions::groupBox_Watermark).name = "Add Watermark:";
-    watermark_options->at(WatermarkOptions::groupBox_Watermark).desc = "";
-    watermark_options->at(WatermarkOptions::pushButton_Watermark).data = 0;
-    watermark_options->at(WatermarkOptions::pushButton_Watermark).name = "Add Watermark";
-    watermark_options->at(WatermarkOptions::pushButton_Watermark).desc = "";
-    watermark_options->at(WatermarkOptions::label_WatermarkLocation).data = ImageEditor::WatermarkLocation::BottomRight;
-    watermark_options->at(WatermarkOptions::label_WatermarkLocation).name = "Location:";
-    watermark_options->at(WatermarkOptions::label_WatermarkLocation).desc = "Choose where to place the watermark image.";
-    watermark_options->at(WatermarkOptions::label_WatermarkTransparency).data = 100;
-    watermark_options->at(WatermarkOptions::label_WatermarkTransparency).name = "Transparency:";
-    watermark_options->at(WatermarkOptions::label_WatermarkTransparency).desc = "Decreasing the transparency (alpha channel) of the watermark will blend it into the background making it \"see-through\".";
-    watermark_options->at(WatermarkOptions::label_WatermarkOffset).data = 0;
-    watermark_options->at(WatermarkOptions::label_WatermarkOffset).name = "X / Y Offset:";
-    watermark_options->at(WatermarkOptions::label_WatermarkOffset).desc = "Offset the watermark position relative to the chosen location.";
+    watermark_options->at(UI::EditOption::Watermark::groupBox_Watermark).data = 0;
+    watermark_options->at(UI::EditOption::Watermark::groupBox_Watermark).name = "Add Watermark:";
+    watermark_options->at(UI::EditOption::Watermark::groupBox_Watermark).desc = "";
+    watermark_options->at(UI::EditOption::Watermark::pushButton_Watermark).data = 0;
+    watermark_options->at(UI::EditOption::Watermark::pushButton_Watermark).name = "Add Watermark";
+    watermark_options->at(UI::EditOption::Watermark::pushButton_Watermark).desc = "";
+    watermark_options->at(UI::EditOption::Watermark::label_WatermarkLocation).data = ImageEditor::WatermarkLocation::BottomRight;
+    watermark_options->at(UI::EditOption::Watermark::label_WatermarkLocation).name = "Location:";
+    watermark_options->at(UI::EditOption::Watermark::label_WatermarkLocation).desc = "Choose where to place the watermark image.";
+    watermark_options->at(UI::EditOption::Watermark::label_WatermarkTransparency).data = 100;
+    watermark_options->at(UI::EditOption::Watermark::label_WatermarkTransparency).name = "Transparency:";
+    watermark_options->at(UI::EditOption::Watermark::label_WatermarkTransparency).desc = "Decreasing the transparency (alpha channel) of the watermark will blend it into the background making it \"see-through\".";
+    watermark_options->at(UI::EditOption::Watermark::label_WatermarkOffset).data = 0;
+    watermark_options->at(UI::EditOption::Watermark::label_WatermarkOffset).name = "X / Y Offset:";
+    watermark_options->at(UI::EditOption::Watermark::label_WatermarkOffset).desc = "Offset the watermark position relative to the chosen location.";
 
     // comboBox_WatermarkLocation
     watermark_locations->at(ImageEditor::WatermarkLocation::TopLeft).data = ImageEditor::WatermarkLocation::TopLeft;
@@ -721,46 +762,46 @@ void BatchItImage::LoadInUiData()
     }
 
     // comboBox_ImageFormat
-    image_formats->at(ImageSaver::SupportedImageFormats::jpeg).data = ImageSaver::SupportedImageFormats::jpeg;
-    image_formats->at(ImageSaver::SupportedImageFormats::jpeg).name = "JPEG Files - *.jpeg";
-    image_formats->at(ImageSaver::SupportedImageFormats::jpeg).desc = "JPEG (Joint Photographic Experts Group) is a commonly used method of lossy compression\n" \
+    image_formats->at(ImageSaver::ImageExtension::jpeg).data = ImageSaver::ImageExtension::jpeg;
+    image_formats->at(ImageSaver::ImageExtension::jpeg).name = "JPEG Files - *.jpeg";
+    image_formats->at(ImageSaver::ImageExtension::jpeg).desc = "JPEG (Joint Photographic Experts Group) is a commonly used method of lossy compression\n" \
         "for digital images, particularly for those images produced by digital photography.\n" \
         "The degree of compression can be adjusted, allowing a selectable tradeoff between\n" \
         "storage size and image quality.JPEG typically achieves 10:1 compression with little\n" \
         "perceptible loss in image quality.";
-    image_formats->at(ImageSaver::SupportedImageFormats::jpg).data = ImageSaver::SupportedImageFormats::jpg;
-    image_formats->at(ImageSaver::SupportedImageFormats::jpg).name = "JPEG Files - *.jpg";
-    image_formats->at(ImageSaver::SupportedImageFormats::jpg).desc = image_formats->at(ImageSaver::SupportedImageFormats::jpeg).desc;
-    image_formats->at(ImageSaver::SupportedImageFormats::jpe).data = ImageSaver::SupportedImageFormats::jpe;
-    image_formats->at(ImageSaver::SupportedImageFormats::jpe).name = "JPEG Files - *.jpe";
-    image_formats->at(ImageSaver::SupportedImageFormats::jpe).desc = image_formats->at(ImageSaver::SupportedImageFormats::jpeg).desc;
-    image_formats->at(ImageSaver::SupportedImageFormats::jp2).data = ImageSaver::SupportedImageFormats::jp2;
-    image_formats->at(ImageSaver::SupportedImageFormats::jp2).name = "JPEG 2000 Files - *.jp2";
-    image_formats->at(ImageSaver::SupportedImageFormats::jp2).desc = "JPEG 2000 (Joint Photographic Experts Group) is an image compression standard based on a\n" \
+    image_formats->at(ImageSaver::ImageExtension::jpg).data = ImageSaver::ImageExtension::jpg;
+    image_formats->at(ImageSaver::ImageExtension::jpg).name = "JPEG Files - *.jpg";
+    image_formats->at(ImageSaver::ImageExtension::jpg).desc = image_formats->at(ImageSaver::ImageExtension::jpeg).desc;
+    image_formats->at(ImageSaver::ImageExtension::jpe).data = ImageSaver::ImageExtension::jpe;
+    image_formats->at(ImageSaver::ImageExtension::jpe).name = "JPEG Files - *.jpe";
+    image_formats->at(ImageSaver::ImageExtension::jpe).desc = image_formats->at(ImageSaver::ImageExtension::jpeg).desc;
+    image_formats->at(ImageSaver::ImageExtension::jp2).data = ImageSaver::ImageExtension::jp2;
+    image_formats->at(ImageSaver::ImageExtension::jp2).name = "JPEG 2000 Files - *.jp2";
+    image_formats->at(ImageSaver::ImageExtension::jp2).desc = "JPEG 2000 (Joint Photographic Experts Group) is an image compression standard based on a\n" \
         "discrete wavelet transform (DWT). Note that it is still not widely supported in web\n" \
         "browsers (other than Safari) and hence is not generally used on the World Wide Web.";
-    image_formats->at(ImageSaver::SupportedImageFormats::png).data = ImageSaver::SupportedImageFormats::png;
-    image_formats->at(ImageSaver::SupportedImageFormats::png).name = "Portable Network Graphics - *.png";
-    image_formats->at(ImageSaver::SupportedImageFormats::png).desc = "Portable Network Graphics (PNG) is a raster-graphics file format that supports lossless\n" \
+    image_formats->at(ImageSaver::ImageExtension::png).data = ImageSaver::ImageExtension::png;
+    image_formats->at(ImageSaver::ImageExtension::png).name = "Portable Network Graphics - *.png";
+    image_formats->at(ImageSaver::ImageExtension::png).desc = "Portable Network Graphics (PNG) is a raster-graphics file format that supports lossless\n" \
         "data compression. PNG supports palette-based images (with palettes of 24-bit RGB or\n" \
         "32-bit RGBA colors), grayscale images (with or without an alpha channel for transparency),\n" \
         "and full-color non-palette-based RGB or RGBA images.";
-    image_formats->at(ImageSaver::SupportedImageFormats::webp).data = ImageSaver::SupportedImageFormats::webp;
-    image_formats->at(ImageSaver::SupportedImageFormats::webp).name = "WebP - *.webp";
-    image_formats->at(ImageSaver::SupportedImageFormats::webp).desc = "WebP is a raster graphics file format developed by Google intended as a replacement for\n" \
+    image_formats->at(ImageSaver::ImageExtension::webp).data = ImageSaver::ImageExtension::webp;
+    image_formats->at(ImageSaver::ImageExtension::webp).name = "WebP - *.webp";
+    image_formats->at(ImageSaver::ImageExtension::webp).desc = "WebP is a raster graphics file format developed by Google intended as a replacement for\n" \
         "JPEG, PNG, and GIF file formats. It supports both lossy and lossless compression, as well\n" \
         "as animation and alpha transparency.";
-    image_formats->at(ImageSaver::SupportedImageFormats::bmp).data = ImageSaver::SupportedImageFormats::bmp;
-    image_formats->at(ImageSaver::SupportedImageFormats::bmp).name = "Windows Bitmaps - *.bmp";
-    image_formats->at(ImageSaver::SupportedImageFormats::bmp).desc = "The BMP file format or bitmap, is a raster graphics image file format used to store\n" \
+    image_formats->at(ImageSaver::ImageExtension::bmp).data = ImageSaver::ImageExtension::bmp;
+    image_formats->at(ImageSaver::ImageExtension::bmp).name = "Windows Bitmaps - *.bmp";
+    image_formats->at(ImageSaver::ImageExtension::bmp).desc = "The BMP file format or bitmap, is a raster graphics image file format used to store\n" \
         "bitmap digital images, independently of the display device (such as a graphics adapter),\n" \
         "especially on Microsoft Windows and OS/2 operating systems.";
-    image_formats->at(ImageSaver::SupportedImageFormats::dib).data = ImageSaver::SupportedImageFormats::dib;
-    image_formats->at(ImageSaver::SupportedImageFormats::dib).name = "Windows Bitmaps - *.dib";
-    image_formats->at(ImageSaver::SupportedImageFormats::dib).desc = image_formats->at(ImageSaver::SupportedImageFormats::bmp).desc;
-    image_formats->at(ImageSaver::SupportedImageFormats::avif).data = ImageSaver::SupportedImageFormats::avif;
-    image_formats->at(ImageSaver::SupportedImageFormats::avif).name = "AVIF - *.avif";
-    image_formats->at(ImageSaver::SupportedImageFormats::avif).desc = "AV1 Image File Format (AVIF) is an open, royalty-free image file format specification\n" \
+    image_formats->at(ImageSaver::ImageExtension::dib).data = ImageSaver::ImageExtension::dib;
+    image_formats->at(ImageSaver::ImageExtension::dib).name = "Windows Bitmaps - *.dib";
+    image_formats->at(ImageSaver::ImageExtension::dib).desc = image_formats->at(ImageSaver::ImageExtension::bmp).desc;
+    image_formats->at(ImageSaver::ImageExtension::avif).data = ImageSaver::ImageExtension::avif;
+    image_formats->at(ImageSaver::ImageExtension::avif).name = "AVIF - *.avif";
+    image_formats->at(ImageSaver::ImageExtension::avif).desc = "AV1 Image File Format (AVIF) is an open, royalty-free image file format specification\n" \
         "for storing images or image sequences compressed with AV1 in the HEIF container format.\n" \
         "AV1 Supports:\n" \
         "* Multiple color spaces (HDR, SDR, color space signaling via CICP or ICC)\n" \
@@ -770,182 +811,182 @@ void BatchItImage::LoadInUiData()
         "* 4:2:0, 4:2:2, 4:4:4 chroma subsampling and RGB\n" \
         "* Film grain synthesis\n" \
         "* Image sequences/animation";
-    image_formats->at(ImageSaver::SupportedImageFormats::pbm).data = ImageSaver::SupportedImageFormats::pbm;
-    image_formats->at(ImageSaver::SupportedImageFormats::pbm).name = "Netpbm Formats - *.pbm";
-    image_formats->at(ImageSaver::SupportedImageFormats::pbm).desc = "Netpbm (formerly Pbmplus) is an open-source package of graphics programs and a programming\n" \
+    image_formats->at(ImageSaver::ImageExtension::pbm).data = ImageSaver::ImageExtension::pbm;
+    image_formats->at(ImageSaver::ImageExtension::pbm).name = "Netpbm Formats - *.pbm";
+    image_formats->at(ImageSaver::ImageExtension::pbm).desc = "Netpbm (formerly Pbmplus) is an open-source package of graphics programs and a programming\n" \
         "library. It is used mainly in the Unix world, but also works on Microsoft Windows, macOS,\n" \
         "and other operating systems.  Graphics formats used and defined by the Netpbm project:\n" \
         "portable pixmap format (PPM), portable graymap format (PGM), and portable bitmap format (PBM).\n" \
         "They are also sometimes referred to collectively as the portable anymap format (PNM).";
-    image_formats->at(ImageSaver::SupportedImageFormats::pgm).data = ImageSaver::SupportedImageFormats::pgm;
-    image_formats->at(ImageSaver::SupportedImageFormats::pgm).name = "Netpbm Formats - *.pgm";
-    image_formats->at(ImageSaver::SupportedImageFormats::pgm).desc = image_formats->at(ImageSaver::SupportedImageFormats::pbm).desc;
-    image_formats->at(ImageSaver::SupportedImageFormats::ppm).data = ImageSaver::SupportedImageFormats::ppm;
-    image_formats->at(ImageSaver::SupportedImageFormats::ppm).name = "Netpbm Formats - *.ppm";
-    image_formats->at(ImageSaver::SupportedImageFormats::ppm).desc = image_formats->at(ImageSaver::SupportedImageFormats::pbm).desc;
-    image_formats->at(ImageSaver::SupportedImageFormats::pxm).data = ImageSaver::SupportedImageFormats::pxm;
-    image_formats->at(ImageSaver::SupportedImageFormats::pxm).name = "Netpbm Formats - *.pxm";
-    image_formats->at(ImageSaver::SupportedImageFormats::pxm).desc = image_formats->at(ImageSaver::SupportedImageFormats::pbm).desc;
-    image_formats->at(ImageSaver::SupportedImageFormats::pnm).data = ImageSaver::SupportedImageFormats::pnm;
-    image_formats->at(ImageSaver::SupportedImageFormats::pnm).name = "Netpbm Formats - *.pnm";
-    image_formats->at(ImageSaver::SupportedImageFormats::pnm).desc = image_formats->at(ImageSaver::SupportedImageFormats::pbm).desc;
-    image_formats->at(ImageSaver::SupportedImageFormats::pfm).data = ImageSaver::SupportedImageFormats::pfm;
-    image_formats->at(ImageSaver::SupportedImageFormats::pfm).name = "Netpbm Formats - *.pfm";
-    image_formats->at(ImageSaver::SupportedImageFormats::pfm).desc = "The PFM (Portable Floatmap) is supported by the de facto reference implementation Netpbm\n" \
+    image_formats->at(ImageSaver::ImageExtension::pgm).data = ImageSaver::ImageExtension::pgm;
+    image_formats->at(ImageSaver::ImageExtension::pgm).name = "Netpbm Formats - *.pgm";
+    image_formats->at(ImageSaver::ImageExtension::pgm).desc = image_formats->at(ImageSaver::ImageExtension::pbm).desc;
+    image_formats->at(ImageSaver::ImageExtension::ppm).data = ImageSaver::ImageExtension::ppm;
+    image_formats->at(ImageSaver::ImageExtension::ppm).name = "Netpbm Formats - *.ppm";
+    image_formats->at(ImageSaver::ImageExtension::ppm).desc = image_formats->at(ImageSaver::ImageExtension::pbm).desc;
+    image_formats->at(ImageSaver::ImageExtension::pxm).data = ImageSaver::ImageExtension::pxm;
+    image_formats->at(ImageSaver::ImageExtension::pxm).name = "Netpbm Formats - *.pxm";
+    image_formats->at(ImageSaver::ImageExtension::pxm).desc = image_formats->at(ImageSaver::ImageExtension::pbm).desc;
+    image_formats->at(ImageSaver::ImageExtension::pnm).data = ImageSaver::ImageExtension::pnm;
+    image_formats->at(ImageSaver::ImageExtension::pnm).name = "Netpbm Formats - *.pnm";
+    image_formats->at(ImageSaver::ImageExtension::pnm).desc = image_formats->at(ImageSaver::ImageExtension::pbm).desc;
+    image_formats->at(ImageSaver::ImageExtension::pfm).data = ImageSaver::ImageExtension::pfm;
+    image_formats->at(ImageSaver::ImageExtension::pfm).name = "Netpbm Formats - *.pfm";
+    image_formats->at(ImageSaver::ImageExtension::pfm).desc = "The PFM (Portable Floatmap) is supported by the de facto reference implementation Netpbm\n" \
         "and is the unofficial four byte IEEE 754 single precision floating point extension.\n" \
         "PFM is supported by the programs Photoshop, GIMP, and ImageMagick.";
     // TODO: Test support for this format
-    image_formats->at(ImageSaver::SupportedImageFormats::pam).data = ImageSaver::SupportedImageFormats::pam;
-    image_formats->at(ImageSaver::SupportedImageFormats::pam).name = "Netpbm Formats - *.pam";
-    image_formats->at(ImageSaver::SupportedImageFormats::pam).desc = "Portable Arbitrary Map (PAM) is an extension of the older binary P4...P6 graphics formats,\n" \
+    image_formats->at(ImageSaver::ImageExtension::pam).data = ImageSaver::ImageExtension::pam;
+    image_formats->at(ImageSaver::ImageExtension::pam).name = "Netpbm Formats - *.pam";
+    image_formats->at(ImageSaver::ImageExtension::pam).desc = "Portable Arbitrary Map (PAM) is an extension of the older binary P4...P6 graphics formats,\n" \
         "introduced with Netpbm version 9.7. PAM generalizes all features of PBM, PGM and PPM, and\n" \
         "provides for extensions. PAM is supported by XnView and FFmpeg; and defines two new\n" \
         "attributes: depth and tuple type.";
-    image_formats->at(ImageSaver::SupportedImageFormats::sr).data = ImageSaver::SupportedImageFormats::sr;
-    image_formats->at(ImageSaver::SupportedImageFormats::sr).name = "Sun Rasters - *.sr";
-    image_formats->at(ImageSaver::SupportedImageFormats::sr).desc = "Sun Raster was a raster graphics file format used on SunOS by Sun Microsystems. ACDSee,\n" \
+    image_formats->at(ImageSaver::ImageExtension::sr).data = ImageSaver::ImageExtension::sr;
+    image_formats->at(ImageSaver::ImageExtension::sr).name = "Sun Rasters - *.sr";
+    image_formats->at(ImageSaver::ImageExtension::sr).desc = "Sun Raster was a raster graphics file format used on SunOS by Sun Microsystems. ACDSee,\n" \
         "FFmpeg, GIMP, ImageMagick, IrfanView, LibreOffice, Netpbm, PaintShop Pro, PMView, and\n" \
         "XnView among others support Sun Raster image files. The format does not support transparency.";
-    image_formats->at(ImageSaver::SupportedImageFormats::ras).data = ImageSaver::SupportedImageFormats::ras;
-    image_formats->at(ImageSaver::SupportedImageFormats::ras).name = "Sun Rasters - *.ras";
-    image_formats->at(ImageSaver::SupportedImageFormats::ras).desc = image_formats->at(ImageSaver::SupportedImageFormats::sr).desc;
-    image_formats->at(ImageSaver::SupportedImageFormats::tiff).data = ImageSaver::SupportedImageFormats::tiff;
-    image_formats->at(ImageSaver::SupportedImageFormats::tiff).name = "TIFF Files - *.tiff";
-    image_formats->at(ImageSaver::SupportedImageFormats::tiff).desc = "Tag Image File Format (TIFF or TIF), is an image file format for storing raster graphics\n" \
+    image_formats->at(ImageSaver::ImageExtension::ras).data = ImageSaver::ImageExtension::ras;
+    image_formats->at(ImageSaver::ImageExtension::ras).name = "Sun Rasters - *.ras";
+    image_formats->at(ImageSaver::ImageExtension::ras).desc = image_formats->at(ImageSaver::ImageExtension::sr).desc;
+    image_formats->at(ImageSaver::ImageExtension::tiff).data = ImageSaver::ImageExtension::tiff;
+    image_formats->at(ImageSaver::ImageExtension::tiff).name = "TIFF Files - *.tiff";
+    image_formats->at(ImageSaver::ImageExtension::tiff).desc = "Tag Image File Format (TIFF or TIF), is an image file format for storing raster graphics\n" \
         "images, popular among graphic artists, the publishing industry, and photographers. TIFF is\n" \
         "widely supported by scanning, faxing, word processing, optical character recognition,\n" \
         "image manipulation, desktop publishing, and page-layout applications.";
-    image_formats->at(ImageSaver::SupportedImageFormats::tif).data = ImageSaver::SupportedImageFormats::tif;
-    image_formats->at(ImageSaver::SupportedImageFormats::tif).name = "TIFF Files - *.tif";
-    image_formats->at(ImageSaver::SupportedImageFormats::tif).desc = image_formats->at(ImageSaver::SupportedImageFormats::tiff).desc;
-    image_formats->at(ImageSaver::SupportedImageFormats::exr).data = ImageSaver::SupportedImageFormats::exr;
-    image_formats->at(ImageSaver::SupportedImageFormats::exr).name = "OpenEXR Image Files - *.exr";
-    image_formats->at(ImageSaver::SupportedImageFormats::exr).desc = "OpenEXR is a high-dynamic range, multi-channel raster file format, created under a free\n" \
+    image_formats->at(ImageSaver::ImageExtension::tif).data = ImageSaver::ImageExtension::tif;
+    image_formats->at(ImageSaver::ImageExtension::tif).name = "TIFF Files - *.tif";
+    image_formats->at(ImageSaver::ImageExtension::tif).desc = image_formats->at(ImageSaver::ImageExtension::tiff).desc;
+    image_formats->at(ImageSaver::ImageExtension::exr).data = ImageSaver::ImageExtension::exr;
+    image_formats->at(ImageSaver::ImageExtension::exr).name = "OpenEXR Image Files - *.exr";
+    image_formats->at(ImageSaver::ImageExtension::exr).desc = "OpenEXR is a high-dynamic range, multi-channel raster file format, created under a free\n" \
         "software license similar to the BSD license. It supports multiple channels of potentially\n" \
         "different pixel sizes, including 32-bit unsigned integer, 32-bit and 16-bit floating point\n" \
         "values, as well as various compression techniques which include lossless and lossy\n" \
         "compression algorithms. It also has arbitrary channels and encodes multiple points of view\n" \
         "such as left- and right-camera images.";
-    image_formats->at(ImageSaver::SupportedImageFormats::hdr).data = ImageSaver::SupportedImageFormats::hdr;
-    image_formats->at(ImageSaver::SupportedImageFormats::hdr).name = "Radiance HDR - *.hdr";
-    image_formats->at(ImageSaver::SupportedImageFormats::hdr).desc = "RGBE or Radiance HDR is an image format that stores pixels as one byte each for RGB (red,\n" \
+    image_formats->at(ImageSaver::ImageExtension::hdr).data = ImageSaver::ImageExtension::hdr;
+    image_formats->at(ImageSaver::ImageExtension::hdr).name = "Radiance HDR - *.hdr";
+    image_formats->at(ImageSaver::ImageExtension::hdr).desc = "RGBE or Radiance HDR is an image format that stores pixels as one byte each for RGB (red,\n" \
         "green, and blue) values with a one byte shared exponent. Thus it stores four bytes per pixel.\n" \
         "RGBE allows pixels to have the dynamic range and precision of floating-point values in a\n" \
         "relatively compact data structure (32 bits per pixel).";
-    image_formats->at(ImageSaver::SupportedImageFormats::pic).data = ImageSaver::SupportedImageFormats::pic;
-    image_formats->at(ImageSaver::SupportedImageFormats::pic).name = "Radiance HDR - *.pic";
-    image_formats->at(ImageSaver::SupportedImageFormats::pic).desc = image_formats->at(ImageSaver::SupportedImageFormats::hdr).desc;
+    image_formats->at(ImageSaver::ImageExtension::pic).data = ImageSaver::ImageExtension::pic;
+    image_formats->at(ImageSaver::ImageExtension::pic).name = "Radiance HDR - *.pic";
+    image_formats->at(ImageSaver::ImageExtension::pic).desc = image_formats->at(ImageSaver::ImageExtension::hdr).desc;
 
     // Specific Format Widget Options (multiple sets)
-    format_jpeg_options[FormatJpegOptions::label_FormatFlags].data = 1;
-    format_jpeg_options[FormatJpegOptions::label_FormatFlags].name = "Subsampling:";
-    format_jpeg_options[FormatJpegOptions::label_FormatFlags].desc = "Chroma subsampling is the practice of encoding images by implementing less resolution\n" \
+    format_jpeg_options[UI::FileOption::FormatJpeg::label_FormatFlags].data = 1;
+    format_jpeg_options[UI::FileOption::FormatJpeg::label_FormatFlags].name = "Subsampling:";
+    format_jpeg_options[UI::FileOption::FormatJpeg::label_FormatFlags].desc = "Chroma subsampling is the practice of encoding images by implementing less resolution\n" \
         "for chroma information than for luma information, taking advantage of the human visual\n" \
         "system's lower acuity for color differences than for luminance.";
-    format_jpeg_options[FormatJpegOptions::label_Quality].data = 95;
-    format_jpeg_options[FormatJpegOptions::label_Quality].name = "Quality:";
-    format_jpeg_options[FormatJpegOptions::label_Quality].desc = "JPEG quality can be between 0 and 100 (the higher the better). Default value is 95.";
-    format_jpeg_options[FormatJpegOptions::checkBox_Optimize].data = 0;
-    format_jpeg_options[FormatJpegOptions::checkBox_Optimize].name = "Optimize";
-    format_jpeg_options[FormatJpegOptions::checkBox_Optimize].desc = "JPEG optimize can lower file sizes by striping unnecessary metadata, but only noticeable\n" \
+    format_jpeg_options[UI::FileOption::FormatJpeg::label_Quality].data = 95;
+    format_jpeg_options[UI::FileOption::FormatJpeg::label_Quality].name = "Quality:";
+    format_jpeg_options[UI::FileOption::FormatJpeg::label_Quality].desc = "JPEG quality can be between 0 and 100 (the higher the better). Default value is 95.";
+    format_jpeg_options[UI::FileOption::FormatJpeg::checkBox_Optimize].data = 0;
+    format_jpeg_options[UI::FileOption::FormatJpeg::checkBox_Optimize].name = "Optimize";
+    format_jpeg_options[UI::FileOption::FormatJpeg::checkBox_Optimize].desc = "JPEG optimize can lower file sizes by striping unnecessary metadata, but only noticeable\n" \
         "at higher quality ranges (95+). Default is unchecked.";
-    format_jpeg_options[FormatJpegOptions::checkBox_Progressive].data = 0;
-    format_jpeg_options[FormatJpegOptions::checkBox_Progressive].name = "Progressive";
-    format_jpeg_options[FormatJpegOptions::checkBox_Progressive].desc = "Using the JPEG interlaced progressive format data is compressed in multiple passes of\n" \
+    format_jpeg_options[UI::FileOption::FormatJpeg::checkBox_Progressive].data = 0;
+    format_jpeg_options[UI::FileOption::FormatJpeg::checkBox_Progressive].name = "Progressive";
+    format_jpeg_options[UI::FileOption::FormatJpeg::checkBox_Progressive].desc = "Using the JPEG interlaced progressive format data is compressed in multiple passes of\n" \
         "progressively higher detail.This is ideal for large images that will be displayed while\n" \
         "downloading over a slow connection, allowing a reasonable preview after receiving only a\n" \
         "portion of the data. Default is unchecked.";
-    format_jpeg_options[FormatJpegOptions::label_Compression].data = 0;
-    format_jpeg_options[FormatJpegOptions::label_Compression].name = "Restart Interval:";
-    format_jpeg_options[FormatJpegOptions::label_Compression].desc = "Restart interval specifies the interval between restart markers, in Minimum Coded Units\n" \
+    format_jpeg_options[UI::FileOption::FormatJpeg::label_Compression].data = 0;
+    format_jpeg_options[UI::FileOption::FormatJpeg::label_Compression].name = "Restart Interval:";
+    format_jpeg_options[UI::FileOption::FormatJpeg::label_Compression].desc = "Restart interval specifies the interval between restart markers, in Minimum Coded Units\n" \
         "(MCUs).They were designed to allow resynchronization after an error, but also now serve a\n" \
         "new purpose, to allow for multi - threaded JPEG encoders and decoders. Default value is 0.";
-    format_jpeg_options[FormatJpegOptions::label_ExtraSetting1].data = -1;
-    format_jpeg_options[FormatJpegOptions::label_ExtraSetting1].name = "Luma:";
-    format_jpeg_options[FormatJpegOptions::label_ExtraSetting1].desc = "Separate and adjust the luma quality between to 0 and 100 (-1 don't use, default). When an\n" \
+    format_jpeg_options[UI::FileOption::FormatJpeg::label_ExtraSetting1].data = -1;
+    format_jpeg_options[UI::FileOption::FormatJpeg::label_ExtraSetting1].name = "Luma:";
+    format_jpeg_options[UI::FileOption::FormatJpeg::label_ExtraSetting1].desc = "Separate and adjust the luma quality between to 0 and 100 (-1 don't use, default). When an\n" \
         "image is converted from RGB to Y'CBCR, the luma component is the (Y'), representing brightness.";
-    format_jpeg_options[FormatJpegOptions::label_ExtraSetting2].data = -1;
-    format_jpeg_options[FormatJpegOptions::label_ExtraSetting2].name = "Chroma:";
-    format_jpeg_options[FormatJpegOptions::label_ExtraSetting2].desc = "Separate and adjust the chroma quality between to 0 and 100 (-1 don't use, default). When an\n" \
+    format_jpeg_options[UI::FileOption::FormatJpeg::label_ExtraSetting2].data = -1;
+    format_jpeg_options[UI::FileOption::FormatJpeg::label_ExtraSetting2].name = "Chroma:";
+    format_jpeg_options[UI::FileOption::FormatJpeg::label_ExtraSetting2].desc = "Separate and adjust the chroma quality between to 0 and 100 (-1 don't use, default). When an\n" \
         "image is converted from RGB to Y'CBCR, the chroma component is the (CB and CR), representing color.";
 
-    format_jp2_options[FormatJp2Options::label_Compression].data = 1000;
-    format_jp2_options[FormatJp2Options::label_Compression].name = "Compression Level:";
-    format_jp2_options[FormatJp2Options::label_Compression].desc = "Use to specify the JPEG 2000 target compression rate with values from 0 to 1000. Default value is 1000.";
+    format_jp2_options[UI::FileOption::FormatJp2::label_Compression].data = 1000;
+    format_jp2_options[UI::FileOption::FormatJp2::label_Compression].name = "Compression Level:";
+    format_jp2_options[UI::FileOption::FormatJp2::label_Compression].desc = "Use to specify the JPEG 2000 target compression rate with values from 0 to 1000. Default value is 1000.";
 
-    format_png_options[FormatPngOptions::label_FormatFlags].data = 0;
-    format_png_options[FormatPngOptions::label_FormatFlags].name = "Compression Strategy:";
-    format_png_options[FormatPngOptions::label_FormatFlags].desc = "PNG compression strategies are passed to the underlying zlib processing stage, and only affect the\n" \
+    format_png_options[UI::FileOption::FormatPng::label_FormatFlags].data = 0;
+    format_png_options[UI::FileOption::FormatPng::label_FormatFlags].name = "Compression Strategy:";
+    format_png_options[UI::FileOption::FormatPng::label_FormatFlags].desc = "PNG compression strategies are passed to the underlying zlib processing stage, and only affect the\n" \
         "compression ratio, but not the correctness of the compressed output even if it is not set appropriately\n" \
         "The effect of the [Filter] strategy is to force more Huffman coding and less string matching; it is\n" \
         "somewhat intermediate between [Default] and [Huffman Only]. [Run-Length Encoding] is designed to be\n" \
         "almost as fast as [Huffman Only], but gives better compression for PNG image data. [Fixed (No Huffman)]\n" \
         "prevents the use of dynamic Huffman codes, allowing for a simpler decoder for special applications.";
-    format_png_options[FormatPngOptions::checkBox_Optimize].data = 0;
-    format_png_options[FormatPngOptions::checkBox_Optimize].name = "Binary Level";
-    format_png_options[FormatPngOptions::checkBox_Optimize].desc = "If binary level (bi-level) is checked a grayscale PNG image will be created. Default is unchecked.";
-    format_png_options[FormatPngOptions::label_Compression].data = 1;
-    format_png_options[FormatPngOptions::label_Compression].name = "Compression Level:";
-    format_png_options[FormatPngOptions::label_Compression].desc = "PNG compression levels are from 0 to 9 with higher values meaning a smaller file size and longer\n" \
+    format_png_options[UI::FileOption::FormatPng::checkBox_Optimize].data = 0;
+    format_png_options[UI::FileOption::FormatPng::checkBox_Optimize].name = "Binary Level";
+    format_png_options[UI::FileOption::FormatPng::checkBox_Optimize].desc = "If binary level (bi-level) is checked a grayscale PNG image will be created. Default is unchecked.";
+    format_png_options[UI::FileOption::FormatPng::label_Compression].data = 1;
+    format_png_options[UI::FileOption::FormatPng::label_Compression].name = "Compression Level:";
+    format_png_options[UI::FileOption::FormatPng::label_Compression].desc = "PNG compression levels are from 0 to 9 with higher values meaning a smaller file size and longer\n" \
         "compression time. If specified, the strategy is changed to [Default].\n" \
         "Default value is 1 (best speed setting).";
 
-    format_webp_options[FormatWebpOptions::label_Quality].data = 100;
-    format_webp_options[FormatWebpOptions::label_Quality].name = "Quality:";
-    format_webp_options[FormatWebpOptions::label_Quality].desc = "WebP quality can be between 0 and 100 (the higher the better). With 100 quality, the lossless\n" \
+    format_webp_options[UI::FileOption::FormatWebp::label_Quality].data = 100;
+    format_webp_options[UI::FileOption::FormatWebp::label_Quality].name = "Quality:";
+    format_webp_options[UI::FileOption::FormatWebp::label_Quality].desc = "WebP quality can be between 0 and 100 (the higher the better). With 100 quality, the lossless\n" \
         "compression is used. Default value is 100.";
 
-    format_avif_options[FormatAvifOptions::label_Quality].data = 95;
-    format_avif_options[FormatAvifOptions::label_Quality].name = "Quality:";
-    format_avif_options[FormatAvifOptions::label_Quality].desc = "AVIF quality can be between 0 and 100 (the higher the better). Default value is 95.";
-    format_avif_options[FormatAvifOptions::label_Compression].data = 9;
-    format_avif_options[FormatAvifOptions::label_Compression].name = "Speed:";
-    format_avif_options[FormatAvifOptions::label_Compression].desc = "The AVIF creation speed can be between 0 (slowest) and 9 (fastest). Default value is 9.";
-    format_avif_options[FormatAvifOptions::label_ExtraSetting2].data = 8;
-    format_avif_options[FormatAvifOptions::label_ExtraSetting2].name = "Color Depth:";
-    format_avif_options[FormatAvifOptions::label_ExtraSetting2].desc = "AVIF can have 8-, 10- or 12-bit color depths. If greater than 8, it is stored/read as a float with\n" \
+    format_avif_options[UI::FileOption::FormatAvif::label_Quality].data = 95;
+    format_avif_options[UI::FileOption::FormatAvif::label_Quality].name = "Quality:";
+    format_avif_options[UI::FileOption::FormatAvif::label_Quality].desc = "AVIF quality can be between 0 and 100 (the higher the better). Default value is 95.";
+    format_avif_options[UI::FileOption::FormatAvif::label_Compression].data = 9;
+    format_avif_options[UI::FileOption::FormatAvif::label_Compression].name = "Speed:";
+    format_avif_options[UI::FileOption::FormatAvif::label_Compression].desc = "The AVIF creation speed can be between 0 (slowest) and 9 (fastest). Default value is 9.";
+    format_avif_options[UI::FileOption::FormatAvif::label_ExtraSetting2].data = 8;
+    format_avif_options[UI::FileOption::FormatAvif::label_ExtraSetting2].name = "Color Depth:";
+    format_avif_options[UI::FileOption::FormatAvif::label_ExtraSetting2].desc = "AVIF can have 8-, 10- or 12-bit color depths. If greater than 8, it is stored/read as a float with\n" \
         "pixels having any value between 0 and 1.0. Default value is 8.";
 
-    format_pbm_options[FormatPbmOptions::checkBox_Optimize].data = 1;
-    format_pbm_options[FormatPbmOptions::checkBox_Optimize].name = "Binary Format";
-    format_pbm_options[FormatPbmOptions::checkBox_Optimize].desc = "For PBM, PGM, or PPM, using a binary format creates a grayscale image. Default is checked.";
+    format_pbm_options[UI::FileOption::FormatPbm::checkBox_Optimize].data = 1;
+    format_pbm_options[UI::FileOption::FormatPbm::checkBox_Optimize].name = "Binary Format";
+    format_pbm_options[UI::FileOption::FormatPbm::checkBox_Optimize].desc = "For PBM, PGM, or PPM, using a binary format creates a grayscale image. Default is checked.";
 
-    format_pam_options[FormatPamOptions::label_FormatFlags].data = 0;
-    format_pam_options[FormatPamOptions::label_FormatFlags].name = "Tuple Type:";
-    format_pam_options[FormatPamOptions::label_FormatFlags].desc = "The tuple type attribute specifies what kind of image the PAM file represents, thus enabling it to\n" \
+    format_pam_options[UI::FileOption::FormatPam::label_FormatFlags].data = 0;
+    format_pam_options[UI::FileOption::FormatPam::label_FormatFlags].name = "Tuple Type:";
+    format_pam_options[UI::FileOption::FormatPam::label_FormatFlags].desc = "The tuple type attribute specifies what kind of image the PAM file represents, thus enabling it to\n" \
         "stand for the older Netpbm formats, as well as to be extended to new uses, like transparency.";
 
-    format_tiff_options[FormatTiffOptions::label_FormatFlags].data = 4;
-    format_tiff_options[FormatTiffOptions::label_FormatFlags].name = "Compression Scheme:";
-    format_tiff_options[FormatTiffOptions::label_FormatFlags].desc = "The compression scheme used on the image data. Note that this is a complete list of schemes from the\n" \
+    format_tiff_options[UI::FileOption::FormatTiff::label_FormatFlags].data = 4;
+    format_tiff_options[UI::FileOption::FormatTiff::label_FormatFlags].name = "Compression Scheme:";
+    format_tiff_options[UI::FileOption::FormatTiff::label_FormatFlags].desc = "The compression scheme used on the image data. Note that this is a complete list of schemes from the\n" \
         "libtiff documents and some may not be currently supported in this app.\n" \
         "Compression schemes that do work: LWZ (default), Adobe Deflate, and Deflate.";
-    format_tiff_options[FormatTiffOptions::label_Quality].data = 2;
-    format_tiff_options[FormatTiffOptions::label_Quality].name = "Resolution Unit:";
-    format_tiff_options[FormatTiffOptions::label_Quality].desc = "The resolution unit of measurement for X and Y directions.";
-    format_tiff_options[FormatTiffOptions::label_ExtraSetting1].data = 0;
-    format_tiff_options[FormatTiffOptions::label_ExtraSetting1].name = "X:";
-    format_tiff_options[FormatTiffOptions::label_ExtraSetting1].desc = "The number of pixels per \"resolution unit\" in the image's width or X direction. Default value is 0.";
-    format_tiff_options[FormatTiffOptions::label_ExtraSetting2].data = 0;
-    format_tiff_options[FormatTiffOptions::label_ExtraSetting2].name = "Y:";
-    format_tiff_options[FormatTiffOptions::label_ExtraSetting2].desc = "The number of pixels per \"resolution unit\" in the image's height (length) or Y direction. Default value is 0.";
+    format_tiff_options[UI::FileOption::FormatTiff::label_Quality].data = 2;
+    format_tiff_options[UI::FileOption::FormatTiff::label_Quality].name = "Resolution Unit:";
+    format_tiff_options[UI::FileOption::FormatTiff::label_Quality].desc = "The resolution unit of measurement for X and Y directions.";
+    format_tiff_options[UI::FileOption::FormatTiff::label_ExtraSetting1].data = 0;
+    format_tiff_options[UI::FileOption::FormatTiff::label_ExtraSetting1].name = "X:";
+    format_tiff_options[UI::FileOption::FormatTiff::label_ExtraSetting1].desc = "The number of pixels per \"resolution unit\" in the image's width or X direction. Default value is 0.";
+    format_tiff_options[UI::FileOption::FormatTiff::label_ExtraSetting2].data = 0;
+    format_tiff_options[UI::FileOption::FormatTiff::label_ExtraSetting2].name = "Y:";
+    format_tiff_options[UI::FileOption::FormatTiff::label_ExtraSetting2].desc = "The number of pixels per \"resolution unit\" in the image's height (length) or Y direction. Default value is 0.";
 
-    format_exr_options[FormatExrOptions::label_FormatFlags].data = 3;
-    format_exr_options[FormatExrOptions::label_FormatFlags].name = "Compression Type:";
-    format_exr_options[FormatExrOptions::label_FormatFlags].desc = "Override EXR compression type (ZLib is default)";
-    format_exr_options[FormatExrOptions::checkBox_Optimize].data = 0;
-    format_exr_options[FormatExrOptions::checkBox_Optimize].name = "Store as FP16 (HALF)";
-    format_exr_options[FormatExrOptions::checkBox_Optimize].desc = "Override EXR Storage Type";
-    format_exr_options[FormatExrOptions::checkBox_Progressive].data = 1;
-    format_exr_options[FormatExrOptions::checkBox_Progressive].name = "Store as FP32 (Default)";
-    format_exr_options[FormatExrOptions::checkBox_Progressive].desc = "Override EXR Storage Type";
-    format_exr_options[FormatExrOptions::label_Compression].data = 45;
-    format_exr_options[FormatExrOptions::label_Compression].name = "Compression Level:";
-    format_exr_options[FormatExrOptions::label_Compression].desc = "Override EXR DWA Compression Level. Default value is 45.";
+    format_exr_options[UI::FileOption::FormatExr::label_FormatFlags].data = 3;
+    format_exr_options[UI::FileOption::FormatExr::label_FormatFlags].name = "Compression Type:";
+    format_exr_options[UI::FileOption::FormatExr::label_FormatFlags].desc = "Override EXR compression type (ZLib is default)";
+    format_exr_options[UI::FileOption::FormatExr::checkBox_Optimize].data = 0;
+    format_exr_options[UI::FileOption::FormatExr::checkBox_Optimize].name = "Store as FP16 (HALF)";
+    format_exr_options[UI::FileOption::FormatExr::checkBox_Optimize].desc = "Override EXR Storage Type";
+    format_exr_options[UI::FileOption::FormatExr::checkBox_Progressive].data = 1;
+    format_exr_options[UI::FileOption::FormatExr::checkBox_Progressive].name = "Store as FP32 (Default)";
+    format_exr_options[UI::FileOption::FormatExr::checkBox_Progressive].desc = "Override EXR Storage Type";
+    format_exr_options[UI::FileOption::FormatExr::label_Compression].data = 45;
+    format_exr_options[UI::FileOption::FormatExr::label_Compression].name = "Compression Level:";
+    format_exr_options[UI::FileOption::FormatExr::label_Compression].desc = "Override EXR DWA Compression Level. Default value is 45.";
 
-    format_hdr_options[FormatHdrOptions::label_FormatFlags].data = 0;
-    format_hdr_options[FormatHdrOptions::label_FormatFlags].name = "Compression Strategy:";
-    format_hdr_options[FormatHdrOptions::label_FormatFlags].desc = "For HDR files there are only really two strategies: compress or don't compress.";
+    format_hdr_options[UI::FileOption::FormatHdr::label_FormatFlags].data = 0;
+    format_hdr_options[UI::FileOption::FormatHdr::label_FormatFlags].name = "Compression Strategy:";
+    format_hdr_options[UI::FileOption::FormatHdr::label_FormatFlags].desc = "For HDR files there are only really two strategies: compress or don't compress.";
 
     // comboBox_FormatFlags (multiple sets)
     format_jpeg_subsamplings[0].data = cv::IMWRITE_JPEG_SAMPLING_FACTOR_411;
@@ -1130,105 +1171,105 @@ void BatchItImage::LoadInUiData()
     format_hdr_compression[1].desc = "The only compression option.";
 
     // Various Other Widget data
-    other_options->at(OtherOptions::tab_1).data = 0; // Default current tab index, ignores other tab.data.
-    other_options->at(OtherOptions::tab_1).name = "Images";
-    //other_options->at(OtherOptions::tab_1).desc = "Image File Viewer Tab";
-    other_options->at(OtherOptions::tab_2).data = 0;
-    other_options->at(OtherOptions::tab_2).name = "Image Edits";
-    //other_options->at(OtherOptions::tab_2).desc = "Image Edit Tools Tab";
-    other_options->at(OtherOptions::tab_3).data = 0;
-    other_options->at(OtherOptions::tab_3).name = "Save Options";
-    //other_options->at(OtherOptions::tab_3).desc = "File Save Options Tab";
-    other_options->at(OtherOptions::checkBox_SearchSubDirs).data = 1;
-    other_options->at(OtherOptions::checkBox_SearchSubDirs).name = "When Searching Directories Search Sub-Directories As Well";
-    other_options->at(OtherOptions::checkBox_SearchSubDirs).desc = "When file directories/folders are dropped into the image file viewer an image file search will begin\n" \
+    other_options->at(UI::Other::tab_1).data = 0; // Default current tab index, ignores other tab.data.
+    other_options->at(UI::Other::tab_1).name = "Images";
+    //other_options->at(UI::Other::tab_1).desc = "Image File Viewer Tab";
+    other_options->at(UI::Other::tab_2).data = 0;
+    other_options->at(UI::Other::tab_2).name = "Image Edits";
+    //other_options->at(UI::Other::tab_2).desc = "Image Edit Tools Tab";
+    other_options->at(UI::Other::tab_3).data = 0;
+    other_options->at(UI::Other::tab_3).name = "Save Options";
+    //other_options->at(UI::Other::tab_3).desc = "File Save Options Tab";
+    other_options->at(UI::Other::checkBox_SearchSubDirs).data = 1;
+    other_options->at(UI::Other::checkBox_SearchSubDirs).name = "When Searching Directories Search Sub-Directories As Well";
+    other_options->at(UI::Other::checkBox_SearchSubDirs).desc = "When file directories/folders are dropped into the image file viewer an image file search will begin\n" \
                                                                    "in the directory, and it this is checked, all its sub-directories too.";
-    other_options->at(OtherOptions::label_EditSave).data = 0;
-    other_options->at(OtherOptions::label_EditSave).name = "Start Editing And Saving:";
-    other_options->at(OtherOptions::label_EditSave).desc = "\"All Images\" means all images loaded into file tree. \"Only Selected Images\" means only\n" \
+    other_options->at(UI::Other::label_EditSave).data = 0;
+    other_options->at(UI::Other::label_EditSave).name = "Start Editing And Saving:";
+    other_options->at(UI::Other::label_EditSave).desc = "\"All Images\" means all images loaded into file tree. \"Only Selected Images\" means only\n" \
                                                            "images in file tree that have their checkboxes checked.";
-    other_options->at(OtherOptions::pushButton_EditSaveAll).data = 0;
-    other_options->at(OtherOptions::pushButton_EditSaveAll).name = "All Images";
-    other_options->at(OtherOptions::pushButton_EditSaveAll).desc = "";
-    other_options->at(OtherOptions::pushButton_EditSaveSelected).data = 0;
-    other_options->at(OtherOptions::pushButton_EditSaveSelected).name = "Selected Images";
-    other_options->at(OtherOptions::pushButton_EditSaveSelected).desc = "";
+    other_options->at(UI::Other::pushButton_EditSaveAll).data = 0;
+    other_options->at(UI::Other::pushButton_EditSaveAll).name = "All Images";
+    other_options->at(UI::Other::pushButton_EditSaveAll).desc = "";
+    other_options->at(UI::Other::pushButton_EditSaveSelected).data = 0;
+    other_options->at(UI::Other::pushButton_EditSaveSelected).name = "Selected Images";
+    other_options->at(UI::Other::pushButton_EditSaveSelected).desc = "";
     
-    dialog_messages.at(DialogMessages::delete_dialog).data = 0; // 1 = bold message/desc text. | ## = #[current preset number]
-    dialog_messages.at(DialogMessages::delete_dialog).name = "Delete?";
-    dialog_messages.at(DialogMessages::delete_dialog).desc = "Delete currently highlighted image file -or- all image files selected/checked?";
-    dialog_messages.at(DialogMessages::delete_dialog_clear).data = 0;
-    dialog_messages.at(DialogMessages::delete_dialog_clear).name = "Clear List?";
-    dialog_messages.at(DialogMessages::delete_dialog_clear).desc = "The entire list of image files is about to be cleared, is this OK?";
-    dialog_messages.at(DialogMessages::CreateNewPreset).data = 0;
-    dialog_messages.at(DialogMessages::CreateNewPreset).name = "Add New Preset";
-    dialog_messages.at(DialogMessages::CreateNewPreset).desc = "Add Description for New Preset.";
-    dialog_messages.at(DialogMessages::ChangePresetDescription).data = 0;
-    dialog_messages.at(DialogMessages::ChangePresetDescription).name = "Change Preset Description";
-    dialog_messages.at(DialogMessages::ChangePresetDescription).desc = "Change Title Description of Currently Selected Preset.";
-    dialog_messages.at(DialogMessages::save_preset_dialog).data = 0;
-    dialog_messages.at(DialogMessages::save_preset_dialog).name = "Save Preset ##?";
-    dialog_messages.at(DialogMessages::save_preset_dialog).desc = "There are unsaved options in [Preset ##], would you like to save these options before proceeding?";
-    dialog_messages.at(DialogMessages::save_preset_dialog_closing).data = 0;
-    dialog_messages.at(DialogMessages::save_preset_dialog_closing).name = "Closing...";
-    dialog_messages.at(DialogMessages::save_preset_dialog_closing).desc = "There are unsaved preset options, would you like to save these options before closing?";
-    dialog_messages.at(DialogMessages::remove_preset_dialog).data = 1;
-    dialog_messages.at(DialogMessages::remove_preset_dialog).name = "Remove Preset ##";
-    dialog_messages.at(DialogMessages::remove_preset_dialog).desc = "Are you sure you want to remove/delete [Preset ##]?";
-    dialog_messages.at(DialogMessages::remove_preset_dialog_halted).data = 0;
-    dialog_messages.at(DialogMessages::remove_preset_dialog_halted).name = "Cannot Remove Preset";
-    dialog_messages.at(DialogMessages::remove_preset_dialog_halted).desc = "You cannot remove/delete the last remaining preset.";
-    dialog_messages.at(DialogMessages::non_image_file_dialog).data = 0;
-    dialog_messages.at(DialogMessages::non_image_file_dialog).name = "Warning";
-    dialog_messages.at(DialogMessages::non_image_file_dialog).desc = "Unsupported or non-image files were not added to list.";
-    dialog_messages.at(DialogMessages::check_wm_path_dialog).data = 0;
-    dialog_messages.at(DialogMessages::check_wm_path_dialog).name = "Invalid Image Path";
-    dialog_messages.at(DialogMessages::check_wm_path_dialog).desc = "The image path provided does not exist. Open file dialog window and find new path?";
-    dialog_messages.at(DialogMessages::check_path_dialog).data = 0;
-    dialog_messages.at(DialogMessages::check_path_dialog).name = "Invalid Directory Path";
-    dialog_messages.at(DialogMessages::check_path_dialog).desc = "The directory path provided does not exist. Open directory dialog window and find new path?";
-    dialog_messages.at(DialogMessages::log_created_dialog).data = 0;
-    dialog_messages.at(DialogMessages::log_created_dialog).name = "Image Editing Finished";
-    dialog_messages.at(DialogMessages::log_created_dialog).desc = "A new log file created with the details of the last batch of images edited.";
-    dialog_messages.at(DialogMessages::log_created_dialog_updated).data = 0;
-    dialog_messages.at(DialogMessages::log_created_dialog_updated).name = "Image Editing Finished";
-    dialog_messages.at(DialogMessages::log_created_dialog_updated).desc = "Log file updated with the details of the latest batch of images edited.";
-    dialog_messages.at(DialogMessages::log_created_dialog_error).data = 0;
-    dialog_messages.at(DialogMessages::log_created_dialog_error).name = "Image Editing Finished";
-    dialog_messages.at(DialogMessages::log_created_dialog_error).desc = "While image editing has finished (possibly with errors), the log file could not be created or written too.";
+    dialog_messages.at(Dialog::Messages::delete_dialog).data = 0; // 1 = bold message/desc text. | ## = #[current preset number]
+    dialog_messages.at(Dialog::Messages::delete_dialog).name = "Delete?";
+    dialog_messages.at(Dialog::Messages::delete_dialog).desc = "Delete currently highlighted image file -or- all image files selected/checked?";
+    dialog_messages.at(Dialog::Messages::delete_dialog_clear).data = 0;
+    dialog_messages.at(Dialog::Messages::delete_dialog_clear).name = "Clear List?";
+    dialog_messages.at(Dialog::Messages::delete_dialog_clear).desc = "The entire list of image files is about to be cleared, is this OK?";
+    dialog_messages.at(Dialog::Messages::CreateNewPreset).data = 0;
+    dialog_messages.at(Dialog::Messages::CreateNewPreset).name = "Add New Preset";
+    dialog_messages.at(Dialog::Messages::CreateNewPreset).desc = "Add Description for New Preset.";
+    dialog_messages.at(Dialog::Messages::ChangePresetDescription).data = 0;
+    dialog_messages.at(Dialog::Messages::ChangePresetDescription).name = "Change Preset Description";
+    dialog_messages.at(Dialog::Messages::ChangePresetDescription).desc = "Change Title Description of Currently Selected Preset.";
+    dialog_messages.at(Dialog::Messages::save_preset_dialog).data = 0;
+    dialog_messages.at(Dialog::Messages::save_preset_dialog).name = "Save Preset ##?";
+    dialog_messages.at(Dialog::Messages::save_preset_dialog).desc = "There are unsaved options in [Preset ##], would you like to save these options before proceeding?";
+    dialog_messages.at(Dialog::Messages::save_preset_dialog_closing).data = 0;
+    dialog_messages.at(Dialog::Messages::save_preset_dialog_closing).name = "Closing...";
+    dialog_messages.at(Dialog::Messages::save_preset_dialog_closing).desc = "There are unsaved preset options, would you like to save these options before closing?";
+    dialog_messages.at(Dialog::Messages::remove_preset_dialog).data = 1;
+    dialog_messages.at(Dialog::Messages::remove_preset_dialog).name = "Remove Preset ##";
+    dialog_messages.at(Dialog::Messages::remove_preset_dialog).desc = "Are you sure you want to remove/delete [Preset ##]?";
+    dialog_messages.at(Dialog::Messages::remove_preset_dialog_halted).data = 0;
+    dialog_messages.at(Dialog::Messages::remove_preset_dialog_halted).name = "Cannot Remove Preset";
+    dialog_messages.at(Dialog::Messages::remove_preset_dialog_halted).desc = "You cannot remove/delete the last remaining preset.";
+    dialog_messages.at(Dialog::Messages::non_image_file_dialog).data = 0;
+    dialog_messages.at(Dialog::Messages::non_image_file_dialog).name = "Warning";
+    dialog_messages.at(Dialog::Messages::non_image_file_dialog).desc = "Unsupported or non-image files were not added to list.";
+    dialog_messages.at(Dialog::Messages::check_wm_path_dialog).data = 0;
+    dialog_messages.at(Dialog::Messages::check_wm_path_dialog).name = "Invalid Image Path";
+    dialog_messages.at(Dialog::Messages::check_wm_path_dialog).desc = "The image path provided does not exist. Open file dialog window and find new path?";
+    dialog_messages.at(Dialog::Messages::check_path_dialog).data = 0;
+    dialog_messages.at(Dialog::Messages::check_path_dialog).name = "Invalid Directory Path";
+    dialog_messages.at(Dialog::Messages::check_path_dialog).desc = "The directory path provided does not exist. Open directory dialog window and find new path?";
+    dialog_messages.at(Dialog::Messages::log_created_dialog).data = 0;
+    dialog_messages.at(Dialog::Messages::log_created_dialog).name = "Image Editing Finished";
+    dialog_messages.at(Dialog::Messages::log_created_dialog).desc = "A new log file created with the details of the last batch of images edited.";
+    dialog_messages.at(Dialog::Messages::log_created_dialog_updated).data = 0;
+    dialog_messages.at(Dialog::Messages::log_created_dialog_updated).name = "Image Editing Finished";
+    dialog_messages.at(Dialog::Messages::log_created_dialog_updated).desc = "Log file updated with the details of the latest batch of images edited.";
+    dialog_messages.at(Dialog::Messages::log_created_dialog_error).data = 0;
+    dialog_messages.at(Dialog::Messages::log_created_dialog_error).name = "Image Editing Finished";
+    dialog_messages.at(Dialog::Messages::log_created_dialog_error).desc = "While image editing has finished (possibly with errors), the log file could not be created or written too.";
 
-    file_dialog_titles.at(FileDialogTitles::LoadImageFiles) = "Select one or more image files to edit...";
-    file_dialog_titles.at(FileDialogTitles::GetImageFile) = "Select an image file to use...";
-    file_dialog_titles.at(FileDialogTitles::GetSaveDirectoryPath) = "Select a directory path...";
-    file_dialog_titles.at(FileDialogTitles::log_file_new_save_path) = "Save Log File As...";
-    file_dialog_titles.at(FileDialogTitles::log_file_new_save_path_extensions) = "Log Files";
+    file_dialog_titles.at(Dialog::FileSearch::LoadImageFiles) = "Select one or more image files to edit...";
+    file_dialog_titles.at(Dialog::FileSearch::GetImageFile) = "Select an image file to use...";
+    file_dialog_titles.at(Dialog::FileSearch::GetSaveDirectoryPath) = "Select a directory path...";
+    file_dialog_titles.at(Dialog::FileSearch::log_file_new_save_path) = "Save Log File As...";
+    file_dialog_titles.at(Dialog::FileSearch::log_file_new_save_path_extensions) = "Log Files";
 
     // Log File Text:  ##  =  Auto-Generated Date/Time, Number or Error Message
-    log_text.at(LogFileLines::ThickDivider) = "===================================";
-    log_text.at(LogFileLines::ThinDivider) = "-----------------------------------";
-    log_text.at(LogFileLines::Title) = "= BatchItImage Generated Log File =";
-    log_text.at(LogFileLines::SessionStart) = "Session Start: ##";
-    log_text.at(LogFileLines::SessionEnd) = "Session End:   ##";
-    log_text.at(LogFileLines::Batch) = "Batch ##";
-    log_text.at(LogFileLines::SummarySuccesses) = " ## Images Edited and Saved";
-    log_text.at(LogFileLines::SummaryErrors) = " ## Images Not Saved (Errors)";
-    log_text.at(LogFileLines::SummaryTime) = " Time to Completion: ##";
-    log_text.at(LogFileLines::UnsavedSettings) = " Using Unsaved Settings";
-    log_text.at(LogFileLines::ImageNumber) = "Image ##";
-    log_text.at(LogFileLines::SaveSuccess) = "--> [Canceled] The image editing and saving process was canceled before it could finish.";
-    log_text.at(LogFileLines::SaveCanceled) = "--> [Success] The image was edited and saved successfully.";
-    log_text.at(LogFileLines::EditError) = "--> [Edit Error] ##";
-    log_text.at(LogFileLines::SaveError) = "--> [Save Error] ##";
+    log_text.at(LogFile::Line::ThickDivider) = "===================================";
+    log_text.at(LogFile::Line::ThinDivider) = "-----------------------------------";
+    log_text.at(LogFile::Line::Title) = "= BatchItImage Generated Log File =";
+    log_text.at(LogFile::Line::SessionStart) = "Session Start: ##";
+    log_text.at(LogFile::Line::SessionEnd) = "Session End:   ##";
+    log_text.at(LogFile::Line::Batch) = "Batch ##";
+    log_text.at(LogFile::Line::SummarySuccesses) = " ## Images Edited and Saved";
+    log_text.at(LogFile::Line::SummaryErrors) = " ## Images Not Saved (Errors)";
+    log_text.at(LogFile::Line::SummaryTime) = " Time to Completion: ##";
+    log_text.at(LogFile::Line::UnsavedSettings) = " Using Unsaved Settings";
+    log_text.at(LogFile::Line::ImageNumber) = "Image ##";
+    log_text.at(LogFile::Line::SaveSuccess) = "--> [Canceled] The image editing and saving process was canceled before it could finish.";
+    log_text.at(LogFile::Line::SaveCanceled) = "--> [Success] The image was edited and saved successfully.";
+    log_text.at(LogFile::Line::EditError) = "--> [Edit Error] ##";
+    log_text.at(LogFile::Line::SaveError) = "--> [Save Error] ##";
 }
 
 void BatchItImage::SetupFileTree()
 {
     ui.treeWidget_FileInfo->clear();
-    for (int col = 0; col < FileColumn::COUNT; col++) {
+    for (int col = 0; col < FileTree::Column::COUNT; col++) {
         ui.treeWidget_FileInfo->headerItem()->setText(col, file_tree_headers->at(col).name);
         ui.treeWidget_FileInfo->headerItem()->setToolTip(col, file_tree_headers->at(col).desc);
     }
-    ui.treeWidget_FileInfo->setColumnWidth(FileColumn::FILE_SELECTED, ui.treeWidget_FileInfo->minimumWidth());
+    ui.treeWidget_FileInfo->setColumnWidth(FileTree::Column::FILE_SELECTED, ui.treeWidget_FileInfo->minimumWidth());
     ui.treeWidget_FileInfo->header()->setSectionsClickable(true);
     ui.treeWidget_FileInfo->header()->sortIndicatorOrder();
     ui.treeWidget_FileInfo->installEventFilter(this); // Keep watch of all events happening in file tree. -> eventFilter()
@@ -1353,13 +1394,19 @@ void BatchItImage::UiConnections()
     Q_ASSERT(connect(ui.action_AddNewPreset, SIGNAL(triggered(bool)), this, SLOT(CreateNewPreset())));
     Q_ASSERT(connect(ui.action_RemovePreset, SIGNAL(triggered(bool)), this, SLOT(RemoveCurrentPreset())));
     Q_ASSERT(connect(ui.action_SavePresets, &QAction::triggered, this, [this] { SavePreset(true); })); // TODO: Show a DialogMessage?
-    Q_ASSERT(connect(ui.action_ChangePresetDesc, &QAction::triggered,
-        this, [this] {
+    Q_ASSERT(connect(ui.action_ChangePresetDesc, &QAction::triggered, this,
+        [this] {
             ChangePresetDescription(
                 CurrentSelectedPreset(),
-                dialog_messages.at(DialogMessages::ChangePresetDescription).name,
-                dialog_messages.at(DialogMessages::ChangePresetDescription).desc
+                dialog_messages.at(Dialog::Messages::ChangePresetDescription).name,
+                dialog_messages.at(Dialog::Messages::ChangePresetDescription).desc
             );
+        }));
+    Q_ASSERT(connect(ui.action_ShowFormatFilter, &QAction::triggered, this,
+        [this] {
+            submenu_format_filter->actions().at(
+                FileTree::ActionMenu::SubMenu::FilterImageFormats::action_submenu_undock)->setVisible(false);
+            submenu_format_filter->showTearOffMenu();
         }));
     Q_ASSERT(connect(ui.action_About, SIGNAL(triggered(bool)), this, SLOT(Test()))); // TODO
     Q_ASSERT(connect(ui.action_AboutQt, &QAction::triggered, this, [this] { QApplication::aboutQt(); }));
@@ -1431,7 +1478,7 @@ void BatchItImage::UiConnections()
         [this] {
             background_color = QColorDialog::getColor(
                 background_color, this,
-                background_options.at(BackgroundOptions::pushButton_ColorDialog).desc,
+                background_options.at(UI::EditOption::Background::pushButton_ColorDialog).desc,
                 QColorDialog::ShowAlphaChannel
             );
             qDebug() << "pushButton_ColorDialog:" << background_color.blue() << "x" << background_color.green()
@@ -2267,33 +2314,33 @@ void BatchItImage::EnableSpecificFormatOptions(bool loading_preset)
         
         enableOptions(FORMATFLAGS + QUALITY + OPTIMIZE + PROGRESSIVE + COMPRESSION + EXTRASETTING1 + EXTRASETTING2);
         
-        ui.label_FormatFlags->setText(format_jpeg_options[FormatJpegOptions::label_FormatFlags].name);
-        ui.label_FormatFlags->setStatusTip(format_jpeg_options[FormatJpegOptions::label_FormatFlags].desc);
-        ui.label_FormatFlags->setToolTip(format_jpeg_options[FormatJpegOptions::label_FormatFlags].desc);
-        ui.label_Quality->setText(format_jpeg_options[FormatJpegOptions::label_Quality].name);
-        ui.label_Quality->setStatusTip(format_jpeg_options[FormatJpegOptions::label_Quality].desc);
-        ui.label_Quality->setToolTip(format_jpeg_options[FormatJpegOptions::label_Quality].desc);
-        ui.checkBox_Optimize->setText(format_jpeg_options[FormatJpegOptions::checkBox_Optimize].name);
-        ui.checkBox_Optimize->setStatusTip(format_jpeg_options[FormatJpegOptions::checkBox_Optimize].desc);
-        ui.checkBox_Optimize->setToolTip(format_jpeg_options[FormatJpegOptions::checkBox_Optimize].desc);
-        ui.checkBox_Progressive->setText(format_jpeg_options[FormatJpegOptions::checkBox_Progressive].name);
-        ui.checkBox_Progressive->setStatusTip(format_jpeg_options[FormatJpegOptions::checkBox_Progressive].desc);
-        ui.checkBox_Progressive->setToolTip(format_jpeg_options[FormatJpegOptions::checkBox_Progressive].desc);
-        ui.label_Compression->setText(format_jpeg_options[FormatJpegOptions::label_Compression].name);
-        ui.label_Compression->setStatusTip(format_jpeg_options[FormatJpegOptions::label_Compression].desc);
-        ui.label_Compression->setToolTip(format_jpeg_options[FormatJpegOptions::label_Compression].desc);
-        ui.label_ExtraSetting1->setText(format_jpeg_options[FormatJpegOptions::label_ExtraSetting1].name);
-        ui.label_ExtraSetting1->setStatusTip(format_jpeg_options[FormatJpegOptions::label_ExtraSetting1].desc);
-        ui.label_ExtraSetting1->setToolTip(format_jpeg_options[FormatJpegOptions::label_ExtraSetting1].desc);
-        ui.label_ExtraSetting2->setText(format_jpeg_options[FormatJpegOptions::label_ExtraSetting2].name);
-        ui.label_ExtraSetting2->setStatusTip(format_jpeg_options[FormatJpegOptions::label_ExtraSetting2].desc);
-        ui.label_ExtraSetting2->setToolTip(format_jpeg_options[FormatJpegOptions::label_ExtraSetting2].desc);
+        ui.label_FormatFlags->setText(format_jpeg_options[UI::FileOption::FormatJpeg::label_FormatFlags].name);
+        ui.label_FormatFlags->setStatusTip(format_jpeg_options[UI::FileOption::FormatJpeg::label_FormatFlags].desc);
+        ui.label_FormatFlags->setToolTip(format_jpeg_options[UI::FileOption::FormatJpeg::label_FormatFlags].desc);
+        ui.label_Quality->setText(format_jpeg_options[UI::FileOption::FormatJpeg::label_Quality].name);
+        ui.label_Quality->setStatusTip(format_jpeg_options[UI::FileOption::FormatJpeg::label_Quality].desc);
+        ui.label_Quality->setToolTip(format_jpeg_options[UI::FileOption::FormatJpeg::label_Quality].desc);
+        ui.checkBox_Optimize->setText(format_jpeg_options[UI::FileOption::FormatJpeg::checkBox_Optimize].name);
+        ui.checkBox_Optimize->setStatusTip(format_jpeg_options[UI::FileOption::FormatJpeg::checkBox_Optimize].desc);
+        ui.checkBox_Optimize->setToolTip(format_jpeg_options[UI::FileOption::FormatJpeg::checkBox_Optimize].desc);
+        ui.checkBox_Progressive->setText(format_jpeg_options[UI::FileOption::FormatJpeg::checkBox_Progressive].name);
+        ui.checkBox_Progressive->setStatusTip(format_jpeg_options[UI::FileOption::FormatJpeg::checkBox_Progressive].desc);
+        ui.checkBox_Progressive->setToolTip(format_jpeg_options[UI::FileOption::FormatJpeg::checkBox_Progressive].desc);
+        ui.label_Compression->setText(format_jpeg_options[UI::FileOption::FormatJpeg::label_Compression].name);
+        ui.label_Compression->setStatusTip(format_jpeg_options[UI::FileOption::FormatJpeg::label_Compression].desc);
+        ui.label_Compression->setToolTip(format_jpeg_options[UI::FileOption::FormatJpeg::label_Compression].desc);
+        ui.label_ExtraSetting1->setText(format_jpeg_options[UI::FileOption::FormatJpeg::label_ExtraSetting1].name);
+        ui.label_ExtraSetting1->setStatusTip(format_jpeg_options[UI::FileOption::FormatJpeg::label_ExtraSetting1].desc);
+        ui.label_ExtraSetting1->setToolTip(format_jpeg_options[UI::FileOption::FormatJpeg::label_ExtraSetting1].desc);
+        ui.label_ExtraSetting2->setText(format_jpeg_options[UI::FileOption::FormatJpeg::label_ExtraSetting2].name);
+        ui.label_ExtraSetting2->setStatusTip(format_jpeg_options[UI::FileOption::FormatJpeg::label_ExtraSetting2].desc);
+        ui.label_ExtraSetting2->setToolTip(format_jpeg_options[UI::FileOption::FormatJpeg::label_ExtraSetting2].desc);
 
         if (loading_preset)
             //PopulateComboBox(ui.comboBox_FormatFlags, format_jpeg_subsamplings, sizeof(format_jpeg_subsamplings) / sizeof(UIData));
             PopulateComboBox(ui.comboBox_FormatFlags, format_jpeg_subsamplings);
         
-        int default_quality_value = format_jpeg_options[FormatJpegOptions::label_Quality].data;
+        int default_quality_value = format_jpeg_options[UI::FileOption::FormatJpeg::label_Quality].data;
         ui.horizontalSlider_Quality->setRange(0, 100);
         ui.horizontalSlider_Quality->addTextTip(default_quality_value, default_quality_value, " : Default", true);
         ui.spinBox_Compression->setRange(0, 65535);
@@ -2302,61 +2349,61 @@ void BatchItImage::EnableSpecificFormatOptions(bool loading_preset)
 
         if (not loading_preset and last_selected_format != ".jpeg" and last_selected_format != ".jpg" and last_selected_format != ".jpe") {
             PopulateComboBox(ui.comboBox_FormatFlags, format_jpeg_subsamplings);
-            ui.comboBox_FormatFlags->setCurrentIndex(format_jpeg_options[FormatJpegOptions::label_FormatFlags].data);
+            ui.comboBox_FormatFlags->setCurrentIndex(format_jpeg_options[UI::FileOption::FormatJpeg::label_FormatFlags].data);
             ui.horizontalSlider_Quality->setValue(default_quality_value);
-            ui.checkBox_Optimize->setChecked(format_jpeg_options[FormatJpegOptions::checkBox_Optimize].data);
-            ui.checkBox_Progressive->setChecked(format_jpeg_options[FormatJpegOptions::checkBox_Progressive].data);
-            ui.spinBox_Compression->setValue(format_jpeg_options[FormatJpegOptions::label_Compression].data);
-            ui.spinBox_ExtraSetting1->setValue(format_jpeg_options[FormatJpegOptions::label_ExtraSetting1].data);
-            ui.spinBox_ExtraSetting2->setValue(format_jpeg_options[FormatJpegOptions::label_ExtraSetting2].data);
+            ui.checkBox_Optimize->setChecked(format_jpeg_options[UI::FileOption::FormatJpeg::checkBox_Optimize].data);
+            ui.checkBox_Progressive->setChecked(format_jpeg_options[UI::FileOption::FormatJpeg::checkBox_Progressive].data);
+            ui.spinBox_Compression->setValue(format_jpeg_options[UI::FileOption::FormatJpeg::label_Compression].data);
+            ui.spinBox_ExtraSetting1->setValue(format_jpeg_options[UI::FileOption::FormatJpeg::label_ExtraSetting1].data);
+            ui.spinBox_ExtraSetting2->setValue(format_jpeg_options[UI::FileOption::FormatJpeg::label_ExtraSetting2].data);
         }
     }
     else if (format == ".jp2") {
         
         enableOptions(COMPRESSION);
 
-        ui.label_Compression->setText(format_jp2_options[FormatJp2Options::label_Compression].name);
-        ui.label_Compression->setStatusTip(format_jp2_options[FormatJp2Options::label_Compression].desc);
-        ui.label_Compression->setToolTip(format_jp2_options[FormatJp2Options::label_Compression].desc);
+        ui.label_Compression->setText(format_jp2_options[UI::FileOption::FormatJp2::label_Compression].name);
+        ui.label_Compression->setStatusTip(format_jp2_options[UI::FileOption::FormatJp2::label_Compression].desc);
+        ui.label_Compression->setToolTip(format_jp2_options[UI::FileOption::FormatJp2::label_Compression].desc);
 
         ui.spinBox_Compression->setRange(0, 1000);
 
         if (not loading_preset and last_selected_format != ".jp2") {
-            ui.spinBox_Compression->setValue(format_jp2_options[FormatJp2Options::label_Compression].data);
+            ui.spinBox_Compression->setValue(format_jp2_options[UI::FileOption::FormatJp2::label_Compression].data);
         }
     }
     else if (format == ".png") {
         
         enableOptions(FORMATFLAGS + OPTIMIZE + COMPRESSION);
 
-        ui.label_FormatFlags->setText(format_png_options[FormatPngOptions::label_FormatFlags].name);
-        ui.label_FormatFlags->setStatusTip(format_png_options[FormatPngOptions::label_FormatFlags].desc);
-        ui.label_FormatFlags->setToolTip(format_png_options[FormatPngOptions::label_FormatFlags].desc);
-        ui.checkBox_Optimize->setText(format_png_options[FormatPngOptions::checkBox_Optimize].name);
-        ui.checkBox_Optimize->setStatusTip(format_png_options[FormatPngOptions::checkBox_Optimize].desc);
-        ui.checkBox_Optimize->setToolTip(format_png_options[FormatPngOptions::checkBox_Optimize].desc);
-        ui.label_Compression->setText(format_png_options[FormatPngOptions::label_Compression].name);
-        ui.label_Compression->setStatusTip(format_png_options[FormatPngOptions::label_Compression].desc);
-        ui.label_Compression->setToolTip(format_png_options[FormatPngOptions::label_Compression].desc);
+        ui.label_FormatFlags->setText(format_png_options[UI::FileOption::FormatPng::label_FormatFlags].name);
+        ui.label_FormatFlags->setStatusTip(format_png_options[UI::FileOption::FormatPng::label_FormatFlags].desc);
+        ui.label_FormatFlags->setToolTip(format_png_options[UI::FileOption::FormatPng::label_FormatFlags].desc);
+        ui.checkBox_Optimize->setText(format_png_options[UI::FileOption::FormatPng::checkBox_Optimize].name);
+        ui.checkBox_Optimize->setStatusTip(format_png_options[UI::FileOption::FormatPng::checkBox_Optimize].desc);
+        ui.checkBox_Optimize->setToolTip(format_png_options[UI::FileOption::FormatPng::checkBox_Optimize].desc);
+        ui.label_Compression->setText(format_png_options[UI::FileOption::FormatPng::label_Compression].name);
+        ui.label_Compression->setStatusTip(format_png_options[UI::FileOption::FormatPng::label_Compression].desc);
+        ui.label_Compression->setToolTip(format_png_options[UI::FileOption::FormatPng::label_Compression].desc);
 
         PopulateComboBox(ui.comboBox_FormatFlags, format_png_compression);
         ui.spinBox_Compression->setRange(0, 9);
 
         if (not loading_preset and last_selected_format != ".png") {
-            ui.comboBox_FormatFlags->setCurrentIndex(format_png_options[FormatPngOptions::label_FormatFlags].data);
-            ui.checkBox_Optimize->setChecked(format_png_options[FormatPngOptions::checkBox_Optimize].data);
-            ui.spinBox_Compression->setValue(format_png_options[FormatPngOptions::label_Compression].data);
+            ui.comboBox_FormatFlags->setCurrentIndex(format_png_options[UI::FileOption::FormatPng::label_FormatFlags].data);
+            ui.checkBox_Optimize->setChecked(format_png_options[UI::FileOption::FormatPng::checkBox_Optimize].data);
+            ui.spinBox_Compression->setValue(format_png_options[UI::FileOption::FormatPng::label_Compression].data);
         }
     }
     else if (format == ".webp") { 
 
         enableOptions(QUALITY);
 
-        ui.label_Quality->setText(format_webp_options[FormatWebpOptions::label_Quality].name);
-        ui.label_Quality->setStatusTip(format_webp_options[FormatWebpOptions::label_Quality].desc);
-        ui.label_Quality->setToolTip(format_webp_options[FormatWebpOptions::label_Quality].desc);
+        ui.label_Quality->setText(format_webp_options[UI::FileOption::FormatWebp::label_Quality].name);
+        ui.label_Quality->setStatusTip(format_webp_options[UI::FileOption::FormatWebp::label_Quality].desc);
+        ui.label_Quality->setToolTip(format_webp_options[UI::FileOption::FormatWebp::label_Quality].desc);
 
-        int default_quality_value = format_webp_options[FormatWebpOptions::label_Quality].data;
+        int default_quality_value = format_webp_options[UI::FileOption::FormatWebp::label_Quality].data;
         ui.horizontalSlider_Quality->setRange(1, 100);
         ui.horizontalSlider_Quality->addTextTip(default_quality_value, default_quality_value, " : Default", true);
 
@@ -2369,17 +2416,17 @@ void BatchItImage::EnableSpecificFormatOptions(bool loading_preset)
         enableOptions(QUALITY + COMPRESSION + EXTRASETTING2);
 
         //ui.label_FormatFlags->setText(":");
-        ui.label_Quality->setText(format_avif_options[FormatAvifOptions::label_Quality].name);
-        ui.label_Quality->setStatusTip(format_avif_options[FormatAvifOptions::label_Quality].desc);
-        ui.label_Quality->setToolTip(format_avif_options[FormatAvifOptions::label_Quality].desc);
-        ui.label_Compression->setText(format_avif_options[FormatAvifOptions::label_Compression].name);
-        ui.label_Compression->setStatusTip(format_avif_options[FormatAvifOptions::label_Compression].desc);
-        ui.label_Compression->setToolTip(format_avif_options[FormatAvifOptions::label_Compression].desc);
-        ui.label_ExtraSetting2->setText(format_avif_options[FormatAvifOptions::label_ExtraSetting2].name);
-        ui.label_ExtraSetting2->setStatusTip(format_avif_options[FormatAvifOptions::label_ExtraSetting2].desc);
-        ui.label_ExtraSetting2->setToolTip(format_avif_options[FormatAvifOptions::label_ExtraSetting2].desc);
+        ui.label_Quality->setText(format_avif_options[UI::FileOption::FormatAvif::label_Quality].name);
+        ui.label_Quality->setStatusTip(format_avif_options[UI::FileOption::FormatAvif::label_Quality].desc);
+        ui.label_Quality->setToolTip(format_avif_options[UI::FileOption::FormatAvif::label_Quality].desc);
+        ui.label_Compression->setText(format_avif_options[UI::FileOption::FormatAvif::label_Compression].name);
+        ui.label_Compression->setStatusTip(format_avif_options[UI::FileOption::FormatAvif::label_Compression].desc);
+        ui.label_Compression->setToolTip(format_avif_options[UI::FileOption::FormatAvif::label_Compression].desc);
+        ui.label_ExtraSetting2->setText(format_avif_options[UI::FileOption::FormatAvif::label_ExtraSetting2].name);
+        ui.label_ExtraSetting2->setStatusTip(format_avif_options[UI::FileOption::FormatAvif::label_ExtraSetting2].desc);
+        ui.label_ExtraSetting2->setToolTip(format_avif_options[UI::FileOption::FormatAvif::label_ExtraSetting2].desc);
 
-        int default_quality_value = format_avif_options[FormatAvifOptions::label_Quality].data;
+        int default_quality_value = format_avif_options[UI::FileOption::FormatAvif::label_Quality].data;
         ui.horizontalSlider_Quality->setRange(0, 100);
         ui.horizontalSlider_Quality->addTextTip(default_quality_value, default_quality_value, " : Default", true);
         ui.spinBox_Compression->setRange(0, 9);
@@ -2396,52 +2443,52 @@ void BatchItImage::EnableSpecificFormatOptions(bool loading_preset)
         if (not loading_preset and last_selected_format != ".avif") {
             //ui.comboBox_FormatFlags->setCurrentIndex(0);
             ui.horizontalSlider_Quality->setValue(default_quality_value);
-            ui.spinBox_Compression->setValue(format_avif_options[FormatAvifOptions::label_Compression].data);
-            ui.spinBox_ExtraSetting2->setValue(format_avif_options[FormatAvifOptions::label_ExtraSetting2].data);
+            ui.spinBox_Compression->setValue(format_avif_options[UI::FileOption::FormatAvif::label_Compression].data);
+            ui.spinBox_ExtraSetting2->setValue(format_avif_options[UI::FileOption::FormatAvif::label_ExtraSetting2].data);
         }
     }
     else if (format == ".pbm" or format == ".pgm" or format == ".ppm") {
 
         enableOptions(OPTIMIZE);
 
-        ui.checkBox_Optimize->setText(format_pbm_options[FormatPbmOptions::checkBox_Optimize].name);
-        ui.checkBox_Optimize->setStatusTip(format_pbm_options[FormatPbmOptions::checkBox_Optimize].desc);
-        ui.checkBox_Optimize->setToolTip(format_pbm_options[FormatPbmOptions::checkBox_Optimize].desc);
+        ui.checkBox_Optimize->setText(format_pbm_options[UI::FileOption::FormatPbm::checkBox_Optimize].name);
+        ui.checkBox_Optimize->setStatusTip(format_pbm_options[UI::FileOption::FormatPbm::checkBox_Optimize].desc);
+        ui.checkBox_Optimize->setToolTip(format_pbm_options[UI::FileOption::FormatPbm::checkBox_Optimize].desc);
 
         if (not loading_preset and last_selected_format != ".pbm" and last_selected_format != ".pgm" and last_selected_format != ".ppm") {
-            ui.checkBox_Optimize->setChecked(format_pbm_options[FormatPbmOptions::checkBox_Optimize].data);
+            ui.checkBox_Optimize->setChecked(format_pbm_options[UI::FileOption::FormatPbm::checkBox_Optimize].data);
         }
     }
     else if (format == ".pam") {
 
         enableOptions(FORMATFLAGS);
 
-        ui.label_FormatFlags->setText(format_pam_options[FormatPamOptions::label_FormatFlags].name);
-        ui.label_FormatFlags->setStatusTip(format_pam_options[FormatPamOptions::label_FormatFlags].desc);
-        ui.label_FormatFlags->setToolTip(format_pam_options[FormatPamOptions::label_FormatFlags].desc);
+        ui.label_FormatFlags->setText(format_pam_options[UI::FileOption::FormatPam::label_FormatFlags].name);
+        ui.label_FormatFlags->setStatusTip(format_pam_options[UI::FileOption::FormatPam::label_FormatFlags].desc);
+        ui.label_FormatFlags->setToolTip(format_pam_options[UI::FileOption::FormatPam::label_FormatFlags].desc);
 
         PopulateComboBox(ui.comboBox_FormatFlags, format_pam_tupletype);
 
         if (not loading_preset and last_selected_format != ".pam") {
-            ui.comboBox_FormatFlags->setCurrentIndex(format_pam_options[FormatPamOptions::label_FormatFlags].data);
+            ui.comboBox_FormatFlags->setCurrentIndex(format_pam_options[UI::FileOption::FormatPam::label_FormatFlags].data);
         }
     }
     else if (format == ".tiff" or format == ".tif") {
 
         enableOptions(FORMATFLAGS + QUALITY + EXTRASETTING1 + EXTRASETTING2);
 
-        ui.label_FormatFlags->setText(format_tiff_options[FormatTiffOptions::label_FormatFlags].name);
-        ui.label_FormatFlags->setStatusTip(format_tiff_options[FormatTiffOptions::label_FormatFlags].desc);
-        ui.label_FormatFlags->setToolTip(format_tiff_options[FormatTiffOptions::label_FormatFlags].desc);
-        ui.label_Quality->setText(format_tiff_options[FormatTiffOptions::label_Quality].name);
-        ui.label_Quality->setStatusTip(format_tiff_options[FormatTiffOptions::label_Quality].desc);
-        ui.label_Quality->setToolTip(format_tiff_options[FormatTiffOptions::label_Quality].desc);
-        ui.label_ExtraSetting1->setText(format_tiff_options[FormatTiffOptions::label_ExtraSetting1].name);
-        ui.label_ExtraSetting1->setStatusTip(format_tiff_options[FormatTiffOptions::label_ExtraSetting1].desc);
-        ui.label_ExtraSetting1->setToolTip(format_tiff_options[FormatTiffOptions::label_ExtraSetting1].desc);
-        ui.label_ExtraSetting2->setText(format_tiff_options[FormatTiffOptions::label_ExtraSetting2].name);
-        ui.label_ExtraSetting2->setStatusTip(format_tiff_options[FormatTiffOptions::label_ExtraSetting2].desc);
-        ui.label_ExtraSetting2->setToolTip(format_tiff_options[FormatTiffOptions::label_ExtraSetting2].desc);
+        ui.label_FormatFlags->setText(format_tiff_options[UI::FileOption::FormatTiff::label_FormatFlags].name);
+        ui.label_FormatFlags->setStatusTip(format_tiff_options[UI::FileOption::FormatTiff::label_FormatFlags].desc);
+        ui.label_FormatFlags->setToolTip(format_tiff_options[UI::FileOption::FormatTiff::label_FormatFlags].desc);
+        ui.label_Quality->setText(format_tiff_options[UI::FileOption::FormatTiff::label_Quality].name);
+        ui.label_Quality->setStatusTip(format_tiff_options[UI::FileOption::FormatTiff::label_Quality].desc);
+        ui.label_Quality->setToolTip(format_tiff_options[UI::FileOption::FormatTiff::label_Quality].desc);
+        ui.label_ExtraSetting1->setText(format_tiff_options[UI::FileOption::FormatTiff::label_ExtraSetting1].name);
+        ui.label_ExtraSetting1->setStatusTip(format_tiff_options[UI::FileOption::FormatTiff::label_ExtraSetting1].desc);
+        ui.label_ExtraSetting1->setToolTip(format_tiff_options[UI::FileOption::FormatTiff::label_ExtraSetting1].desc);
+        ui.label_ExtraSetting2->setText(format_tiff_options[UI::FileOption::FormatTiff::label_ExtraSetting2].name);
+        ui.label_ExtraSetting2->setStatusTip(format_tiff_options[UI::FileOption::FormatTiff::label_ExtraSetting2].desc);
+        ui.label_ExtraSetting2->setToolTip(format_tiff_options[UI::FileOption::FormatTiff::label_ExtraSetting2].desc);
 
         if (loading_preset)
             PopulateComboBox(ui.comboBox_FormatFlags, format_tiff_compression);
@@ -2460,38 +2507,38 @@ void BatchItImage::EnableSpecificFormatOptions(bool loading_preset)
 
         if (not loading_preset and last_selected_format != ".tiff" and last_selected_format != ".tif") {
             PopulateComboBox(ui.comboBox_FormatFlags, format_tiff_compression);
-            ui.comboBox_FormatFlags->setCurrentIndex(format_tiff_options[FormatTiffOptions::label_FormatFlags].data);
-            ui.horizontalSlider_Quality->setValue(format_tiff_options[FormatTiffOptions::label_Quality].data);
-            ui.spinBox_ExtraSetting1->setValue(format_tiff_options[FormatTiffOptions::label_ExtraSetting1].data);
-            ui.spinBox_ExtraSetting2->setValue(format_tiff_options[FormatTiffOptions::label_ExtraSetting2].data);
+            ui.comboBox_FormatFlags->setCurrentIndex(format_tiff_options[UI::FileOption::FormatTiff::label_FormatFlags].data);
+            ui.horizontalSlider_Quality->setValue(format_tiff_options[UI::FileOption::FormatTiff::label_Quality].data);
+            ui.spinBox_ExtraSetting1->setValue(format_tiff_options[UI::FileOption::FormatTiff::label_ExtraSetting1].data);
+            ui.spinBox_ExtraSetting2->setValue(format_tiff_options[UI::FileOption::FormatTiff::label_ExtraSetting2].data);
         }
     }
     else if (format == ".exr") {
 
         enableOptions(FORMATFLAGS + OPTIMIZE + PROGRESSIVE + COMPRESSION);
 
-        ui.label_FormatFlags->setText(format_exr_options[FormatExrOptions::label_FormatFlags].name);
-        ui.label_FormatFlags->setStatusTip(format_exr_options[FormatExrOptions::label_FormatFlags].desc);
-        ui.label_FormatFlags->setToolTip(format_exr_options[FormatExrOptions::label_FormatFlags].desc);
-        ui.checkBox_Optimize->setText(format_exr_options[FormatExrOptions::checkBox_Optimize].name);
-        ui.checkBox_Optimize->setStatusTip(format_exr_options[FormatExrOptions::checkBox_Optimize].desc);
-        ui.checkBox_Optimize->setToolTip(format_exr_options[FormatExrOptions::checkBox_Optimize].desc);
-        ui.checkBox_Progressive->setText(format_exr_options[FormatExrOptions::checkBox_Progressive].name);
-        ui.checkBox_Progressive->setStatusTip(format_exr_options[FormatExrOptions::checkBox_Progressive].desc);
-        ui.checkBox_Progressive->setToolTip(format_exr_options[FormatExrOptions::checkBox_Progressive].desc);
-        ui.label_Compression->setText(format_exr_options[FormatExrOptions::label_Compression].name);
-        ui.label_Compression->setStatusTip(format_exr_options[FormatExrOptions::label_Compression].desc);
-        ui.label_Compression->setToolTip(format_exr_options[FormatExrOptions::label_Compression].desc);
+        ui.label_FormatFlags->setText(format_exr_options[UI::FileOption::FormatExr::label_FormatFlags].name);
+        ui.label_FormatFlags->setStatusTip(format_exr_options[UI::FileOption::FormatExr::label_FormatFlags].desc);
+        ui.label_FormatFlags->setToolTip(format_exr_options[UI::FileOption::FormatExr::label_FormatFlags].desc);
+        ui.checkBox_Optimize->setText(format_exr_options[UI::FileOption::FormatExr::checkBox_Optimize].name);
+        ui.checkBox_Optimize->setStatusTip(format_exr_options[UI::FileOption::FormatExr::checkBox_Optimize].desc);
+        ui.checkBox_Optimize->setToolTip(format_exr_options[UI::FileOption::FormatExr::checkBox_Optimize].desc);
+        ui.checkBox_Progressive->setText(format_exr_options[UI::FileOption::FormatExr::checkBox_Progressive].name);
+        ui.checkBox_Progressive->setStatusTip(format_exr_options[UI::FileOption::FormatExr::checkBox_Progressive].desc);
+        ui.checkBox_Progressive->setToolTip(format_exr_options[UI::FileOption::FormatExr::checkBox_Progressive].desc);
+        ui.label_Compression->setText(format_exr_options[UI::FileOption::FormatExr::label_Compression].name);
+        ui.label_Compression->setStatusTip(format_exr_options[UI::FileOption::FormatExr::label_Compression].desc);
+        ui.label_Compression->setToolTip(format_exr_options[UI::FileOption::FormatExr::label_Compression].desc);
 
         PopulateComboBox(ui.comboBox_FormatFlags, format_exr_compression);
         ui.checkBox_Optimize->setAutoExclusive(true);
         ui.checkBox_Progressive->setAutoExclusive(true);
 
         if (not loading_preset and last_selected_format != ".exr") {
-            ui.comboBox_FormatFlags->setCurrentIndex(format_exr_options[FormatExrOptions::label_FormatFlags].data);
-            ui.checkBox_Optimize->setChecked(format_exr_options[FormatExrOptions::checkBox_Optimize].data);
-            ui.checkBox_Progressive->setChecked(format_exr_options[FormatExrOptions::checkBox_Progressive].data);
-            ui.spinBox_Compression->setValue(format_exr_options[FormatExrOptions::label_Compression].data);
+            ui.comboBox_FormatFlags->setCurrentIndex(format_exr_options[UI::FileOption::FormatExr::label_FormatFlags].data);
+            ui.checkBox_Optimize->setChecked(format_exr_options[UI::FileOption::FormatExr::checkBox_Optimize].data);
+            ui.checkBox_Progressive->setChecked(format_exr_options[UI::FileOption::FormatExr::checkBox_Progressive].data);
+            ui.spinBox_Compression->setValue(format_exr_options[UI::FileOption::FormatExr::label_Compression].data);
         }
 
     }
@@ -2499,16 +2546,16 @@ void BatchItImage::EnableSpecificFormatOptions(bool loading_preset)
 
         enableOptions(FORMATFLAGS);
 
-        ui.label_FormatFlags->setText(format_hdr_options[FormatHdrOptions::label_FormatFlags].name);
-        ui.label_FormatFlags->setStatusTip(format_hdr_options[FormatHdrOptions::label_FormatFlags].desc);
-        ui.label_FormatFlags->setToolTip(format_hdr_options[FormatHdrOptions::label_FormatFlags].desc);
+        ui.label_FormatFlags->setText(format_hdr_options[UI::FileOption::FormatHdr::label_FormatFlags].name);
+        ui.label_FormatFlags->setStatusTip(format_hdr_options[UI::FileOption::FormatHdr::label_FormatFlags].desc);
+        ui.label_FormatFlags->setToolTip(format_hdr_options[UI::FileOption::FormatHdr::label_FormatFlags].desc);
 
         if (loading_preset)
             PopulateComboBox(ui.comboBox_FormatFlags, format_hdr_compression);
 
         if (not loading_preset and last_selected_format != ".hdr" and last_selected_format != ".pic") {
             PopulateComboBox(ui.comboBox_FormatFlags, format_hdr_compression);
-            ui.comboBox_FormatFlags->setCurrentIndex(format_hdr_options[FormatHdrOptions::label_FormatFlags].data);
+            ui.comboBox_FormatFlags->setCurrentIndex(format_hdr_options[UI::FileOption::FormatHdr::label_FormatFlags].data);
         }
     }
     else {
@@ -2524,14 +2571,18 @@ void BatchItImage::EnableSpecificFormatOptions(bool loading_preset)
 
 void BatchItImage::SetupFileTreeContextMenu()
 {
-    action_add = new QAction(file_tree_menu_items->at(ActionMenu::action_add).name, this);
-    action_delete = new QAction(file_tree_menu_items->at(ActionMenu::action_delete).name, this);
-    action_clear = new QAction(file_tree_menu_items->at(ActionMenu::action_clear).name, this);
-    action_select = new QAction(file_tree_menu_items->at(ActionMenu::action_select).name, this);
-    action_select_all = new QAction(file_tree_menu_items->at(ActionMenu::action_select_all).name, this);
-    action_select_none = new QAction(file_tree_menu_items->at(ActionMenu::action_select_none).name, this);
-    action_view = new QAction(file_tree_menu_items->at(ActionMenu::action_view).name, this);
-    action_preview = new QAction(file_tree_menu_items->at(ActionMenu::action_preview).name, this);
+    qDebug() << "SetupFileTreeContextMenu";
+
+    action_add = new QAction(file_tree_menu_items->at(FileTree::ActionMenu::MainMenu::action_add).name, this);
+    action_delete = new QAction(file_tree_menu_items->at(FileTree::ActionMenu::MainMenu::action_delete).name, this);
+    action_clear = new QAction(file_tree_menu_items->at(FileTree::ActionMenu::MainMenu::action_clear).name, this);
+    action_select = new QAction(file_tree_menu_items->at(FileTree::ActionMenu::MainMenu::action_select).name, this);
+    action_select_all = new QAction(file_tree_menu_items->at(FileTree::ActionMenu::MainMenu::action_select_all).name, this);
+    action_select_none = new QAction(file_tree_menu_items->at(FileTree::ActionMenu::MainMenu::action_select_none).name, this);
+    action_submenu_filter = new QAction(file_tree_sub_menu_formats->at(
+        FileTree::ActionMenu::SubMenu::FilterImageFormats::action_submenu_filter).name, this);
+    action_view = new QAction(file_tree_menu_items->at(FileTree::ActionMenu::MainMenu::action_view).name, this);
+    action_preview = new QAction(file_tree_menu_items->at(FileTree::ActionMenu::MainMenu::action_preview).name, this);
 
     auto action_line_1 = new QAction(this);
     action_line_1->setSeparator(true);
@@ -2539,18 +2590,79 @@ void BatchItImage::SetupFileTreeContextMenu()
     action_line_2->setSeparator(true);
     auto action_line_3 = new QAction(this);
     action_line_3->setSeparator(true);
+    
+    // Sub-Menu: Filters
+    submenu_format_filter = new QMenu();
+    auto action_submenu_undock = new QAction(file_tree_sub_menu_formats->at(FileTree::ActionMenu::SubMenu::FilterImageFormats::action_submenu_undock).name, this);
+    auto action_filter_jpeg = new QAction(file_tree_sub_menu_formats->at(FileTree::ActionMenu::SubMenu::FilterImageFormats::action_filter_jpeg).name, this);
+    auto action_filter_jp2 = new QAction(file_tree_sub_menu_formats->at(FileTree::ActionMenu::SubMenu::FilterImageFormats::action_filter_jp2).name, this);
+    auto action_filter_png = new QAction(file_tree_sub_menu_formats->at(FileTree::ActionMenu::SubMenu::FilterImageFormats::action_filter_png).name, this);
+    auto action_filter_webp = new QAction(file_tree_sub_menu_formats->at(FileTree::ActionMenu::SubMenu::FilterImageFormats::action_filter_webp).name, this);
+    auto action_filter_bmp = new QAction(file_tree_sub_menu_formats->at(FileTree::ActionMenu::SubMenu::FilterImageFormats::action_filter_bmp).name, this);
+    auto action_filter_avif = new QAction(file_tree_sub_menu_formats->at(FileTree::ActionMenu::SubMenu::FilterImageFormats::action_filter_avif).name, this);
+    auto action_filter_pbm = new QAction(file_tree_sub_menu_formats->at(FileTree::ActionMenu::SubMenu::FilterImageFormats::action_filter_pbm).name, this);
+    auto action_filter_sr = new QAction(file_tree_sub_menu_formats->at(FileTree::ActionMenu::SubMenu::FilterImageFormats::action_filter_sr).name, this);
+    auto action_filter_tiff = new QAction(file_tree_sub_menu_formats->at(FileTree::ActionMenu::SubMenu::FilterImageFormats::action_filter_tiff).name, this);
+    auto action_filter_exr = new QAction(file_tree_sub_menu_formats->at(FileTree::ActionMenu::SubMenu::FilterImageFormats::action_filter_exr).name, this);
+    auto action_filter_hdr = new QAction(file_tree_sub_menu_formats->at(FileTree::ActionMenu::SubMenu::FilterImageFormats::action_filter_hdr).name, this);
+    action_filter_jpeg->setCheckable(true);
+    action_filter_jp2->setCheckable(true);
+    action_filter_png->setCheckable(true);
+    action_filter_webp->setCheckable(true);
+    action_filter_bmp->setCheckable(true);
+    action_filter_avif->setCheckable(true);
+    action_filter_pbm->setCheckable(true);
+    action_filter_sr->setCheckable(true);
+    action_filter_tiff->setCheckable(true);
+    action_filter_exr->setCheckable(true);
+    action_filter_hdr->setCheckable(true);
 
-    auto action_submenu_filter = new QAction("Selection Filter", this);
+    // TODO: No tristate? Remove check if any filtered item unchecked? FileSelectionChange()
 
-    action_add->setToolTip(file_tree_menu_items->at(ActionMenu::action_add).desc);
-    action_delete->setToolTip(file_tree_menu_items->at(ActionMenu::action_delete).desc);
-    action_clear->setToolTip(file_tree_menu_items->at(ActionMenu::action_clear).desc);
-    action_select->setToolTip(file_tree_menu_items->at(ActionMenu::action_select).desc);
-    action_select_all->setToolTip(file_tree_menu_items->at(ActionMenu::action_select_all).desc);
-    action_select_none->setToolTip(file_tree_menu_items->at(ActionMenu::action_select_none).desc);
-    action_view->setToolTip(file_tree_menu_items->at(ActionMenu::action_view).desc);
-    action_preview->setToolTip(file_tree_menu_items->at(ActionMenu::action_preview).desc);
+    action_add->setStatusTip(file_tree_menu_items->at(FileTree::ActionMenu::MainMenu::action_add).desc);
+    action_add->setToolTip(file_tree_menu_items->at(FileTree::ActionMenu::MainMenu::action_add).desc);
+    action_delete->setStatusTip(file_tree_menu_items->at(FileTree::ActionMenu::MainMenu::action_delete).desc);
+    action_delete->setToolTip(file_tree_menu_items->at(FileTree::ActionMenu::MainMenu::action_delete).desc);
+    action_clear->setStatusTip(file_tree_menu_items->at(FileTree::ActionMenu::MainMenu::action_clear).desc);
+    action_clear->setToolTip(file_tree_menu_items->at(FileTree::ActionMenu::MainMenu::action_clear).desc);
+    action_select->setStatusTip(file_tree_menu_items->at(FileTree::ActionMenu::MainMenu::action_select).desc);
+    action_select->setToolTip(file_tree_menu_items->at(FileTree::ActionMenu::MainMenu::action_select).desc);
+    action_select_all->setStatusTip(file_tree_menu_items->at(FileTree::ActionMenu::MainMenu::action_select_all).desc);
+    action_select_all->setToolTip(file_tree_menu_items->at(FileTree::ActionMenu::MainMenu::action_select_all).desc);
+    action_select_none->setStatusTip(file_tree_menu_items->at(FileTree::ActionMenu::MainMenu::action_select_none).desc);
+    action_select_none->setToolTip(file_tree_menu_items->at(FileTree::ActionMenu::MainMenu::action_select_none).desc);
+    action_submenu_filter->setStatusTip(file_tree_sub_menu_formats->at(FileTree::ActionMenu::SubMenu::FilterImageFormats::action_submenu_filter).desc);
+    action_submenu_filter->setToolTip(file_tree_sub_menu_formats->at(FileTree::ActionMenu::SubMenu::FilterImageFormats::action_submenu_filter).desc);
+    action_submenu_undock->setStatusTip(file_tree_sub_menu_formats->at(FileTree::ActionMenu::SubMenu::FilterImageFormats::action_submenu_undock).desc);
+    action_submenu_undock->setToolTip(file_tree_sub_menu_formats->at(FileTree::ActionMenu::SubMenu::FilterImageFormats::action_submenu_undock).desc);
+    action_filter_jpeg->setStatusTip(file_tree_sub_menu_formats->at(FileTree::ActionMenu::SubMenu::FilterImageFormats::action_filter_jpeg).desc);
+    action_filter_jpeg->setToolTip(file_tree_sub_menu_formats->at(FileTree::ActionMenu::SubMenu::FilterImageFormats::action_filter_jpeg).desc);
+    action_filter_jp2->setStatusTip(file_tree_sub_menu_formats->at(FileTree::ActionMenu::SubMenu::FilterImageFormats::action_filter_jp2).desc);
+    action_filter_jp2->setToolTip(file_tree_sub_menu_formats->at(FileTree::ActionMenu::SubMenu::FilterImageFormats::action_filter_jp2).desc);
+    action_filter_png->setStatusTip(file_tree_sub_menu_formats->at(FileTree::ActionMenu::SubMenu::FilterImageFormats::action_filter_png).desc);
+    action_filter_png->setToolTip(file_tree_sub_menu_formats->at(FileTree::ActionMenu::SubMenu::FilterImageFormats::action_filter_png).desc);
+    action_filter_webp->setStatusTip(file_tree_sub_menu_formats->at(FileTree::ActionMenu::SubMenu::FilterImageFormats::action_filter_webp).desc);
+    action_filter_webp->setToolTip(file_tree_sub_menu_formats->at(FileTree::ActionMenu::SubMenu::FilterImageFormats::action_filter_webp).desc);
+    action_filter_bmp->setStatusTip(file_tree_sub_menu_formats->at(FileTree::ActionMenu::SubMenu::FilterImageFormats::action_filter_bmp).desc);
+    action_filter_bmp->setToolTip(file_tree_sub_menu_formats->at(FileTree::ActionMenu::SubMenu::FilterImageFormats::action_filter_bmp).desc);
+    action_filter_avif->setStatusTip(file_tree_sub_menu_formats->at(FileTree::ActionMenu::SubMenu::FilterImageFormats::action_filter_avif).desc);
+    action_filter_avif->setToolTip(file_tree_sub_menu_formats->at(FileTree::ActionMenu::SubMenu::FilterImageFormats::action_filter_avif).desc);
+    action_filter_pbm->setStatusTip(file_tree_sub_menu_formats->at(FileTree::ActionMenu::SubMenu::FilterImageFormats::action_filter_pbm).desc);
+    action_filter_pbm->setToolTip(file_tree_sub_menu_formats->at(FileTree::ActionMenu::SubMenu::FilterImageFormats::action_filter_pbm).desc);
+    action_filter_sr->setStatusTip(file_tree_sub_menu_formats->at(FileTree::ActionMenu::SubMenu::FilterImageFormats::action_filter_sr).desc);
+    action_filter_sr->setToolTip(file_tree_sub_menu_formats->at(FileTree::ActionMenu::SubMenu::FilterImageFormats::action_filter_sr).desc);
+    action_filter_tiff->setStatusTip(file_tree_sub_menu_formats->at(FileTree::ActionMenu::SubMenu::FilterImageFormats::action_filter_tiff).desc);
+    action_filter_tiff->setToolTip(file_tree_sub_menu_formats->at(FileTree::ActionMenu::SubMenu::FilterImageFormats::action_filter_tiff).desc);
+    action_filter_exr->setStatusTip(file_tree_sub_menu_formats->at(FileTree::ActionMenu::SubMenu::FilterImageFormats::action_filter_exr).desc);
+    action_filter_exr->setToolTip(file_tree_sub_menu_formats->at(FileTree::ActionMenu::SubMenu::FilterImageFormats::action_filter_exr).desc);
+    action_filter_hdr->setStatusTip(file_tree_sub_menu_formats->at(FileTree::ActionMenu::SubMenu::FilterImageFormats::action_filter_hdr).desc);
+    action_filter_hdr->setToolTip(file_tree_sub_menu_formats->at(FileTree::ActionMenu::SubMenu::FilterImageFormats::action_filter_hdr).desc);
+    action_view->setStatusTip(file_tree_menu_items->at(FileTree::ActionMenu::MainMenu::action_view).desc);
+    action_view->setToolTip(file_tree_menu_items->at(FileTree::ActionMenu::MainMenu::action_view).desc);
+    action_preview->setStatusTip(file_tree_menu_items->at(FileTree::ActionMenu::MainMenu::action_preview).desc);
+    action_preview->setToolTip(file_tree_menu_items->at(FileTree::ActionMenu::MainMenu::action_preview).desc);
 
+    // Main Menu Actions
     Q_ASSERT(connect(action_add, SIGNAL(triggered()), this, SLOT(LoadImageFiles())));
     Q_ASSERT(connect(action_delete, SIGNAL(triggered()), this, SLOT(DeleteConfirmationPopup())));
     Q_ASSERT(connect(action_clear, &QAction::triggered, [this] { DeleteConfirmationPopup(true); }));
@@ -2560,17 +2672,48 @@ void BatchItImage::SetupFileTreeContextMenu()
     Q_ASSERT(connect(action_view, SIGNAL(triggered()), this, SLOT(Test()))); // TODO
     Q_ASSERT(connect(action_preview, SIGNAL(triggered()), this, SLOT(Test()))); // TODO
     
-    // Enabled later when files are loaded into tree.
-    ToggleFileTreeContextMenuItems(false);
+    // Format Filter Submenu Actions
+    Q_ASSERT(connect(action_filter_jpeg, &QAction::changed, this, [=] { FileSelectionFilter(submenu_format_filter->actions()); }));
+    Q_ASSERT(connect(action_filter_jp2, &QAction::changed, this, [=] { FileSelectionFilter(submenu_format_filter->actions()); }));
+    Q_ASSERT(connect(action_filter_png, &QAction::changed, this, [=] { FileSelectionFilter(submenu_format_filter->actions()); }));
+    Q_ASSERT(connect(action_filter_webp, &QAction::changed, this, [=] { FileSelectionFilter(submenu_format_filter->actions()); }));
+    Q_ASSERT(connect(action_filter_bmp, &QAction::changed, this, [=] { FileSelectionFilter(submenu_format_filter->actions()); }));
+    Q_ASSERT(connect(action_filter_avif, &QAction::changed, this, [=] { FileSelectionFilter(submenu_format_filter->actions()); }));
+    Q_ASSERT(connect(action_filter_pbm, &QAction::changed, this, [=] { FileSelectionFilter(submenu_format_filter->actions()); }));
+    Q_ASSERT(connect(action_filter_sr, &QAction::changed, this, [=] { FileSelectionFilter(submenu_format_filter->actions()); }));
+    Q_ASSERT(connect(action_filter_tiff, &QAction::changed, this, [=] { FileSelectionFilter(submenu_format_filter->actions()); }));
+    Q_ASSERT(connect(action_filter_exr, &QAction::changed, this, [=] { FileSelectionFilter(submenu_format_filter->actions()); }));
+    Q_ASSERT(connect(action_filter_hdr, &QAction::changed, this, [=] { FileSelectionFilter(submenu_format_filter->actions()); }));
+
+    // Undockable Format Filter Menu
+    Q_ASSERT(connect(action_submenu_undock, &QAction::triggered, this,
+        [=] {
+            submenu_format_filter->showTearOffMenu();
+            action_submenu_undock->setVisible(false);
+        }));
+    Q_ASSERT(connect(submenu_format_filter, &QMenu::aboutToShow, this,
+        [=] {
+            if (submenu_format_filter->isTearOffMenuVisible())
+                action_submenu_undock->setVisible(false);
+            else
+                action_submenu_undock->setVisible(true);
+        }));
 
     // Create the Context Menu
     ui.treeWidget_FileInfo->setContextMenuPolicy(Qt::ActionsContextMenu);
-    //ui.treeWidget_FileInfo->setContextMenuPolicy(Qt::CustomContextMenu);
     ui.treeWidget_FileInfo->addActions({ 
         action_add, action_delete, action_clear, action_line_1,
         action_select, action_select_all, action_select_none, action_submenu_filter, action_line_2,
         action_view, action_preview, 
         });
+    submenu_format_filter->addActions({
+        action_submenu_undock, action_line_3, action_filter_jpeg, action_filter_jp2, action_filter_png, action_filter_webp,
+        action_filter_bmp, action_filter_avif, action_filter_pbm, action_filter_sr, action_filter_tiff, action_filter_exr, action_filter_hdr
+        });
+    action_submenu_filter->setMenu(submenu_format_filter);
+
+    // Disabled most actions until files are loaded into tree.
+    ToggleFileTreeContextMenuItems(false);
 
 #ifdef _DEBUG
     auto action_line_D = new QAction(this);
@@ -2601,6 +2744,7 @@ void BatchItImage::ToggleFileTreeContextMenuItems(bool enable)
     action_select->setEnabled(enable);
     action_select_all->setEnabled(enable);
     action_select_none->setEnabled(enable);
+    action_submenu_filter->setEnabled(enable);
     action_view->setEnabled(enable);
     action_preview->setEnabled(enable);
     if (enable) {
@@ -2609,6 +2753,7 @@ void BatchItImage::ToggleFileTreeContextMenuItems(bool enable)
         action_select->setFont(*font_default);
         action_select_all->setFont(*font_default);
         action_select_none->setFont(*font_default);
+        action_submenu_filter->setFont(*font_default);
         action_view->setFont(*font_default);
         action_preview->setFont(*font_default);
     }
@@ -2618,6 +2763,7 @@ void BatchItImage::ToggleFileTreeContextMenuItems(bool enable)
         action_select->setFont(*font_default_light);
         action_select_all->setFont(*font_default_light);
         action_select_none->setFont(*font_default_light);
+        action_submenu_filter->setFont(*font_default_light);
         action_view->setFont(*font_default_light);
         action_preview->setFont(*font_default_light);
     }
@@ -2988,10 +3134,10 @@ void BatchItImage::CreateNewPreset()
 
     ChangePresetDescription(
         new_preset_index,
-        dialog_messages.at(DialogMessages::CreateNewPreset).name,
-        dialog_messages.at(DialogMessages::CreateNewPreset).desc
-        //ReplaceAll(dialog_messages.at(DialogMessages::CreateNewPreset).name, "##", preset_number),
-        //ReplaceAll(dialog_messages.at(DialogMessages::CreateNewPreset).desc, "##", preset_number)
+        dialog_messages.at(Dialog::Messages::CreateNewPreset).name,
+        dialog_messages.at(Dialog::Messages::CreateNewPreset).desc
+        //ReplaceAll(dialog_messages.at(Dialog::Messages::CreateNewPreset).name, "##", preset_number),
+        //ReplaceAll(dialog_messages.at(Dialog::Messages::CreateNewPreset).desc, "##", preset_number)
     );
 }
 
@@ -3005,18 +3151,18 @@ void BatchItImage::RemoveCurrentPreset()
     bool use_bold_text = false;
 
     if (preset_list.size() > 1) {
-        title = ReplaceAll(dialog_messages.at(DialogMessages::remove_preset_dialog).name, "##", preset_number);
-        message = ReplaceAll(dialog_messages.at(DialogMessages::remove_preset_dialog).desc, "##", preset_number);
+        title = ReplaceAll(dialog_messages.at(Dialog::Messages::remove_preset_dialog).name, "##", preset_number);
+        message = ReplaceAll(dialog_messages.at(Dialog::Messages::remove_preset_dialog).desc, "##", preset_number);
         buttons = QDialogButtonBox::Cancel;
         custom_buttons = DialogMessage::CustomButton::Delete;
-        use_bold_text = dialog_messages.at(DialogMessages::remove_preset_dialog).data;
+        use_bold_text = dialog_messages.at(Dialog::Messages::remove_preset_dialog).data;
     }
     else {
-        title = ReplaceAll(dialog_messages.at(DialogMessages::remove_preset_dialog_halted).name, "##", preset_number);
-        message = ReplaceAll(dialog_messages.at(DialogMessages::remove_preset_dialog_halted).desc, "##", preset_number);
+        title = ReplaceAll(dialog_messages.at(Dialog::Messages::remove_preset_dialog_halted).name, "##", preset_number);
+        message = ReplaceAll(dialog_messages.at(Dialog::Messages::remove_preset_dialog_halted).desc, "##", preset_number);
         buttons = QDialogButtonBox::Close;
         custom_buttons = DialogMessage::CustomButton::NoCustomButton;
-        use_bold_text = dialog_messages.at(DialogMessages::remove_preset_dialog_halted).data;
+        use_bold_text = dialog_messages.at(Dialog::Messages::remove_preset_dialog_halted).data;
     }
     auto* remove_preset_dialog = new DialogMessage(title, message, buttons, custom_buttons, this, use_bold_text);
 
@@ -3047,14 +3193,14 @@ bool BatchItImage::SavePresetDialog(bool include_cancel_buttons, bool closing)
         DialogMessage::CustomButtons custom_buttons = DialogMessage::CustomButton::NoCustomButton;
 
         if (closing) {
-            title = ReplaceAll(dialog_messages.at(DialogMessages::save_preset_dialog_closing).name, "##", preset_number);
-            message = ReplaceAll(dialog_messages.at(DialogMessages::save_preset_dialog_closing).desc, "##", preset_number);
+            title = ReplaceAll(dialog_messages.at(Dialog::Messages::save_preset_dialog_closing).name, "##", preset_number);
+            message = ReplaceAll(dialog_messages.at(Dialog::Messages::save_preset_dialog_closing).desc, "##", preset_number);
             buttons = QDialogButtonBox::Cancel;
             custom_buttons = DialogMessage::CustomButton::SaveClose | DialogMessage::CustomButton::Close;
         }
         else {
-            title = ReplaceAll(dialog_messages.at(DialogMessages::save_preset_dialog).name, "##", preset_number);
-            message = ReplaceAll(dialog_messages.at(DialogMessages::save_preset_dialog).desc, "##", preset_number);
+            title = ReplaceAll(dialog_messages.at(Dialog::Messages::save_preset_dialog).name, "##", preset_number);
+            message = ReplaceAll(dialog_messages.at(Dialog::Messages::save_preset_dialog).desc, "##", preset_number);
             if (include_cancel_buttons) {
                 buttons = QDialogButtonBox::Cancel;
                 custom_buttons = DialogMessage::CustomButton::SaveContinue
@@ -3316,31 +3462,31 @@ void BatchItImage::StartBatchImageLog()
     // Create Header, if not already created.
     if (log_lines.empty()) {
         std::chrono::zoned_time session_start_time_zt{ std::chrono::current_zone(), session_start_time };
-        log_lines.push_back(log_text.at(LogFileLines::ThickDivider));
-        log_lines.push_back(log_text.at(LogFileLines::Title));
-        log_lines.push_back(log_text.at(LogFileLines::ThickDivider));
+        log_lines.push_back(log_text.at(LogFile::Line::ThickDivider));
+        log_lines.push_back(log_text.at(LogFile::Line::Title));
+        log_lines.push_back(log_text.at(LogFile::Line::ThickDivider));
         log_lines.push_back(
-            ReplaceAll(log_text.at(LogFileLines::SessionStart), "##", std::format("{0:%Y.%m.%d %H:%M:%OS}", session_start_time_zt))
+            ReplaceAll(log_text.at(LogFile::Line::SessionStart), "##", std::format("{0:%Y.%m.%d %H:%M:%OS}", session_start_time_zt))
         );
-        log_lines.push_back(log_text.at(LogFileLines::SessionEnd));
+        log_lines.push_back(log_text.at(LogFile::Line::SessionEnd));
         log_lines.push_back("");
     }
 
     // Add Batch Summary
-    log_lines.push_back(log_text.at(LogFileLines::ThinDivider));
+    log_lines.push_back(log_text.at(LogFile::Line::ThinDivider));
     log_lines.push_back(
-        ReplaceAll(log_text.at(LogFileLines::Batch), "##", "#" + std::to_string(++log_batch_number))
+        ReplaceAll(log_text.at(LogFile::Line::Batch), "##", "#" + std::to_string(++log_batch_number))
     );
     log_batch_summary = log_lines.size();
-    log_lines.push_back(log_text.at(LogFileLines::ThinDivider));
-    log_lines.push_back(log_text.at(LogFileLines::SummarySuccesses));
-    log_lines.push_back(log_text.at(LogFileLines::SummaryErrors));
-    log_lines.push_back(log_text.at(LogFileLines::SummaryTime));
-    log_lines.push_back(log_text.at(LogFileLines::ThinDivider));
+    log_lines.push_back(log_text.at(LogFile::Line::ThinDivider));
+    log_lines.push_back(log_text.at(LogFile::Line::SummarySuccesses));
+    log_lines.push_back(log_text.at(LogFile::Line::SummaryErrors));
+    log_lines.push_back(log_text.at(LogFile::Line::SummaryTime));
+    log_lines.push_back(log_text.at(LogFile::Line::ThinDivider));
 
     // Add Settings Used
     if (edit_options_change_tracker or save_options_change_tracker) {
-        log_lines.push_back(log_text.at(LogFileLines::UnsavedSettings));
+        log_lines.push_back(log_text.at(LogFile::Line::UnsavedSettings));
     }
     else {
         log_lines.push_back(" " + ui.comboBox_Preset_1->currentText().toStdString());
@@ -3508,42 +3654,42 @@ void BatchItImage::StartBatchImageLog()
         log_lines.push_back(
             " " + ui.label_ImageFormat->text().toStdString() + " " + ui.comboBox_ImageFormat->currentText().toStdString()
         );
-        if (ui.comboBox_ImageFormat->currentIndex() == ImageSaver::SupportedImageFormats::jpeg
-            or ui.comboBox_ImageFormat->currentIndex() == ImageSaver::SupportedImageFormats::jpg
-            or ui.comboBox_ImageFormat->currentIndex() == ImageSaver::SupportedImageFormats::jpe
-            or ui.comboBox_ImageFormat->currentIndex() == ImageSaver::SupportedImageFormats::png
-            or ui.comboBox_ImageFormat->currentIndex() == ImageSaver::SupportedImageFormats::pam
-            or ui.comboBox_ImageFormat->currentIndex() == ImageSaver::SupportedImageFormats::tiff
-            or ui.comboBox_ImageFormat->currentIndex() == ImageSaver::SupportedImageFormats::tif
-            or ui.comboBox_ImageFormat->currentIndex() == ImageSaver::SupportedImageFormats::exr
-            or ui.comboBox_ImageFormat->currentIndex() == ImageSaver::SupportedImageFormats::hdr)
+        if (ui.comboBox_ImageFormat->currentIndex() == ImageSaver::ImageExtension::jpeg
+            or ui.comboBox_ImageFormat->currentIndex() == ImageSaver::ImageExtension::jpg
+            or ui.comboBox_ImageFormat->currentIndex() == ImageSaver::ImageExtension::jpe
+            or ui.comboBox_ImageFormat->currentIndex() == ImageSaver::ImageExtension::png
+            or ui.comboBox_ImageFormat->currentIndex() == ImageSaver::ImageExtension::pam
+            or ui.comboBox_ImageFormat->currentIndex() == ImageSaver::ImageExtension::tiff
+            or ui.comboBox_ImageFormat->currentIndex() == ImageSaver::ImageExtension::tif
+            or ui.comboBox_ImageFormat->currentIndex() == ImageSaver::ImageExtension::exr
+            or ui.comboBox_ImageFormat->currentIndex() == ImageSaver::ImageExtension::hdr)
         {
             log_lines.push_back(
                 " " + ui.label_FormatFlags->text().toStdString() + " " + ui.comboBox_FormatFlags->currentText().toStdString()
             );
         }
-        if (ui.comboBox_ImageFormat->currentIndex() == ImageSaver::SupportedImageFormats::jpeg
-            or ui.comboBox_ImageFormat->currentIndex() == ImageSaver::SupportedImageFormats::jpg
-            or ui.comboBox_ImageFormat->currentIndex() == ImageSaver::SupportedImageFormats::jpe
-            or ui.comboBox_ImageFormat->currentIndex() == ImageSaver::SupportedImageFormats::webp
-            or ui.comboBox_ImageFormat->currentIndex() == ImageSaver::SupportedImageFormats::avif
-            or ui.comboBox_ImageFormat->currentIndex() == ImageSaver::SupportedImageFormats::tiff
-            or ui.comboBox_ImageFormat->currentIndex() == ImageSaver::SupportedImageFormats::tif)
+        if (ui.comboBox_ImageFormat->currentIndex() == ImageSaver::ImageExtension::jpeg
+            or ui.comboBox_ImageFormat->currentIndex() == ImageSaver::ImageExtension::jpg
+            or ui.comboBox_ImageFormat->currentIndex() == ImageSaver::ImageExtension::jpe
+            or ui.comboBox_ImageFormat->currentIndex() == ImageSaver::ImageExtension::webp
+            or ui.comboBox_ImageFormat->currentIndex() == ImageSaver::ImageExtension::avif
+            or ui.comboBox_ImageFormat->currentIndex() == ImageSaver::ImageExtension::tiff
+            or ui.comboBox_ImageFormat->currentIndex() == ImageSaver::ImageExtension::tif)
         {
             log_lines.push_back(
                 " " + ui.label_Quality->text().toStdString() + " " + std::to_string(ui.horizontalSlider_Quality->value())
             );
         }
 
-        if (ui.comboBox_ImageFormat->currentIndex() == ImageSaver::SupportedImageFormats::jpeg
-            or ui.comboBox_ImageFormat->currentIndex() == ImageSaver::SupportedImageFormats::jpg
-            or ui.comboBox_ImageFormat->currentIndex() == ImageSaver::SupportedImageFormats::jpe
-            or ui.comboBox_ImageFormat->currentIndex() == ImageSaver::SupportedImageFormats::png
-            or ui.comboBox_ImageFormat->currentIndex() == ImageSaver::SupportedImageFormats::pbm
-            or ui.comboBox_ImageFormat->currentIndex() == ImageSaver::SupportedImageFormats::pgm
-            or ui.comboBox_ImageFormat->currentIndex() == ImageSaver::SupportedImageFormats::ppm
-            or ui.comboBox_ImageFormat->currentIndex() == ImageSaver::SupportedImageFormats::pxm
-            or ui.comboBox_ImageFormat->currentIndex() == ImageSaver::SupportedImageFormats::exr)
+        if (ui.comboBox_ImageFormat->currentIndex() == ImageSaver::ImageExtension::jpeg
+            or ui.comboBox_ImageFormat->currentIndex() == ImageSaver::ImageExtension::jpg
+            or ui.comboBox_ImageFormat->currentIndex() == ImageSaver::ImageExtension::jpe
+            or ui.comboBox_ImageFormat->currentIndex() == ImageSaver::ImageExtension::png
+            or ui.comboBox_ImageFormat->currentIndex() == ImageSaver::ImageExtension::pbm
+            or ui.comboBox_ImageFormat->currentIndex() == ImageSaver::ImageExtension::pgm
+            or ui.comboBox_ImageFormat->currentIndex() == ImageSaver::ImageExtension::ppm
+            or ui.comboBox_ImageFormat->currentIndex() == ImageSaver::ImageExtension::pxm
+            or ui.comboBox_ImageFormat->currentIndex() == ImageSaver::ImageExtension::exr)
         {
             if (ui.checkBox_Optimize->isChecked()) {
                 log_lines.push_back(
@@ -3551,10 +3697,10 @@ void BatchItImage::StartBatchImageLog()
                 );
             }
         }
-        if (ui.comboBox_ImageFormat->currentIndex() == ImageSaver::SupportedImageFormats::jpeg
-            or ui.comboBox_ImageFormat->currentIndex() == ImageSaver::SupportedImageFormats::jpg
-            or ui.comboBox_ImageFormat->currentIndex() == ImageSaver::SupportedImageFormats::jpe
-            or ui.comboBox_ImageFormat->currentIndex() == ImageSaver::SupportedImageFormats::exr)
+        if (ui.comboBox_ImageFormat->currentIndex() == ImageSaver::ImageExtension::jpeg
+            or ui.comboBox_ImageFormat->currentIndex() == ImageSaver::ImageExtension::jpg
+            or ui.comboBox_ImageFormat->currentIndex() == ImageSaver::ImageExtension::jpe
+            or ui.comboBox_ImageFormat->currentIndex() == ImageSaver::ImageExtension::exr)
         {
             if (ui.checkBox_Progressive->isChecked()) {
                 log_lines.push_back(
@@ -3562,22 +3708,22 @@ void BatchItImage::StartBatchImageLog()
                 );
             }
         }
-        if (ui.comboBox_ImageFormat->currentIndex() == ImageSaver::SupportedImageFormats::jpeg
-            or ui.comboBox_ImageFormat->currentIndex() == ImageSaver::SupportedImageFormats::jpg
-            or ui.comboBox_ImageFormat->currentIndex() == ImageSaver::SupportedImageFormats::jpe
-            or ui.comboBox_ImageFormat->currentIndex() == ImageSaver::SupportedImageFormats::jp2
-            or ui.comboBox_ImageFormat->currentIndex() == ImageSaver::SupportedImageFormats::png
-            or ui.comboBox_ImageFormat->currentIndex() == ImageSaver::SupportedImageFormats::avif
-            or ui.comboBox_ImageFormat->currentIndex() == ImageSaver::SupportedImageFormats::exr)
+        if (ui.comboBox_ImageFormat->currentIndex() == ImageSaver::ImageExtension::jpeg
+            or ui.comboBox_ImageFormat->currentIndex() == ImageSaver::ImageExtension::jpg
+            or ui.comboBox_ImageFormat->currentIndex() == ImageSaver::ImageExtension::jpe
+            or ui.comboBox_ImageFormat->currentIndex() == ImageSaver::ImageExtension::jp2
+            or ui.comboBox_ImageFormat->currentIndex() == ImageSaver::ImageExtension::png
+            or ui.comboBox_ImageFormat->currentIndex() == ImageSaver::ImageExtension::avif
+            or ui.comboBox_ImageFormat->currentIndex() == ImageSaver::ImageExtension::exr)
         {
             log_lines.push_back(
                 " " + ui.label_Compression->text().toStdString() + " " + std::to_string(ui.spinBox_Compression->value())
             );
         }
         // ExtraSetting1
-        if (ui.comboBox_ImageFormat->currentIndex() == ImageSaver::SupportedImageFormats::jpeg
-            or ui.comboBox_ImageFormat->currentIndex() == ImageSaver::SupportedImageFormats::jpg
-            or ui.comboBox_ImageFormat->currentIndex() == ImageSaver::SupportedImageFormats::jpe)
+        if (ui.comboBox_ImageFormat->currentIndex() == ImageSaver::ImageExtension::jpeg
+            or ui.comboBox_ImageFormat->currentIndex() == ImageSaver::ImageExtension::jpg
+            or ui.comboBox_ImageFormat->currentIndex() == ImageSaver::ImageExtension::jpe)
         {
             if (ui.spinBox_ExtraSetting1->value() > -1) {
                 log_lines.push_back(
@@ -3585,17 +3731,17 @@ void BatchItImage::StartBatchImageLog()
                 );
             }
         }
-        else if (ui.comboBox_ImageFormat->currentIndex() == ImageSaver::SupportedImageFormats::tiff
-            or ui.comboBox_ImageFormat->currentIndex() == ImageSaver::SupportedImageFormats::tif)
+        else if (ui.comboBox_ImageFormat->currentIndex() == ImageSaver::ImageExtension::tiff
+            or ui.comboBox_ImageFormat->currentIndex() == ImageSaver::ImageExtension::tif)
         {
             log_lines.push_back(
                 " " + ui.label_ExtraSetting1->text().toStdString() + " " + std::to_string(ui.spinBox_ExtraSetting1->value())
             );
         }
         // ExtraSetting2
-        if (ui.comboBox_ImageFormat->currentIndex() == ImageSaver::SupportedImageFormats::jpeg
-            or ui.comboBox_ImageFormat->currentIndex() == ImageSaver::SupportedImageFormats::jpg
-            or ui.comboBox_ImageFormat->currentIndex() == ImageSaver::SupportedImageFormats::jpe)
+        if (ui.comboBox_ImageFormat->currentIndex() == ImageSaver::ImageExtension::jpeg
+            or ui.comboBox_ImageFormat->currentIndex() == ImageSaver::ImageExtension::jpg
+            or ui.comboBox_ImageFormat->currentIndex() == ImageSaver::ImageExtension::jpe)
         {
             if (ui.spinBox_ExtraSetting2->value() > -1) {
                 log_lines.push_back(
@@ -3603,16 +3749,16 @@ void BatchItImage::StartBatchImageLog()
                 );
             }
         }
-        else if (ui.comboBox_ImageFormat->currentIndex() == ImageSaver::SupportedImageFormats::avif
-            or ui.comboBox_ImageFormat->currentIndex() == ImageSaver::SupportedImageFormats::tiff
-            or ui.comboBox_ImageFormat->currentIndex() == ImageSaver::SupportedImageFormats::tif)
+        else if (ui.comboBox_ImageFormat->currentIndex() == ImageSaver::ImageExtension::avif
+            or ui.comboBox_ImageFormat->currentIndex() == ImageSaver::ImageExtension::tiff
+            or ui.comboBox_ImageFormat->currentIndex() == ImageSaver::ImageExtension::tif)
         {
             log_lines.push_back(
                 " " + ui.label_ExtraSetting2->text().toStdString() + " " + std::to_string(ui.spinBox_ExtraSetting2->value())
             );
         }
     }
-    log_lines.push_back(log_text.at(LogFileLines::ThinDivider));
+    log_lines.push_back(log_text.at(LogFile::Line::ThinDivider));
     log_lines.push_back("");
 }
 
@@ -3623,12 +3769,12 @@ void BatchItImage::UpdateLog(ImageEditor* edited_image, ImageSaver* saved_image)
     std::vector<std::string>* edit_errors = edited_image->errorMessages();
     std::string* save_error = saved_image->errorMessage();
 
-    log_lines.push_back(ReplaceAll(log_text.at(LogFileLines::ImageNumber), "##", "#" + std::to_string(saved_image->imageCount())));
+    log_lines.push_back(ReplaceAll(log_text.at(LogFile::Line::ImageNumber), "##", "#" + std::to_string(saved_image->imageCount())));
     log_lines.push_back(saved_image->originalImagePath());
     log_lines.push_back(saved_image->imageSavePath());
 
     if (saved_image->isImageSaveCanceled()) {
-        log_lines.push_back(log_text.at(LogFileLines::SaveSuccess));
+        log_lines.push_back(log_text.at(LogFile::Line::SaveSuccess));
     }
     else {
         if (edit_errors->empty()) {
@@ -3636,16 +3782,16 @@ void BatchItImage::UpdateLog(ImageEditor* edited_image, ImageSaver* saved_image)
         }
         else {
             for (auto& error : *edit_errors) {
-                log_lines.push_back(ReplaceAll(log_text.at(LogFileLines::EditError), "##", error));
+                log_lines.push_back(ReplaceAll(log_text.at(LogFile::Line::EditError), "##", error));
             }
         }
         if (save_error->empty()) {
             successful_image_saves++;
-            log_lines.push_back(log_text.at(LogFileLines::SaveCanceled));
+            log_lines.push_back(log_text.at(LogFile::Line::SaveCanceled));
         }
         else {
             image_save_errors++;
-            log_lines.push_back(ReplaceAll(log_text.at(LogFileLines::SaveError), "##", *save_error));
+            log_lines.push_back(ReplaceAll(log_text.at(LogFile::Line::SaveError), "##", *save_error));
         }
     }
     log_lines.push_back("");
@@ -3748,18 +3894,18 @@ void BatchItImage::PrintBatchImageLog()
     DialogMessage::CustomButtons custom_buttons = DialogMessage::CustomButton::OpenLog | DialogMessage::CustomButton::SaveLogAs;
 
     if (log_error) {
-        title = dialog_messages.at(DialogMessages::log_created_dialog_error).name;
-        message = dialog_messages.at(DialogMessages::log_created_dialog_error).desc;
+        title = dialog_messages.at(Dialog::Messages::log_created_dialog_error).name;
+        message = dialog_messages.at(Dialog::Messages::log_created_dialog_error).desc;
         buttons = QDialogButtonBox::Ok;
         custom_buttons = DialogMessage::CustomButton::NoCustomButton;
     }
     else if (log_end_line) {
-        title = dialog_messages.at(DialogMessages::log_created_dialog_updated).name;
-        message = dialog_messages.at(DialogMessages::log_created_dialog_updated).desc;
+        title = dialog_messages.at(Dialog::Messages::log_created_dialog_updated).name;
+        message = dialog_messages.at(Dialog::Messages::log_created_dialog_updated).desc;
     }
     else {
-        title = dialog_messages.at(DialogMessages::log_created_dialog).name;
-        message = dialog_messages.at(DialogMessages::log_created_dialog).desc;
+        title = dialog_messages.at(Dialog::Messages::log_created_dialog).name;
+        message = dialog_messages.at(Dialog::Messages::log_created_dialog).desc;
     }
     auto* log_created_dialog = new DialogMessage(title, message, buttons, custom_buttons, this);
     Q_ASSERT(connect(log_created_dialog, &DialogMessage::buttonRoleClicked, this,
@@ -3772,9 +3918,9 @@ void BatchItImage::PrintBatchImageLog()
             }
             else if (QDialogButtonBox::ButtonRole::ApplyRole == button_role_clicked) { // Save Log File
                 std::string log_file_new_save_path = QFileDialog::getSaveFileName( this,
-                    file_dialog_titles.at(FileDialogTitles::log_file_new_save_path),
+                    file_dialog_titles.at(Dialog::FileSearch::log_file_new_save_path),
                     QString::fromStdString((log_file_path / log_file_name).string()),
-                    file_dialog_titles.at(FileDialogTitles::log_file_new_save_path_extensions) + \
+                    file_dialog_titles.at(Dialog::FileSearch::log_file_new_save_path_extensions) + \
                     " (*" + log_extensions[0] + " *" + log_extensions[1] + ")"
                 ).toStdString();
                 qDebug() << "Save:" << log_file_new_save_path;
@@ -3796,7 +3942,7 @@ void BatchItImage::LoadImageFiles()
 {
     QStringList files = QFileDialog::getOpenFileNames(
         this,
-        file_dialog_titles.at(FileDialogTitles::LoadImageFiles),
+        file_dialog_titles.at(Dialog::FileSearch::LoadImageFiles),
         qdefault_path, // TODO: Default config setting, "recent"
         supported_image_extensions_dialog_str
     );
@@ -3809,7 +3955,7 @@ QString BatchItImage::GetImageFile(QString default_image_path)
 {
     QString file = QFileDialog::getOpenFileName(
         this,
-        file_dialog_titles.at(FileDialogTitles::GetImageFile),
+        file_dialog_titles.at(Dialog::FileSearch::GetImageFile),
         default_image_path,
         supported_image_extensions_dialog_str
     );
@@ -3945,8 +4091,8 @@ void BatchItImage::HandleFileMetadata(FileMetadata* file_metadata)
         // TODO: return bad file path? then add to vector of bad files, show non_image_file_dialog for each or ignore all
         if (not non_image_file_dialog_shown) {
             auto* non_image_file_dialog = new DialogMessage(
-                dialog_messages.at(DialogMessages::non_image_file_dialog).name,
-                dialog_messages.at(DialogMessages::non_image_file_dialog).desc,
+                dialog_messages.at(Dialog::Messages::non_image_file_dialog).name,
+                dialog_messages.at(Dialog::Messages::non_image_file_dialog).desc,
                 QDialogButtonBox::Ignore,
                 DialogMessage::CustomButton::NoCustomButton,
                 this
@@ -4008,43 +4154,43 @@ void BatchItImage::LoadFileIntoTree(int file_index, int sorted_column)
     QCheckBox* file_selected_check_box = new QCheckBox(ui.treeWidget_FileInfo);
     file_selected_check_box->setText("");
     file_selected_check_box->setChecked(file.selected);
-    file_selected_check_box->setStatusTip(file_tree_other_text[FileColumn::FILE_LOAD_ORDER] + QVariant(file.load_order).toString());
+    file_selected_check_box->setStatusTip(file_tree_other_text[FileTree::Column::FILE_LOAD_ORDER] + QVariant(file.load_order).toString());
     
     connect(file_selected_check_box, &QCheckBox::toggled, this,
         [=] (bool toggle) {
             FileSelectionChange(file_index, toggle);
         });
 
-    ui.treeWidget_FileInfo->setItemWidget(new_item, FileColumn::FILE_SELECTED, file_selected_check_box);
-    new_item->setToolTip(FileColumn::FILE_SELECTED, file_tree_other_text[FileColumn::FILE_LOAD_ORDER] + QVariant(file.load_order).toString());
-    //new_item->setData(FileColumn::FILE_SELECTED, Qt::ToolTipRole, QVariant(file.load_order));
-    //new_item->setData(FileColumn::FILE_SELECTED, Qt::StatusTipRole, QVariant(file.load_order)); // Won't show for widget column
-    new_item->setText(FileColumn::FILE_NAME, QString::fromStdString(file_path.filename().string()));
-    new_item->setStatusTip(FileColumn::FILE_NAME, file_tree_other_text[FileColumn::FILE_NAME] + QString::fromStdString(file.path));
-    new_item->setToolTip(FileColumn::FILE_NAME, file_tree_other_text[FileColumn::FILE_NAME] + QString::fromStdString(file.path));
-    new_item->setText(FileColumn::IMAGE_DIMENSIONS, QString::fromStdString(std::to_string(file.width) + " x " + std::to_string(file.height)));
-    new_item->setTextAlignment(FileColumn::IMAGE_DIMENSIONS, Qt::AlignCenter);
-    new_item->setStatusTip(FileColumn::IMAGE_DIMENSIONS, file_tree_other_text[FileColumn::IMAGE_DIMENSIONS] + QVariant(file.width).toString() + " x " + QVariant(file.height).toString());
-    //new_item->setToolTip(FileColumn::IMAGE_DIMENSIONS, QString::fromStdString("Image Width: " + std::to_string(file.width) + ",   Image Height: " + std::to_string(file.height)));
-    new_item->setToolTip(FileColumn::IMAGE_DIMENSIONS, file_tree_other_text[FileColumn::IMAGE_DIMENSIONS] + QVariant(file.width).toString() + " x " + QVariant(file.height).toString());
-    new_item->setText(FileColumn::FILE_SIZE, QString::fromStdString(file_size_str));
-    new_item->setTextAlignment(FileColumn::FILE_SIZE, Qt::AlignRight);
-    new_item->setStatusTip(FileColumn::FILE_SIZE, file_tree_other_text[FileColumn::FILE_SIZE] + QString::fromStdString(file_size_str));
-    new_item->setToolTip(FileColumn::FILE_SIZE, file_tree_other_text[FileColumn::FILE_SIZE] + QString::fromStdString(file_size_str));
-    new_item->setText(FileColumn::DATE_CREATED, QString::fromStdString(date_created));
-    new_item->setStatusTip(FileColumn::DATE_CREATED, file_tree_other_text[FileColumn::DATE_CREATED] + QString(date_created));
-    new_item->setToolTip(FileColumn::DATE_CREATED, file_tree_other_text[FileColumn::DATE_CREATED] + QString(date_created));
-    new_item->setText(FileColumn::DATE_MODIFIED, QString::fromStdString(date_modified));
-    new_item->setStatusTip(FileColumn::DATE_MODIFIED, file_tree_other_text[FileColumn::DATE_MODIFIED] + QString(date_modified));
-    new_item->setToolTip(FileColumn::DATE_MODIFIED, file_tree_other_text[FileColumn::DATE_MODIFIED] + QString(date_modified));
+    ui.treeWidget_FileInfo->setItemWidget(new_item, FileTree::Column::FILE_SELECTED, file_selected_check_box);
+    new_item->setToolTip(FileTree::Column::FILE_SELECTED, file_tree_other_text[FileTree::Column::FILE_LOAD_ORDER] + QVariant(file.load_order).toString());
+    //new_item->setData(FileTree::Column::FILE_SELECTED, Qt::ToolTipRole, QVariant(file.load_order));
+    //new_item->setData(FileTree::Column::FILE_SELECTED, Qt::StatusTipRole, QVariant(file.load_order)); // Won't show for widget column
+    new_item->setText(FileTree::Column::FILE_NAME, QString::fromStdString(file_path.filename().string()));
+    new_item->setStatusTip(FileTree::Column::FILE_NAME, file_tree_other_text[FileTree::Column::FILE_NAME] + QString::fromStdString(file.path));
+    new_item->setToolTip(FileTree::Column::FILE_NAME, file_tree_other_text[FileTree::Column::FILE_NAME] + QString::fromStdString(file.path));
+    new_item->setText(FileTree::Column::IMAGE_DIMENSIONS, QString::fromStdString(std::to_string(file.width) + " x " + std::to_string(file.height)));
+    new_item->setTextAlignment(FileTree::Column::IMAGE_DIMENSIONS, Qt::AlignCenter);
+    new_item->setStatusTip(FileTree::Column::IMAGE_DIMENSIONS, file_tree_other_text[FileTree::Column::IMAGE_DIMENSIONS] + QVariant(file.width).toString() + " x " + QVariant(file.height).toString());
+    //new_item->setToolTip(FileTree::Column::IMAGE_DIMENSIONS, QString::fromStdString("Image Width: " + std::to_string(file.width) + ",   Image Height: " + std::to_string(file.height)));
+    new_item->setToolTip(FileTree::Column::IMAGE_DIMENSIONS, file_tree_other_text[FileTree::Column::IMAGE_DIMENSIONS] + QVariant(file.width).toString() + " x " + QVariant(file.height).toString());
+    new_item->setText(FileTree::Column::FILE_SIZE, QString::fromStdString(file_size_str));
+    new_item->setTextAlignment(FileTree::Column::FILE_SIZE, Qt::AlignRight);
+    new_item->setStatusTip(FileTree::Column::FILE_SIZE, file_tree_other_text[FileTree::Column::FILE_SIZE] + QString::fromStdString(file_size_str));
+    new_item->setToolTip(FileTree::Column::FILE_SIZE, file_tree_other_text[FileTree::Column::FILE_SIZE] + QString::fromStdString(file_size_str));
+    new_item->setText(FileTree::Column::DATE_CREATED, QString::fromStdString(date_created));
+    new_item->setStatusTip(FileTree::Column::DATE_CREATED, file_tree_other_text[FileTree::Column::DATE_CREATED] + QString(date_created));
+    new_item->setToolTip(FileTree::Column::DATE_CREATED, file_tree_other_text[FileTree::Column::DATE_CREATED] + QString(date_created));
+    new_item->setText(FileTree::Column::DATE_MODIFIED, QString::fromStdString(date_modified));
+    new_item->setStatusTip(FileTree::Column::DATE_MODIFIED, file_tree_other_text[FileTree::Column::DATE_MODIFIED] + QString(date_modified));
+    new_item->setToolTip(FileTree::Column::DATE_MODIFIED, file_tree_other_text[FileTree::Column::DATE_MODIFIED] + QString(date_modified));
     
-    new_item->setFont(FileColumn::FILE_SELECTED, *font_mono);
-    new_item->setFont(FileColumn::FILE_NAME, *font_mono);
-    new_item->setFont(FileColumn::IMAGE_DIMENSIONS, *font_mono);
-    new_item->setFont(FileColumn::FILE_SIZE, *font_mono);
-    new_item->setFont(FileColumn::DATE_CREATED, *font_mono);
-    new_item->setFont(FileColumn::DATE_MODIFIED, *font_mono);
-    if (sorted_column > -1 and sorted_column < FileColumn::COUNT)
+    new_item->setFont(FileTree::Column::FILE_SELECTED, *font_mono);
+    new_item->setFont(FileTree::Column::FILE_NAME, *font_mono);
+    new_item->setFont(FileTree::Column::IMAGE_DIMENSIONS, *font_mono);
+    new_item->setFont(FileTree::Column::FILE_SIZE, *font_mono);
+    new_item->setFont(FileTree::Column::DATE_CREATED, *font_mono);
+    new_item->setFont(FileTree::Column::DATE_MODIFIED, *font_mono);
+    if (sorted_column > -1 and sorted_column < FileTree::Column::COUNT)
         new_item->setFont(sorted_column, *font_mono_bold);
 
     QTreeWidgetItem* item_file_path = new QTreeWidgetItem(new_item);
@@ -4092,16 +4238,79 @@ void BatchItImage::FileSelectionToggleAll(bool toggle)
 {
     qDebug() << "FileSelectionToggleAll:" << toggle;
     Qt::CheckState checked_toggle = (toggle) ? Qt::Checked : Qt::Unchecked;
-    for (uint i = 0; i < ui.treeWidget_FileInfo->topLevelItemCount(); i++) {
+    for (int i = 0; i < ui.treeWidget_FileInfo->topLevelItemCount(); i++) {
         qobject_cast<QCheckBox*>(ui.treeWidget_FileInfo->itemWidget(
             ui.treeWidget_FileInfo->topLevelItem(i), 0))->setCheckState(checked_toggle);
+    }
+}
+
+void BatchItImage::FileSelectionFilter(QList<QAction*> actions)
+{
+    for (size_t i = 0; i < current_file_metadata_list.size(); i++) {
+
+        std::string ext = std::filesystem::path(current_file_metadata_list.at(i).path).extension().string();
+
+        auto file_selection_cb = qobject_cast<QCheckBox*>(ui.treeWidget_FileInfo->
+            itemWidget(ui.treeWidget_FileInfo->topLevelItem(i), FileTree::Column::FILE_SELECTED));
+
+        if (ImageSaver::ExtensionList.at(ImageSaver::ImageExtension::jpeg) == ext
+            or ImageSaver::ExtensionList.at(ImageSaver::ImageExtension::jpg) == ext
+            or ImageSaver::ExtensionList.at(ImageSaver::ImageExtension::jpe) == ext)
+        {
+            file_selection_cb->setChecked(actions.at(FileTree::ActionMenu::SubMenu::FilterImageFormats::action_filter_jpeg)->isChecked());
+        }
+        else if (ImageSaver::ExtensionList.at(ImageSaver::ImageExtension::jp2) == ext) {
+            file_selection_cb->setChecked(actions.at(FileTree::ActionMenu::SubMenu::FilterImageFormats::action_filter_jp2)->isChecked());
+        }
+        else if (ImageSaver::ExtensionList.at(ImageSaver::ImageExtension::png) == ext) {
+            file_selection_cb->setChecked(actions.at(FileTree::ActionMenu::SubMenu::FilterImageFormats::action_filter_png)->isChecked());
+        }
+        else if (ImageSaver::ExtensionList.at(ImageSaver::ImageExtension::webp) == ext) {
+            file_selection_cb->setChecked(actions.at(FileTree::ActionMenu::SubMenu::FilterImageFormats::action_filter_webp)->isChecked());
+        }
+        else if (ImageSaver::ExtensionList.at(ImageSaver::ImageExtension::bmp) == ext
+            or ImageSaver::ExtensionList.at(ImageSaver::ImageExtension::dib) == ext)
+        {
+            file_selection_cb->setChecked(actions.at(FileTree::ActionMenu::SubMenu::FilterImageFormats::action_filter_bmp)->isChecked());
+        }
+        else if (ImageSaver::ExtensionList.at(ImageSaver::ImageExtension::avif) == ext) {
+            file_selection_cb->setChecked(actions.at(FileTree::ActionMenu::SubMenu::FilterImageFormats::action_filter_avif)->isChecked());
+        }
+        else if (ImageSaver::ExtensionList.at(ImageSaver::ImageExtension::pbm) == ext
+            or ImageSaver::ExtensionList.at(ImageSaver::ImageExtension::pgm) == ext
+            or ImageSaver::ExtensionList.at(ImageSaver::ImageExtension::ppm) == ext
+            or ImageSaver::ExtensionList.at(ImageSaver::ImageExtension::pxm) == ext
+            or ImageSaver::ExtensionList.at(ImageSaver::ImageExtension::pnm) == ext
+            or ImageSaver::ExtensionList.at(ImageSaver::ImageExtension::pfm) == ext
+            or ImageSaver::ExtensionList.at(ImageSaver::ImageExtension::pam) == ext)
+        {
+            file_selection_cb->setChecked(actions.at(FileTree::ActionMenu::SubMenu::FilterImageFormats::action_filter_pbm)->isChecked());
+        }
+        else if (ImageSaver::ExtensionList.at(ImageSaver::ImageExtension::sr) == ext
+            or ImageSaver::ExtensionList.at(ImageSaver::ImageExtension::ras) == ext)
+        {
+            file_selection_cb->setChecked(actions.at(FileTree::ActionMenu::SubMenu::FilterImageFormats::action_filter_sr)->isChecked());
+        }
+        else if (ImageSaver::ExtensionList.at(ImageSaver::ImageExtension::tiff) == ext
+            or ImageSaver::ExtensionList.at(ImageSaver::ImageExtension::tif) == ext)
+        {
+            file_selection_cb->setChecked(actions.at(FileTree::ActionMenu::SubMenu::FilterImageFormats::action_filter_tiff)->isChecked());
+        }
+        else if (ImageSaver::ExtensionList.at(ImageSaver::ImageExtension::exr) == ext){
+            file_selection_cb->setChecked(actions.at(FileTree::ActionMenu::SubMenu::FilterImageFormats::action_filter_exr)->isChecked());
+        }
+        else if (ImageSaver::ExtensionList.at(ImageSaver::ImageExtension::hdr) == ext
+            or ImageSaver::ExtensionList.at(ImageSaver::ImageExtension::pic) == ext)
+        {
+            file_selection_cb->setChecked(actions.at(FileTree::ActionMenu::SubMenu::FilterImageFormats::action_filter_hdr)->isChecked());
+        }
     }
 }
 
 void BatchItImage::ResizeFileTreeColumns()
 {
     qDebug() << "ResizeFileTreeColumns";
-    for (int i = 0; i < FileColumn::COUNT; i++) {
+    for (int i = 0; i < FileTree::Column::COUNT; i++) {
         ui.treeWidget_FileInfo->resizeColumnToContents(i);
         //ui.treeWidget_FileInfo->header()->setSectionResizeMode(QHeaderView::ResizeToContents);
     }
@@ -4117,92 +4326,92 @@ void BatchItImage::SortFileTreeByColumn(int index)
     // Get sort order
     if (current_file_column_sorted != index) {
         current_file_column_sorted = index;
-        current_file_sort_order = SortOrder::ASCENDING1;
+        current_file_sort_order = FileTree::SortOrder::ASCENDING1;
     }
     else {
-        current_file_sort_order = (current_file_sort_order < SortOrder::DESCENDING2) ? ++current_file_sort_order : SortOrder::ASCENDING1;
+        current_file_sort_order = (current_file_sort_order < FileTree::SortOrder::DESCENDING2) ? ++current_file_sort_order : FileTree::SortOrder::ASCENDING1;
         qsort_indicator = (fmod(current_file_sort_order, 2) == 0) ? Qt::SortOrder::AscendingOrder : Qt::SortOrder::DescendingOrder;
     }
     
     // Sort list of file metadata based on column clicked.
-    if (current_file_column_sorted == FileColumn::FILE_LOAD_ORDER and
-        (current_file_sort_order == SortOrder::ASCENDING1 or current_file_sort_order == SortOrder::ASCENDING2)) {
+    if (current_file_column_sorted == FileTree::Column::FILE_LOAD_ORDER and
+        (current_file_sort_order == FileTree::SortOrder::ASCENDING1 or current_file_sort_order == FileTree::SortOrder::ASCENDING2)) {
         std::sort(begin(current_file_metadata_list), end(current_file_metadata_list), [](auto const& left, auto const& right) {
                 return left.load_order < right.load_order;
             });
     }
-    else if (current_file_column_sorted == FileColumn::FILE_LOAD_ORDER and
-        (current_file_sort_order == SortOrder::DESCENDING1 or current_file_sort_order == SortOrder::DESCENDING2)) {
+    else if (current_file_column_sorted == FileTree::Column::FILE_LOAD_ORDER and
+        (current_file_sort_order == FileTree::SortOrder::DESCENDING1 or current_file_sort_order == FileTree::SortOrder::DESCENDING2)) {
         std::sort(begin(current_file_metadata_list), end(current_file_metadata_list), [](auto const& left, auto const& right) {
                 return left.load_order > right.load_order;
             });
     }
-    else if (current_file_column_sorted == FileColumn::FILE_NAME and
-        (current_file_sort_order == SortOrder::ASCENDING1 or current_file_sort_order == SortOrder::ASCENDING2)) {
+    else if (current_file_column_sorted == FileTree::Column::FILE_NAME and
+        (current_file_sort_order == FileTree::SortOrder::ASCENDING1 or current_file_sort_order == FileTree::SortOrder::ASCENDING2)) {
         std::sort(begin(current_file_metadata_list), end(current_file_metadata_list), [](auto const& left, auto const& right) {
                 return left.path < right.path;
             });
     }
-    else if (current_file_column_sorted == FileColumn::FILE_NAME and
-        (current_file_sort_order == SortOrder::DESCENDING1 or current_file_sort_order == SortOrder::DESCENDING2)) {
+    else if (current_file_column_sorted == FileTree::Column::FILE_NAME and
+        (current_file_sort_order == FileTree::SortOrder::DESCENDING1 or current_file_sort_order == FileTree::SortOrder::DESCENDING2)) {
         std::sort(begin(current_file_metadata_list), end(current_file_metadata_list), [](auto const& left, auto const& right) {
                 return left.path > right.path;
             });
     }
-    else if (current_file_column_sorted == FileColumn::IMAGE_DIMENSIONS and (current_file_sort_order == SortOrder::ASCENDING1)) {
+    else if (current_file_column_sorted == FileTree::Column::IMAGE_DIMENSIONS and (current_file_sort_order == FileTree::SortOrder::ASCENDING1)) {
         std::sort(begin(current_file_metadata_list), end(current_file_metadata_list), [](auto const& left, auto const& right) {
                 return left.width < right.width;
             });
     }
-    else if (current_file_column_sorted == FileColumn::IMAGE_DIMENSIONS and (current_file_sort_order == SortOrder::DESCENDING1)) {
+    else if (current_file_column_sorted == FileTree::Column::IMAGE_DIMENSIONS and (current_file_sort_order == FileTree::SortOrder::DESCENDING1)) {
         std::sort(begin(current_file_metadata_list), end(current_file_metadata_list), [](auto const& left, auto const& right) {
                 return left.width > right.width;
             });
     }
-    else if (current_file_column_sorted == FileColumn::IMAGE_DIMENSIONS and
-        (current_file_sort_order == SortOrder::ASCENDING2)) {
+    else if (current_file_column_sorted == FileTree::Column::IMAGE_DIMENSIONS and
+        (current_file_sort_order == FileTree::SortOrder::ASCENDING2)) {
         std::sort(begin(current_file_metadata_list), end(current_file_metadata_list), [](auto const& left, auto const& right) {
                 return left.height < right.height;
             });
     }
-    else if (current_file_column_sorted == FileColumn::IMAGE_DIMENSIONS and
-        (current_file_sort_order == SortOrder::DESCENDING2)) {
+    else if (current_file_column_sorted == FileTree::Column::IMAGE_DIMENSIONS and
+        (current_file_sort_order == FileTree::SortOrder::DESCENDING2)) {
         std::sort(begin(current_file_metadata_list), end(current_file_metadata_list), [](auto const& left, auto const& right) {
                 return left.height > right.height;
             });
     }
-    else if (current_file_column_sorted == FileColumn::FILE_SIZE and
-        (current_file_sort_order == SortOrder::ASCENDING1 or current_file_sort_order == SortOrder::ASCENDING2)) {
+    else if (current_file_column_sorted == FileTree::Column::FILE_SIZE and
+        (current_file_sort_order == FileTree::SortOrder::ASCENDING1 or current_file_sort_order == FileTree::SortOrder::ASCENDING2)) {
         std::sort(begin(current_file_metadata_list), end(current_file_metadata_list), [](auto const& left, auto const& right) {
                 return left.size < right.size;
             });
     }
-    else if (current_file_column_sorted == FileColumn::FILE_SIZE and
-        (current_file_sort_order == SortOrder::DESCENDING1 or current_file_sort_order == SortOrder::DESCENDING2)) {
+    else if (current_file_column_sorted == FileTree::Column::FILE_SIZE and
+        (current_file_sort_order == FileTree::SortOrder::DESCENDING1 or current_file_sort_order == FileTree::SortOrder::DESCENDING2)) {
         std::sort(begin(current_file_metadata_list), end(current_file_metadata_list), [](auto const& left, auto const& right) {
                 return left.size > right.size;
             });
     }
-    else if (current_file_column_sorted == FileColumn::DATE_CREATED and
-        (current_file_sort_order == SortOrder::ASCENDING1 or current_file_sort_order == SortOrder::ASCENDING2)) {
+    else if (current_file_column_sorted == FileTree::Column::DATE_CREATED and
+        (current_file_sort_order == FileTree::SortOrder::ASCENDING1 or current_file_sort_order == FileTree::SortOrder::ASCENDING2)) {
         std::sort(begin(current_file_metadata_list), end(current_file_metadata_list), [](auto const& left, auto const& right) {
                 return left.date_created < right.date_created;
             });
     }
-    else if (current_file_column_sorted == FileColumn::DATE_CREATED and
-        (current_file_sort_order == SortOrder::DESCENDING1 or current_file_sort_order == SortOrder::DESCENDING2)) {
+    else if (current_file_column_sorted == FileTree::Column::DATE_CREATED and
+        (current_file_sort_order == FileTree::SortOrder::DESCENDING1 or current_file_sort_order == FileTree::SortOrder::DESCENDING2)) {
         std::sort(begin(current_file_metadata_list), end(current_file_metadata_list), [](auto const& left, auto const& right) {
                 return left.date_created > right.date_created;
             });
     }
-    else if (current_file_column_sorted == FileColumn::DATE_MODIFIED and
-        (current_file_sort_order == SortOrder::ASCENDING1 or current_file_sort_order == SortOrder::ASCENDING2)) {
+    else if (current_file_column_sorted == FileTree::Column::DATE_MODIFIED and
+        (current_file_sort_order == FileTree::SortOrder::ASCENDING1 or current_file_sort_order == FileTree::SortOrder::ASCENDING2)) {
         std::sort(begin(current_file_metadata_list), end(current_file_metadata_list), [](auto const& left, auto const& right) {
                 return left.date_modified < right.date_modified;
             });
     }
-    else if (current_file_column_sorted == FileColumn::DATE_MODIFIED and
-        (current_file_sort_order == SortOrder::DESCENDING1 or current_file_sort_order == SortOrder::DESCENDING2)) {
+    else if (current_file_column_sorted == FileTree::Column::DATE_MODIFIED and
+        (current_file_sort_order == FileTree::SortOrder::DESCENDING1 or current_file_sort_order == FileTree::SortOrder::DESCENDING2)) {
         std::sort(begin(current_file_metadata_list), end(current_file_metadata_list), [](auto const& left, auto const& right) {
                 return left.date_modified > right.date_modified;
             });
@@ -4227,8 +4436,7 @@ bool BatchItImage::eventFilter(QObject* watched, QEvent* event)
     }
     if (event->type() == QEvent::ChildPolished) { // Used in-place of "no ActionsContextMenu event"
         qDebug() << "ActionsContextMenu Called?";
-        int current_file_tree_row = ui.treeWidget_FileInfo->currentIndex().row();
-        //int current_file_tree_row = GetCurrentFileTreeRow();
+        int current_file_tree_row = GetCurrentFileTreeRow();
         if (current_file_tree_row > -1) {
             if (current_file_metadata_list.at(current_file_tree_row).selected)
                 action_select->setText(unselect_text);
@@ -4236,7 +4444,7 @@ bool BatchItImage::eventFilter(QObject* watched, QEvent* event)
                 action_select->setText(select_text);
         }
     }
-    // Pass the event on to the parent class.
+    // Pass on the event.
     return QWidget::eventFilter(watched, event);
 }
 
@@ -4294,8 +4502,8 @@ void BatchItImage::DeleteConfirmationPopup(bool clear_all)
 
             if (clear_all) {
                 delete_dialog = new DialogMessage(
-                    dialog_messages.at(DialogMessages::delete_dialog_clear).name,
-                    dialog_messages.at(DialogMessages::delete_dialog_clear).desc,
+                    dialog_messages.at(Dialog::Messages::delete_dialog_clear).name,
+                    dialog_messages.at(Dialog::Messages::delete_dialog_clear).desc,
                     QDialogButtonBox::Ok | QDialogButtonBox::Cancel,
                     DialogMessage::CustomButton::NoCustomButton,
                     this
@@ -4303,8 +4511,8 @@ void BatchItImage::DeleteConfirmationPopup(bool clear_all)
             }
             else {
                 delete_dialog = new DialogMessage(
-                    dialog_messages.at(DialogMessages::delete_dialog).name,
-                    dialog_messages.at(DialogMessages::delete_dialog).desc,
+                    dialog_messages.at(Dialog::Messages::delete_dialog).name,
+                    dialog_messages.at(Dialog::Messages::delete_dialog).desc,
                     QDialogButtonBox::Yes | QDialogButtonBox::YesToAll | QDialogButtonBox::Cancel,
                     DialogMessage::CustomButton::NoCustomButton,
                     this
@@ -4522,8 +4730,8 @@ void BatchItImage::CheckWatermarkPath()
     }
     else {
         auto* check_wm_path_dialog = new DialogMessage(
-            dialog_messages.at(DialogMessages::check_wm_path_dialog).name,
-            dialog_messages.at(DialogMessages::check_wm_path_dialog).desc,
+            dialog_messages.at(Dialog::Messages::check_wm_path_dialog).name,
+            dialog_messages.at(Dialog::Messages::check_wm_path_dialog).desc,
             QDialogButtonBox::Open | QDialogButtonBox::Cancel,
             DialogMessage::CustomButton::NoCustomButton,
             this
@@ -4564,8 +4772,8 @@ void BatchItImage::CheckAbsolutePath()
     }
     else {
         auto* check_path_dialog = new DialogMessage(
-            dialog_messages.at(DialogMessages::check_path_dialog).name,
-            dialog_messages.at(DialogMessages::check_path_dialog).desc,
+            dialog_messages.at(Dialog::Messages::check_path_dialog).name,
+            dialog_messages.at(Dialog::Messages::check_path_dialog).desc,
             QDialogButtonBox::Open | QDialogButtonBox::Cancel,
             DialogMessage::CustomButton::NoCustomButton,
             this
@@ -4585,7 +4793,7 @@ QString BatchItImage::GetSaveDirectoryPath()
     QString qpath = GetLastExistingSavePath();
     QString directory = QFileDialog::getExistingDirectory(
         this,
-        file_dialog_titles.at(FileDialogTitles::GetSaveDirectoryPath),
+        file_dialog_titles.at(Dialog::FileSearch::GetSaveDirectoryPath),
         qpath // TODO: Default config setting, "recent"
     );
     qDebug() << directory.toStdString();
