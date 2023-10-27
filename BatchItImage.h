@@ -13,6 +13,101 @@
 #include "ui_DialogMessage.h"
 
 
+namespace FileTree {
+    namespace ActionMenu {
+        const struct MainMenu {
+            enum {
+                action_add, action_delete, action_clear, action_select, action_unselect, action_select_all, action_select_none,
+                action_view, action_preview, COUNT
+            };
+        };
+        namespace SubMenu {
+            const struct FilterImageFormats {
+                enum { // Note: action_submenu_filter = line, takes same spot in "Actions List"
+                    action_submenu_undock, action_submenu_filter, action_filter_jpeg, action_filter_jp2, action_filter_png,
+                    action_filter_webp, action_filter_bmp, action_filter_avif, action_filter_pbm, action_filter_sr, action_filter_tiff,
+                    action_filter_exr, action_filter_hdr, COUNT
+                };
+            };
+        };
+    };
+    const struct Column {
+        enum { FILE_SELECTED, FILE_NAME, IMAGE_DIMENSIONS, FILE_SIZE, DATE_CREATED, DATE_MODIFIED, COUNT };
+        enum { FILE_LOAD_ORDER, FILE_PATH, IMAGE_SIZES, FILE_SIZES, DATE_FILE_CREATED, DATE_FILE_MODIFIED, FILE_COLUMN_COUNT };
+    };
+    const struct SortOrder {
+        enum { ASCENDING1, DESCENDING1, ASCENDING2, DESCENDING2 };
+    };
+};
+namespace UI {
+    namespace EditOption {
+        const struct Resize { enum { groupBox_Resize, checkBox_KeepAspectRatio, COUNT }; };
+        const struct Background { enum { groupBox_Background, pushButton_ColorDialog, label_ColorPreview, COUNT }; };
+        const struct Blur {
+            enum {
+                groupBox_Blur, checkBox_BlurNormalize, label_BlurX1, label_BlurY1, label_BlurX2, label_BlurY2, label_BlurD, COUNT
+            };
+        };
+        const struct Rotation { enum { groupBox_Rotation, checkBox_IncreaseBounds, checkBox_FlipImage, COUNT }; };
+        const struct Watermark {
+            enum {
+                groupBox_Watermark, pushButton_Watermark, label_WatermarkLocation, label_WatermarkTransparency,
+                label_WatermarkOffset, COUNT
+            };
+        };
+    };
+    namespace FileOption {
+        const struct FilePath {
+            enum {
+                groupBox_FileRename, radioButton_Overwrite, radioButton_RenameOriginal, radioButton_NewFileName, label_Add,
+                groupBox_SaveDir, radioButton_RelativePath, radioButton_AbsolutePath, pushButton_AddBackOneDir,
+                pushButton_FindAbsolutePath, COUNT
+            };
+        };
+        const struct FormatJpeg {
+            enum {
+                label_FormatFlags, label_Quality, checkBox_Optimize, checkBox_Progressive, label_Compression, label_ExtraSetting1,
+                label_ExtraSetting2, COUNT
+            };
+        };
+        const struct FormatJp2 { enum { label_Compression, COUNT }; };
+        const struct FormatPng { enum { label_FormatFlags, checkBox_Optimize, label_Compression, COUNT }; };
+        const struct FormatWebp { enum { label_Quality, COUNT }; };
+        const struct FormatAvif { enum { label_Quality, label_Compression, label_ExtraSetting2, COUNT }; };
+        const struct FormatPbm { enum { checkBox_Optimize, COUNT }; };
+        const struct FormatPam { enum { label_FormatFlags, COUNT }; };
+        const struct FormatTiff { enum { label_FormatFlags, label_Quality, label_ExtraSetting1, label_ExtraSetting2, COUNT }; };
+        const struct FormatExr { enum { label_FormatFlags, checkBox_Optimize, checkBox_Progressive, label_Compression, COUNT }; };
+        const struct FormatHdr { enum { label_FormatFlags, COUNT }; };
+    }; 
+    const struct Other {
+        enum {
+            tab_1, tab_2, tab_3, checkBox_SearchSubDirs, label_EditSave, pushButton_EditSaveAll, pushButton_EditSaveSelected, COUNT
+        };
+    };
+};
+namespace Dialog {
+    const struct Messages {
+        enum {
+            delete_dialog, delete_dialog_clear, CreateNewPreset, ChangePresetDescription, save_preset_dialog, save_preset_dialog_closing,
+            remove_preset_dialog, remove_preset_dialog_halted, non_image_file_dialog, check_wm_path_dialog, check_path_dialog,
+            log_created_dialog, log_created_dialog_updated, log_created_dialog_error, COUNT
+        };
+    };
+    const struct FileSearch {
+        enum { LoadImageFiles, GetImageFile, GetSaveDirectoryPath, log_file_new_save_path, log_file_new_save_path_extensions, COUNT };
+    };
+};
+namespace LogFile{
+    const struct Line {
+        enum {
+            ThickDivider, ThinDivider, Title, SessionStart, SessionEnd, Batch, SummarySuccesses, SummaryErrors, SummaryTime,
+            UnsavedSettings, ImageNumber, SaveSuccess, SaveCanceled, EditError, SaveError, COUNT
+        };
+    };
+};
+
+
 class DialogMessage : public QDialog 
 {
     Q_OBJECT
@@ -326,6 +421,11 @@ private slots:
     /// <param name="toggle">--All/true or None/false.</param>
     void FileSelectionToggleAll(bool toggle);
     /// <summary>
+    /// Select (check) files in file tree using a filter based on image file formats.
+    /// </summary>
+    /// <param name="actions">--List of all submenu actions.</param>
+    void FileSelectionFilter(QList<QAction*> actions);
+    /// <summary>
     /// Resize all columns to fit content in file tree.
     /// </summary>
     void ResizeFileTreeColumns();
@@ -497,59 +597,6 @@ private:
     } Option;
     ulong edit_options_change_tracker = 0;
     ulong save_options_change_tracker = 0;
-    
-    // Enums of named objects, widgets or methods
-    const struct FileColumn {
-        enum { FILE_SELECTED, FILE_NAME, IMAGE_DIMENSIONS, FILE_SIZE, DATE_CREATED, DATE_MODIFIED, COUNT };
-        enum { FILE_LOAD_ORDER, FILE_PATH, IMAGE_SIZES, FILE_SIZES, DATE_FILE_CREATED, DATE_FILE_MODIFIED, FILE_COLUMN_COUNT };
-    };
-    const struct SortOrder { enum { ASCENDING1, DESCENDING1, ASCENDING2, DESCENDING2 }; };
-    const struct ActionMenu {
-        enum { action_add, action_delete, action_clear, action_select, action_unselect, action_select_all, action_select_none,
-            action_view, action_preview, COUNT };
-    };
-    const struct ResizeOptions { enum { groupBox_Resize, checkBox_KeepAspectRatio, COUNT }; };
-    const struct BackgroundOptions { enum { groupBox_Background, pushButton_ColorDialog, label_ColorPreview, COUNT }; };
-    const struct BlurOptions {
-        enum { groupBox_Blur, checkBox_BlurNormalize, label_BlurX1, label_BlurY1, label_BlurX2, label_BlurY2, label_BlurD, COUNT };
-    };
-    const struct RotationOptions { enum { groupBox_Rotation, checkBox_IncreaseBounds, checkBox_FlipImage, COUNT }; };
-    const struct WatermarkOptions {
-        enum { groupBox_Watermark, pushButton_Watermark, label_WatermarkLocation, label_WatermarkTransparency, label_WatermarkOffset, COUNT };
-    };
-    const struct FilePathOptions {
-        enum { groupBox_FileRename, radioButton_Overwrite, radioButton_RenameOriginal, radioButton_NewFileName,
-            label_Add, groupBox_SaveDir, radioButton_RelativePath, radioButton_AbsolutePath, pushButton_AddBackOneDir, 
-            pushButton_FindAbsolutePath, COUNT };
-    };
-    const struct FormatJpegOptions {
-        enum { label_FormatFlags, label_Quality, checkBox_Optimize, checkBox_Progressive,
-            label_Compression, label_ExtraSetting1, label_ExtraSetting2, COUNT };
-    };
-    const struct FormatJp2Options { enum { label_Compression, COUNT }; };
-    const struct FormatPngOptions { enum { label_FormatFlags, checkBox_Optimize, label_Compression, COUNT }; };
-    const struct FormatWebpOptions { enum { label_Quality, COUNT }; };
-    const struct FormatAvifOptions { enum { label_Quality, label_Compression, label_ExtraSetting2, COUNT }; };
-    const struct FormatPbmOptions { enum { checkBox_Optimize, COUNT }; };
-    const struct FormatPamOptions { enum { label_FormatFlags, COUNT }; };
-    const struct FormatTiffOptions { enum { label_FormatFlags, label_Quality, label_ExtraSetting1, label_ExtraSetting2, COUNT }; };
-    const struct FormatExrOptions { enum { label_FormatFlags, checkBox_Optimize, checkBox_Progressive, label_Compression, COUNT }; };
-    const struct FormatHdrOptions { enum { label_FormatFlags, COUNT }; };
-    const struct OtherOptions {
-        enum { tab_1, tab_2, tab_3, checkBox_SearchSubDirs, label_EditSave, pushButton_EditSaveAll, pushButton_EditSaveSelected, COUNT };
-    };
-    const struct DialogMessages {
-        enum { delete_dialog, delete_dialog_clear, CreateNewPreset, ChangePresetDescription, save_preset_dialog, save_preset_dialog_closing,
-            remove_preset_dialog, remove_preset_dialog_halted, non_image_file_dialog, check_wm_path_dialog, check_path_dialog, log_created_dialog,
-            log_created_dialog_updated, log_created_dialog_error, COUNT };
-    };
-    const struct FileDialogTitles { 
-        enum { LoadImageFiles, GetImageFile, GetSaveDirectoryPath, log_file_new_save_path, log_file_new_save_path_extensions, COUNT };
-    };
-    const struct LogFileLines {
-        enum { ThickDivider, ThinDivider, Title, SessionStart, SessionEnd, Batch, SummarySuccesses, SummaryErrors, SummaryTime,
-            UnsavedSettings, ImageNumber, SaveSuccess, SaveCanceled, EditError, SaveError, COUNT };
-    };
 
     // UI Data to be added to an object/widget
     struct UIData {
@@ -559,31 +606,34 @@ private:
     };
 
     // Tree UIData (Arrays placed on the heap will be deleted after use.)
-    std::array<UIData, FileColumn::COUNT>* file_tree_headers = new std::array<UIData, FileColumn::COUNT>;
-    std::array<UIData, ActionMenu::COUNT>* file_tree_menu_items = new std::array<UIData, ActionMenu::COUNT>;
-    std::array<QString, FileColumn::COUNT> file_tree_other_text;
+    std::array<UIData, FileTree::Column::COUNT>* file_tree_headers = new std::array<UIData, FileTree::Column::COUNT>;
+    std::array<UIData, FileTree::ActionMenu::MainMenu::COUNT>* file_tree_menu_items
+        = new std::array<UIData, FileTree::ActionMenu::MainMenu::COUNT>;
+    std::array<UIData, FileTree::ActionMenu::SubMenu::FilterImageFormats::COUNT>* file_tree_sub_menu_formats
+        = new std::array<UIData, FileTree::ActionMenu::SubMenu::FilterImageFormats::COUNT>;
+    std::array<QString, FileTree::Column::COUNT> file_tree_other_text;
     QString select_text;
     QString unselect_text;
 
     // Tab, Label, Check Box, and Button UIData
-    std::array<UIData, FilePathOptions::COUNT>* file_path_options = new std::array<UIData, FilePathOptions::COUNT>;
-    std::array<UIData, ResizeOptions::COUNT>* resize_options = new std::array<UIData, ResizeOptions::COUNT>;
-    //std::array<UIData, BackgroundOptions::COUNT>* background_options = new std::array<UIData, BackgroundOptions::COUNT>; // TODO: desc
-    std::array<UIData, BackgroundOptions::COUNT> background_options; // TODO: desc
-    std::array<UIData, BlurOptions::COUNT>* blur_options = new std::array<UIData, BlurOptions::COUNT>; // TODO: desc
-    std::array<UIData, RotationOptions::COUNT>* rotation_options = new std::array<UIData, RotationOptions::COUNT>; // TODO: desc
-    std::array<UIData, WatermarkOptions::COUNT>* watermark_options = new std::array<UIData, WatermarkOptions::COUNT>;
-    std::array<UIData, FormatJpegOptions::COUNT> format_jpeg_options;
-    std::array<UIData, FormatJp2Options::COUNT> format_jp2_options;
-    std::array<UIData, FormatPngOptions::COUNT> format_png_options;
-    std::array<UIData, FormatPngOptions::COUNT> format_webp_options;
-    std::array<UIData, FormatAvifOptions::COUNT> format_avif_options;
-    std::array<UIData, FormatPbmOptions::COUNT> format_pbm_options;
-    std::array<UIData, FormatPamOptions::COUNT> format_pam_options;
-    std::array<UIData, FormatTiffOptions::COUNT> format_tiff_options;
-    std::array<UIData, FormatExrOptions::COUNT> format_exr_options;
-    std::array<UIData, FormatHdrOptions::COUNT> format_hdr_options;
-    std::array<UIData, OtherOptions::COUNT>* other_options = new std::array<UIData, OtherOptions::COUNT>;
+    std::array<UIData, UI::FileOption::FilePath::COUNT>* file_path_options = new std::array<UIData, UI::FileOption::FilePath::COUNT>;
+    std::array<UIData, UI::EditOption::Resize::COUNT>* resize_options = new std::array<UIData, UI::EditOption::Resize::COUNT>;
+    //std::array<UIData, UI::EditOption::Background::COUNT>* background_options = new std::array<UIData, UI::EditOption::Background::COUNT>; // TODO: desc
+    std::array<UIData, UI::EditOption::Background::COUNT> background_options; // TODO: desc
+    std::array<UIData, UI::EditOption::Blur::COUNT>* blur_options = new std::array<UIData, UI::EditOption::Blur::COUNT>; // TODO: desc
+    std::array<UIData, UI::EditOption::Rotation::COUNT>* rotation_options = new std::array<UIData, UI::EditOption::Rotation::COUNT>; // TODO: desc
+    std::array<UIData, UI::EditOption::Watermark::COUNT>* watermark_options = new std::array<UIData, UI::EditOption::Watermark::COUNT>;
+    std::array<UIData, UI::FileOption::FormatJpeg::COUNT> format_jpeg_options;
+    std::array<UIData, UI::FileOption::FormatJp2::COUNT> format_jp2_options;
+    std::array<UIData, UI::FileOption::FormatPng::COUNT> format_png_options;
+    std::array<UIData, UI::FileOption::FormatPng::COUNT> format_webp_options;
+    std::array<UIData, UI::FileOption::FormatAvif::COUNT> format_avif_options;
+    std::array<UIData, UI::FileOption::FormatPbm::COUNT> format_pbm_options;
+    std::array<UIData, UI::FileOption::FormatPam::COUNT> format_pam_options;
+    std::array<UIData, UI::FileOption::FormatTiff::COUNT> format_tiff_options;
+    std::array<UIData, UI::FileOption::FormatExr::COUNT> format_exr_options;
+    std::array<UIData, UI::FileOption::FormatHdr::COUNT> format_hdr_options;
+    std::array<UIData, UI::Other::COUNT>* other_options = new std::array<UIData, UI::Other::COUNT>;
 
     // Combo Box UIData
     std::array<UIData, 6>* width_selections = new std::array<UIData, 6>;
@@ -593,7 +643,7 @@ private:
     std::array<UIData, 7>* blur_filters = new std::array<UIData, 7>;
     std::array<UIData, 9>* watermark_locations = new std::array<UIData, 9>;
     std::array<UIData, ImageSaver::MetadataFlags::COUNT>* file_name_creation = new std::array<UIData, ImageSaver::MetadataFlags::COUNT>;
-    std::array<UIData, ImageSaver::SupportedImageFormats::COUNT>* image_formats = new std::array<UIData, ImageSaver::SupportedImageFormats::COUNT>;
+    std::array<UIData, ImageSaver::ImageExtension::COUNT>* image_formats = new std::array<UIData, ImageSaver::ImageExtension::COUNT>;
     std::array<UIData, 5> format_jpeg_subsamplings;
     std::array<UIData, 5> format_png_compression;
     std::array<UIData, 6> format_pam_tupletype;
@@ -603,11 +653,11 @@ private:
     std::array<UIData, 2> format_hdr_compression;
 
     // Other UIData
-    std::array<UIData, DialogMessages::COUNT> dialog_messages;
+    std::array<UIData, Dialog::Messages::COUNT> dialog_messages;
     std::array<UIData, 6> blur_depth_selections;
-    std::array <QString, FileDialogTitles::COUNT> file_dialog_titles;
-    std::array <std::string, LogFileLines::COUNT> log_text; // TODO
-    std::array <QString, ImageSaver::SupportedImageFormats::COUNT> extension_list;
+    std::array <QString, Dialog::FileSearch::COUNT> file_dialog_titles;
+    std::array <std::string, LogFile::Line::COUNT> log_text; // TODO
+    std::array <QString, ImageSaver::ImageExtension::COUNT> extension_list;
     QString supported_image_extensions_dialog_str = ""; // Built from extension_list
     QColor background_color = QColor(0, 0, 0, 255);
 
@@ -626,8 +676,10 @@ private:
     QAction* action_select;
     QAction* action_select_all;
     QAction* action_select_none;
+    QAction* action_submenu_filter;
     QAction* action_view;
     QAction* action_preview;
+    QMenu* submenu_format_filter;
 
     // File Paths
     const std::filesystem::path default_path = std::filesystem::current_path();
