@@ -13,33 +13,24 @@
 #include "ui_DialogMessage.h"
 
 
-namespace FileTree {
-    namespace ActionMenu {
-        const struct MainMenu {
-            enum {
-                action_add, action_delete, action_clear, action_select, action_unselect, action_select_all, action_select_none,
-                action_view, action_preview, COUNT
-            };
-        };
-        namespace SubMenu {
-            const struct FilterImageFormats {
-                enum { // Note: action_submenu_filter = line, takes same spot in "Actions List"
-                    action_submenu_undock, action_submenu_filter, action_filter_jpeg, action_filter_jp2, action_filter_png,
-                    action_filter_webp, action_filter_bmp, action_filter_avif, action_filter_pbm, action_filter_sr, action_filter_tiff,
-                    action_filter_exr, action_filter_hdr, COUNT
-                };
-            };
-        };
-    };
-    const struct Column {
-        enum { FILE_SELECTED, FILE_NAME, IMAGE_DIMENSIONS, FILE_SIZE, DATE_CREATED, DATE_MODIFIED, COUNT };
-        enum { FILE_LOAD_ORDER, FILE_PATH, IMAGE_SIZES, FILE_SIZES, DATE_FILE_CREATED, DATE_FILE_MODIFIED, FILE_COLUMN_COUNT };
-    };
-    const struct SortOrder {
-        enum { ASCENDING1, DESCENDING1, ASCENDING2, DESCENDING2 };
-    };
-};
+// Enums
 namespace UI {
+    namespace MenuBar { // TODO
+        const struct File {
+            enum {
+                menu_File, action_AddImages, menu_RecentImageFiles, load_all_files, clear_all_files, action_SaveLogAs, action_Close, COUNT
+            };
+        };
+        const struct Edit {
+            enum {
+                menu_Edit, action_AddNewPreset, action_RemovePreset, action_SavePresets, action_ChangePresetDesc, action_ShowFormatFilter, COUNT
+            };
+        };
+        const struct Help {
+            enum { menu_Help, action_About, action_AboutQt, action_Help, COUNT };
+        };
+
+    };
     namespace EditOption {
         const struct Resize { enum { groupBox_Resize, checkBox_KeepAspectRatio, COUNT }; };
         const struct Background { enum { groupBox_Background, pushButton_ColorDialog, label_ColorPreview, COUNT }; };
@@ -80,10 +71,39 @@ namespace UI {
         const struct FormatExr { enum { label_FormatFlags, checkBox_Optimize, checkBox_Progressive, label_Compression, COUNT }; };
         const struct FormatHdr { enum { label_FormatFlags, COUNT }; };
     }; 
+    const struct StatusBar {
+        enum { SavePreset, clear_all_files, COUNT };
+    };
     const struct Other {
         enum {
             tab_1, tab_2, tab_3, checkBox_SearchSubDirs, label_EditSave, pushButton_EditSaveAll, pushButton_EditSaveSelected, COUNT
         };
+    };
+};
+namespace FileTree {
+    namespace ActionMenu {
+        const struct MainMenu {
+            enum {
+                action_add, action_delete, action_clear, action_select, action_unselect, action_select_all, action_select_none,
+                action_view, action_preview, COUNT
+            };
+        };
+        namespace SubMenu {
+            const struct FilterImageFormats {
+                enum { // Note: action_submenu_filter = line, takes same spot in "Actions List"
+                    action_submenu_undock, action_submenu_filter, action_filter_jpeg, action_filter_jp2, action_filter_png,
+                    action_filter_webp, action_filter_bmp, action_filter_avif, action_filter_pbm, action_filter_sr, action_filter_tiff,
+                    action_filter_exr, action_filter_hdr, COUNT
+                };
+            };
+        };
+    };
+    const struct Column {
+        enum { FILE_SELECTED, FILE_NAME, IMAGE_DIMENSIONS, FILE_SIZE, DATE_CREATED, DATE_MODIFIED, COUNT };
+        enum { FILE_LOAD_ORDER, FILE_PATH, IMAGE_SIZES, FILE_SIZES, DATE_FILE_CREATED, DATE_FILE_MODIFIED, FILE_COLUMN_COUNT };
+    };
+    const struct SortOrder {
+        enum { ASCENDING1, DESCENDING1, ASCENDING2, DESCENDING2 };
     };
 };
 namespace Dialog {
@@ -204,6 +224,14 @@ public:
     /// </summary>
     /// <param name="checked">--The index of a preset in preset_list.</param>
     void SavePresetToSettingsFile(int index);
+    /// <summary>
+    /// Write recently loaded image file paths to the settings file.
+    /// </summary>
+    void SaveRecentFiles();
+    /// <summary>
+    /// Read recently loaded image file paths from the settings file.
+    /// </summary>
+    void LoadRecentFiles();
     /// <summary>
     /// Load a preset's data into various UI elements.
     /// </summary>
@@ -332,7 +360,13 @@ public slots:
     /// <param name="default_image_path">--Default image path to both start search from and return if canceled.</param>
     QString GetImageFile(QString default_image_path = "");
     /// <summary>
-    /// Check for any directories and add any files found to the list before sending it too BuildFileMetadataList(). 
+    /// Add a single image file to file tree.
+    /// </summary>
+    /// <param name="file">--A single file path.</param>
+    void AddNewFile(QString file);
+    /// <summary>
+    /// Add many image files to file tree. Will first check for any directories and add any files found to the list before
+    /// sending it too BuildFileMetadataList(). 
     /// </summary>
     /// <param name="file_list">--List of file and/or directory paths.</param>
     void AddNewFiles(QStringList file_list);
@@ -426,9 +460,13 @@ private slots:
     /// <param name="actions">--List of all submenu actions.</param>
     void FileSelectionFilter(QList<QAction*> actions);
     /// <summary>
-    /// Resize all columns to fit content in file tree.
+    /// After files loaded resize all columns to fit content in file tree and save recent files loaded.
     /// </summary>
-    void ResizeFileTreeColumns();
+    void FileLoadingFinished();
+    /// <summary>
+    /// After files sorted resize all columns to fit content in file tree.
+    /// </summary>
+    void FileSortingFinished();
     /// <summary>
     /// Confirmation popup asking user how to handle the deleting of files in file tree.
     /// </summary>
@@ -633,6 +671,7 @@ private:
     std::array<UIData, UI::FileOption::FormatTiff::COUNT> format_tiff_options;
     std::array<UIData, UI::FileOption::FormatExr::COUNT> format_exr_options;
     std::array<UIData, UI::FileOption::FormatHdr::COUNT> format_hdr_options;
+    std::array<UIData, UI::StatusBar::COUNT> status_bar_messages;
     std::array<UIData, UI::Other::COUNT>* other_options = new std::array<UIData, UI::Other::COUNT>;
 
     // Combo Box UIData
@@ -669,6 +708,12 @@ private:
     const QFont* font_mono = new QFont("New Courier", 9);
     const QFont* font_mono_bold = new QFont("New Courier", 9, QFont::Bold);
 
+    // Menu Bar Items
+    QAction* action_load_all_files;
+    QAction* action_clear_all_files;
+    QAction* action_line_recent_top;
+    QAction* action_line_recent_bottom;
+
     // Right Click Menu Items
     QAction* action_add;
     QAction* action_delete;
@@ -690,13 +735,15 @@ private:
     std::string last_selected_format;
 
     // Preset and File Lists
-    std::vector<struct Preset> preset_list;
-    std::vector<struct FileMetadata> current_file_metadata_list;
-    std::vector<struct FileMetadata> deleted_file_metadata_list;
+    std::vector<Preset> preset_list;
+    std::vector<FileMetadata> current_file_metadata_list;
+    std::vector<FileMetadata> deleted_file_metadata_list;
+    QStringList recent_file_paths_loaded;
     uint current_selected_preset = 0;
     int current_file_column_sorted = -1;
     int current_file_sort_order = -1;
     int last_load_count = 0;
+    qsizetype recent_file_paths_loaded_max = 10; // TODO: User Setting
 
     // Logging
     std::vector<std::string> log_lines;
@@ -711,7 +758,8 @@ private:
 
     std::vector<ImageEditor*> ie_pointer_list;
 
-    const std::function<void()> function_ResizeFileTreeColumns = std::bind(&BatchItImage::ResizeFileTreeColumns, this);
+    const std::function<void()> function_FileLoadingFinished = std::bind(&BatchItImage::FileLoadingFinished, this);
+    const std::function<void()> function_FileSortingFinished = std::bind(&BatchItImage::FileSortingFinished, this);
     const std::function<void()> function_PrintBatchImageLog = std::bind(&BatchItImage::PrintBatchImageLog, this);
 
     /// <summary>
@@ -789,6 +837,10 @@ private:
     /// Build a "right click" context menu for the file tree.
     /// </summary>
     void SetupFileTreeContextMenu();
+    /// <summary>
+    /// Build and add recently loading image files to the top menu recent files submenu.
+    /// </summary>
+    void BuildRecentFilesMenu();
     /// <summary>
     /// Create a header for the log file and add current settings used to log.
     /// </summary>
