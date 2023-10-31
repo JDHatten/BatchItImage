@@ -7,7 +7,6 @@ TODOs:
     Track changes to undo file list deletes or image edit ui changes
     Image File Filters... select: files > 100 width, < 1 MB, < 1/1/2021 date, etc. Via right click context menu?
     Application Settings Dialog
-    Menu Item: Recent image files loaded
     Priority Sort those selected to top. Context menu?
     Handle extensions not matching the format used?
 
@@ -184,7 +183,7 @@ void DialogEditPresetDesc::buttonBoxClicked(QAbstractButton* button)
 
 FileMetadataWorker::FileMetadataWorker(std::string file_path, int load_order, QObject* parent)
 {
-    FileMetadataWorker::file_path = file_path;
+    FileMetadataWorker::file_path = std::filesystem::path(file_path).make_preferred().string();
     FileMetadataWorker::load_order = load_order;
 }
 void FileMetadataWorker::getFileMetadata()
@@ -286,6 +285,14 @@ BatchItImage::BatchItImage(QWidget* parent) : QMainWindow(parent)
     preset_list.reserve(10);
     current_file_metadata_list.reserve(30);
     deleted_file_metadata_list.reserve(10);
+    recent_file_paths_loaded.reserve(recent_file_paths_loaded_max);
+
+    action_load_all_files = new QAction("Load All Files Below", this); // TODO -> text data.
+    action_clear_all_files = new QAction("Clear Recent History", this);
+    action_line_recent_top = new QAction(this);
+    action_line_recent_top->setSeparator(true);
+    action_line_recent_bottom = new QAction(this);
+    action_line_recent_bottom->setSeparator(true);
 
     //ui.enhancedProgressBar->setVisible(false);
     ui.enhancedProgressBar->setParentContainer(ui.widget_EnhancedProgressBar);
@@ -300,6 +307,7 @@ BatchItImage::BatchItImage(QWidget* parent) : QMainWindow(parent)
 
     SetupFileTree();
     SetupFileTreeContextMenu();
+    LoadRecentFiles();
     LoadPresets();
 
     // All characters allowed in file names or paths, plus <>. 
@@ -1170,7 +1178,12 @@ void BatchItImage::LoadInUiData()
     format_hdr_compression[1].name = "Run-Length Encoding";
     format_hdr_compression[1].desc = "The only compression option.";
 
-    // Various Other Widget data
+    status_bar_messages.at(UI::StatusBar::SavePreset).data = 5000;
+    status_bar_messages.at(UI::StatusBar::SavePreset).name = "All Presets Saved!";
+    status_bar_messages.at(UI::StatusBar::clear_all_files).data = 5000;
+    status_bar_messages.at(UI::StatusBar::clear_all_files).name = "Recent File History Cleared!";
+
+    // Various Other Widget Data
     other_options->at(UI::Other::tab_1).data = 0; // Default current tab index, ignores other tab.data.
     other_options->at(UI::Other::tab_1).name = "Images";
     //other_options->at(UI::Other::tab_1).desc = "Image File Viewer Tab";
@@ -1387,7 +1400,7 @@ void BatchItImage::UpdateLineEditTextTips(QLineEdit* line_edit)
 
 void BatchItImage::UiConnections()
 {
-    // Main Window Menu
+    // Menu Bar
     Q_ASSERT(connect(ui.action_AddImages, SIGNAL(triggered(bool)), this, SLOT(LoadImageFiles())));
     Q_ASSERT(connect(ui.action_SaveLogAs, SIGNAL(triggered(bool)), this, SLOT(Test()))); // TODO
     Q_ASSERT(connect(ui.action_Close, &QAction::triggered, this, &BatchItImage::close));
@@ -1411,6 +1424,20 @@ void BatchItImage::UiConnections()
     Q_ASSERT(connect(ui.action_About, SIGNAL(triggered(bool)), this, SLOT(Test()))); // TODO
     Q_ASSERT(connect(ui.action_AboutQt, &QAction::triggered, this, [this] { QApplication::aboutQt(); }));
     Q_ASSERT(connect(ui.action_Help, &QAction::triggered, this, [this] { Test(); })); // TODO
+
+    // Submenu of ui.menu_RecentImageFiles
+    Q_ASSERT(connect(action_load_all_files, &QAction::triggered, this, [this] { AddNewFiles(recent_file_paths_loaded); }));
+    Q_ASSERT(connect(action_clear_all_files, &QAction::triggered, this,
+        [this] {
+            recent_file_paths_loaded.clear();
+            QSettings settings(preset_settings_file, QSettings::IniFormat);
+            settings.remove("Recent");
+            BuildRecentFilesMenu();
+            ui.statusbar->showMessage(
+                status_bar_messages.at(UI::StatusBar::clear_all_files).name,
+                status_bar_messages.at(UI::StatusBar::clear_all_files).data
+            );
+        }));
 
     // Image File Tree Widgets
     Q_ASSERT(connect(ui.treeWidget_FileInfo->header(), SIGNAL(sectionClicked(int)), this, SLOT(SortFileTreeByColumn(int))));
@@ -2817,11 +2844,8 @@ void BatchItImage::ChangePreset(int index)
 
 void BatchItImage::SavePreset(bool save_all)
 {
-    //qDebug() << "SavePresets->current_selected_preset:" << current_selected_preset;
-
-    //QStringList recent_image_files;
-    //recent_image_files.resize(20);
-    // TODO: record time file added, sort descending, when adding to "recent_image_files" create new QStringList and join with old.
+    if (save_all) qDebug() << "SavePreset:" << current_selected_preset;
+    else qDebug() << "SavePreset: All";
 
     int save_option;
     if (ui.radioButton_Overwrite->isChecked()) {
@@ -2889,7 +2913,10 @@ void BatchItImage::SavePreset(bool save_all)
         for (int i = 0; i < preset_list.size(); i++) {
             SavePresetToSettingsFile(i);
         }
-        ui.statusbar->showMessage("All Presets Saved!", 5000);
+        ui.statusbar->showMessage(
+            status_bar_messages.at(UI::StatusBar::SavePreset).name,
+            status_bar_messages.at(UI::StatusBar::SavePreset).data
+        );
     }
     else {
         qDebug() << "Saving Preset #" << current_selected_preset << "to Settings File";
@@ -2946,6 +2973,57 @@ void BatchItImage::SavePresetToSettingsFile(int index)
     settings.setValue("saveFilePathChange", preset_list.at(index).saveFilePathChange());
     settings.endGroup();
 }
+
+void BatchItImage::SaveRecentFiles()
+{
+    QSettings settings(preset_settings_file, QSettings::IniFormat);
+
+    settings.beginGroup("Recent");
+    for (qsizetype i = 0; i < recent_file_paths_loaded.size(); i++) {
+        QString num = QVariant::fromValue(i).toString();
+        qDebug() << num + ".)" << recent_file_paths_loaded.at(i);
+        settings.setValue(num, recent_file_paths_loaded.at(i));
+    }
+    settings.endGroup();
+    BuildRecentFilesMenu();
+}
+
+void BatchItImage::LoadRecentFiles()
+{
+    qDebug() << "LoadRecentFiles";
+    recent_file_paths_loaded.clear();
+    QSettings settings(preset_settings_file, QSettings::IniFormat);
+
+    if (settings.childGroups().indexOf("Recent") > -1) {
+        settings.beginGroup("Recent");
+        qDebug() << "[Recent]";
+        for (qsizetype i = 0; i < recent_file_paths_loaded_max; i++) {
+            QString num = QVariant::fromValue(i).toString();
+            QString recent_file = settings.value(num, "").toString();
+            if (recent_file.length()) {
+                recent_file_paths_loaded.append(settings.value(num, "").toString());
+                qDebug() << num + ".)" << recent_file_paths_loaded.at(i).toUtf8();
+            }
+            else
+                break;
+        }
+        settings.endGroup();
+    }
+    BuildRecentFilesMenu();
+}
+
+void BatchItImage::BuildRecentFilesMenu()
+{
+    ui.menu_RecentImageFiles->clear(); // Actions owned by the menu and not shown in any other widget are "deleted".
+    ui.menu_RecentImageFiles->addActions({ action_load_all_files, action_line_recent_top });
+    for (auto& recent_file_path : recent_file_paths_loaded) {
+        auto image_file_link = new QAction(recent_file_path, this);
+        Q_ASSERT(connect(image_file_link, &QAction::triggered, this, [=] { AddNewFile(recent_file_path); }));
+        ui.menu_RecentImageFiles->addAction(image_file_link);
+    }
+    ui.menu_RecentImageFiles->addActions({ action_line_recent_bottom, action_clear_all_files });
+}
+
 
 void BatchItImage::LoadPreset(Preset preset)
 {
@@ -3039,8 +3117,7 @@ void BatchItImage::LoadPresets()
     preset2.setSaveFileProcedureIndex(ImageSaver::SaveOptionFlag::RENAME_ORIGINAL);
     preset2.setSaveFileNameChange(ImageSaver::MetadataIdentifiers.at(ImageSaver::MetadataFlags::FILE_NAME) + "__org");
 
-    if (settings.contains("Preset0")) {
-        // TODO: load presets from settings to preset_list
+    if (settings.childGroups().indexOf("Preset0") > -1) {
         int i = 0;
         do {
             qDebug() << "Found Preset#" + std::to_string(i) + " in Settings";
@@ -3092,7 +3169,7 @@ void BatchItImage::LoadPresets()
             //preset_list.push_back({ preset });
             settings.endGroup();
 
-        } while (settings.contains("Preset" + i));
+        } while (settings.childGroups().indexOf("Preset" + i) > -1);
 
         settings.beginGroup("Settings");
         cspi = settings.value("current_selected_preset").toInt();
@@ -3965,13 +4042,22 @@ QString BatchItImage::GetImageFile(QString default_image_path)
         return default_image_path;
 }
 
+void BatchItImage::AddNewFile(QString file)
+{
+    QStringList file_list;
+    file_list.append(file);
+    BuildFileMetadataList(file_list);
+}
+
 void BatchItImage::AddNewFiles(QStringList file_list)
 {
+    qDebug() << "AddNewFiles:" << file_list.count();
+
     // Create new updated file list from files found in directories.
     QStringList updated_file_list;
     for (const auto& file : file_list)
     {
-        std::filesystem::path file_path = std::filesystem::u8path(file.toStdString());
+        std::filesystem::path file_path = std::filesystem::u8path(file.toStdString()).make_preferred();
         // TODO: handle windows shortcut files. https://stackoverflow.com/questions/22986845/windows-read-the-target-of-shortcut-file-in-c
         if (std::filesystem::is_symlink(file_path)) {
             file_path = std::filesystem::read_symlink(file_path);
@@ -3987,10 +4073,11 @@ void BatchItImage::AddNewFiles(QStringList file_list)
             //qDebug() << "File:" << std::filesystem::directory_iterator(file_path)->path().string();
         }
         else {
-            updated_file_list.append(file);
+            updated_file_list.append(QString::fromStdString(file_path.string()));
         }
     }
-    BuildFileMetadataList(updated_file_list);
+    if (updated_file_list.size())
+        BuildFileMetadataList(updated_file_list);
     //DebugPrintList(current_file_metadata_list, "current_file_metadata_list");
 }
 
@@ -4024,7 +4111,7 @@ void BatchItImage::BuildFileMetadataList(const QStringList file_list)
     int load_order = last_load_count; // Get highest load_order in all file lists. 
     int file_count = file_list.size();
 
-    ui.enhancedProgressBar->restartProgressBar(file_count, 3.0f, function_ResizeFileTreeColumns);
+    ui.enhancedProgressBar->restartProgressBar(file_count, 3.0f, function_FileLoadingFinished);
 
     //qDebug() << "file_list (count):" <<  file_list.count();
 
@@ -4131,7 +4218,18 @@ void BatchItImage::LoadFileIntoTree(int file_index, int sorted_column)
     //}
     
     FileMetadata file = current_file_metadata_list.at(file_index);
-    std::filesystem::path file_path = std::filesystem::u8path(file.path);
+    std::filesystem::path file_path = std::filesystem::u8path(file.path).make_preferred();
+    QString file_path_str = QString::fromStdString(file_path.string());
+
+    // Add path to recently loaded list
+    auto existing_recent_index = recent_file_paths_loaded.indexOf(file_path_str);
+    if (existing_recent_index > -1) {
+        recent_file_paths_loaded.removeAt(existing_recent_index);
+    }
+    recent_file_paths_loaded.prepend(file_path_str);
+    if (recent_file_paths_loaded.size() > recent_file_paths_loaded_max) {
+        recent_file_paths_loaded.erase(recent_file_paths_loaded.begin() + 10, recent_file_paths_loaded.end());
+    }
 
     // Get File Metadata:
     struct stat t_stat;
@@ -4157,9 +4255,7 @@ void BatchItImage::LoadFileIntoTree(int file_index, int sorted_column)
     file_selected_check_box->setStatusTip(file_tree_other_text[FileTree::Column::FILE_LOAD_ORDER] + QVariant(file.load_order).toString());
     
     connect(file_selected_check_box, &QCheckBox::toggled, this,
-        [=] (bool toggle) {
-            FileSelectionChange(file_index, toggle);
-        });
+        [=] (bool toggle) { FileSelectionChange(file_index, toggle); });
 
     ui.treeWidget_FileInfo->setItemWidget(new_item, FileTree::Column::FILE_SELECTED, file_selected_check_box);
     new_item->setToolTip(FileTree::Column::FILE_SELECTED, file_tree_other_text[FileTree::Column::FILE_LOAD_ORDER] + QVariant(file.load_order).toString());
@@ -4194,7 +4290,7 @@ void BatchItImage::LoadFileIntoTree(int file_index, int sorted_column)
         new_item->setFont(sorted_column, *font_mono_bold);
 
     QTreeWidgetItem* item_file_path = new QTreeWidgetItem(new_item);
-    item_file_path->setText(0, QString::fromStdString(file_path.string()));
+    item_file_path->setText(0, file_path_str);
     item_file_path->setFirstColumnSpanned(true);
 
     new_item->addChild(item_file_path);
@@ -4228,9 +4324,6 @@ void BatchItImage::FileSelectionToggle(int index)
         qDebug() << "FileSelectionToggle:" << toggle;
         qobject_cast<QCheckBox*>(ui.treeWidget_FileInfo->itemWidget(
             ui.treeWidget_FileInfo->topLevelItem(index), 0))->setCheckState(toggle);
-    }
-    else {
-        qDebug() << "WTF?";
     }
 }
 
@@ -4307,9 +4400,15 @@ void BatchItImage::FileSelectionFilter(QList<QAction*> actions)
     }
 }
 
-void BatchItImage::ResizeFileTreeColumns()
+void BatchItImage::FileLoadingFinished()
 {
-    qDebug() << "ResizeFileTreeColumns";
+    qDebug() << "FileLoadingFinished";
+    FileSortingFinished();
+    SaveRecentFiles();
+}
+
+void BatchItImage::FileSortingFinished()
+{
     for (int i = 0; i < FileTree::Column::COUNT; i++) {
         ui.treeWidget_FileInfo->resizeColumnToContents(i);
         //ui.treeWidget_FileInfo->header()->setSectionResizeMode(QHeaderView::ResizeToContents);
@@ -4319,7 +4418,7 @@ void BatchItImage::ResizeFileTreeColumns()
 void BatchItImage::SortFileTreeByColumn(int index)
 {
     qDebug() << "Column Clicked:" << index << "  Sort Order:" << current_file_sort_order;
-    ui.enhancedProgressBar->restartProgressBar(ui.treeWidget_FileInfo->topLevelItemCount(), 2.0f, function_ResizeFileTreeColumns);
+    ui.enhancedProgressBar->restartProgressBar(ui.treeWidget_FileInfo->topLevelItemCount(), 2.0f, function_FileSortingFinished);
 
     Qt::SortOrder qsort_indicator = Qt::SortOrder::AscendingOrder;
     
