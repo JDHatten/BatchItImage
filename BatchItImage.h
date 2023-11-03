@@ -18,7 +18,7 @@ namespace UI {
     namespace MenuBar { // TODO
         const struct File {
             enum {
-                menu_File, action_AddImages, menu_RecentImageFiles, load_all_files, clear_all_files, action_SaveLogAs, action_Close, COUNT
+                menu_File, action_AddImages, menu_RecentImageFiles, action_load_all_files, action_clear_all_files, action_OpenLogDirectory, action_Close, COUNT
             };
         };
         const struct Edit {
@@ -114,8 +114,16 @@ namespace Dialog {
             log_created_dialog, log_created_dialog_updated, log_created_dialog_error, COUNT
         };
     };
+    const struct Buttons { // TODO
+        enum {
+            COUNT
+        };
+    };
     const struct FileSearch {
-        enum { LoadImageFiles, GetImageFile, GetSaveDirectoryPath, log_file_new_save_path, log_file_new_save_path_extensions, COUNT };
+        enum {
+            LoadImageFiles, GetImageFile, GetSaveDirectoryPath, supported_image_extensions_dialog_str, all_files_dialog_str,
+            log_file_new_save_path, log_file_new_save_path_extensions, COUNT
+        };
     };
 };
 namespace LogFile{
@@ -134,16 +142,10 @@ class DialogMessage : public QDialog
 public:
     typedef uint CustomButtons;
     const struct CustomButton {
-        static const CustomButtons NoCustomButton = 0;
-        static const CustomButtons SaveContinue = 1;
-        static const CustomButtons Continue = 2;
-        static const CustomButtons ResetCancel = 4;
-        //static const CustomButtons Cancel = 8;
-        static const CustomButtons SaveClose = 8;
-        static const CustomButtons Close = 16;
-        static const CustomButtons Delete = 32;
-        static const CustomButtons OpenLog = 64;
-        static const CustomButtons SaveLogAs = 128;
+        enum : CustomButtons {
+            NoCustomButton = 0, SaveContinue = 1, Continue = 2, ResetCancel = 4,
+            SaveClose = 8, Close = 16, Delete = 32, OpenLog = 64, SaveLogAs = 128
+        };
     };
     DialogMessage(QString title, QString message,
         const QFlags<QDialogButtonBox::StandardButton> buttons = QDialogButtonBox::StandardButton::NoButton,
@@ -643,6 +645,11 @@ private:
         QString desc; // Descriptive text used in Tooltips, Statusbars, Dialog Messages, etc.
     };
 
+    // Menu Bar
+    std::array<QString, UI::MenuBar::File::COUNT>* menu_bar_file = new std::array<QString, UI::MenuBar::File::COUNT>;
+    std::array<QString, UI::MenuBar::Edit::COUNT>* menu_bar_edit = new std::array<QString, UI::MenuBar::Edit::COUNT>;
+    std::array<QString, UI::MenuBar::Help::COUNT>* menu_bar_help = new std::array<QString, UI::MenuBar::Help::COUNT>;
+
     // Tree UIData (Arrays placed on the heap will be deleted after use.)
     std::array<UIData, FileTree::Column::COUNT>* file_tree_headers = new std::array<UIData, FileTree::Column::COUNT>;
     std::array<UIData, FileTree::ActionMenu::MainMenu::COUNT>* file_tree_menu_items
@@ -709,10 +716,10 @@ private:
     const QFont* font_mono_bold = new QFont("New Courier", 9, QFont::Bold);
 
     // Menu Bar Items
-    QAction* action_load_all_files;
-    QAction* action_clear_all_files;
-    QAction* action_line_recent_top;
-    QAction* action_line_recent_bottom;
+    QAction* action_load_all_files = new QAction(this);
+    QAction* action_clear_all_files = new QAction(this);
+    QAction* action_line_recent_top = new QAction(this);
+    QAction* action_line_recent_bottom = new QAction(this);
 
     // Right Click Menu Items
     QAction* action_add;
@@ -729,6 +736,7 @@ private:
     // File Paths
     const std::filesystem::path default_path = std::filesystem::current_path();
     const QString qdefault_path = QString::fromStdString(default_path.string());
+    const std::filesystem::path log_directory_path = default_path / "logs"; // TODO: User Setting
     std::string last_existing_load_path;
     std::string last_existing_save_path;
     QString last_existing_wm_path = "";
@@ -755,6 +763,7 @@ private:
     uint successful_image_edits = 0;
     uint successful_image_saves = 0;
     uint image_save_errors = 0;
+    qsizetype max_log_files = 20; // TODO: User Setting
 
     std::vector<ImageEditor*> ie_pointer_list;
 
@@ -773,6 +782,20 @@ private:
     /// <summary>
     /// Add display text, tooltip descriptions, and other data to various types of ui objects/widgets.
     /// </summary>
+    /// <typeparam name="ui_data_size"></typeparam>
+    /// <param name="ui_data">--Reference to an array of QStrings.</param>
+    /// <param name="objects">--A list of pointers to objects/widgets.</param>
+    template<std::size_t ui_data_size>void AddUiDataTo(const std::array<QString, ui_data_size>& ui_data, const std::vector<QObject*>& objects);
+    /// <summary>
+    /// Add display text, tooltip descriptions, and other data to various types of ui objects/widgets.
+    /// </summary>
+    /// <param name="object">--Pointer to an object/widget.</param>
+    /// <param name="ui_data">--Reference to a QString.</param>
+    void AddUiDataTo(QObject* object, const QString& ui_data);
+    /// <summary>
+    /// Add display text, tooltip descriptions, and other data to various types of ui objects/widgets.
+    /// </summary>
+    /// <typeparam name="ui_data_size"></typeparam>
     /// <param name="ui_data">--Reference to an array of UIData.</param>
     /// <param name="objects">--A list of pointers to objects/widgets.</param>
     template<std::size_t ui_data_size>void AddUiDataTo(const std::array<UIData, ui_data_size>& ui_data, const std::vector<QWidget*>& objects);
@@ -874,6 +897,12 @@ private:
     /// <param name="bytes">--File size in bytes.</param>
     /// <returns>A Formatted String - Example: " 1.37 MB "</returns>
     std::string BytesToFileSizeString(std::uintmax_t);
+    /// <summary>
+    /// Create any missing directories in a path.
+    /// </summary>
+    /// <param name="file_path">--A full file system path.</param>
+    /// <returns>"True" if an error occurs.</returns>
+    bool CreateDirectories(std::filesystem::path file_path);
     /// <summary>
     /// Get the last existing directory path or a default path if none.
     /// </summary>
