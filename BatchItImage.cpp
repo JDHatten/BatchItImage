@@ -229,12 +229,27 @@ BatchItImage::BatchItImage(QWidget* parent) : QMainWindow(parent)
     preset_settings_file = QApplication::applicationDirPath() + "/settings.ini";
     qDebug() << preset_settings_file.toStdString();
 
+    preset_list.reserve(10);
+    current_file_metadata_list.reserve(30);
+    deleted_file_metadata_list.reserve(10);
+    recent_file_paths_loaded.reserve(recent_file_paths_loaded_max);
+
     /***************************
         Add UI Text/Data
     ****************************/
 
     LoadInUiData();
-    qDebug() << "LoadInUiData = Loaded";
+    qDebug() << "LoadInUiData = Successful";
+
+    AddUiDataTo(*menu_bar_file, std::vector<QObject*>{
+        ui.menu_File, ui.action_AddImages, ui.menu_RecentImageFiles, action_load_all_files,
+            action_clear_all_files, ui.action_OpenLogDirectory, ui.action_Close
+    });
+    AddUiDataTo(*menu_bar_edit, std::vector<QObject*>{
+        ui.menu_Edit, ui.action_AddNewPreset, ui.action_RemovePreset, ui.action_SavePresets,
+            ui.action_ChangePresetDesc, ui.action_ShowFormatFilter
+    });
+    AddUiDataTo(*menu_bar_help, std::vector<QObject*>{ ui.menu_Help, ui.action_About, ui.action_AboutQt, ui.action_Help });
 
     ui.tabWidget->setCurrentIndex(other_options->at(UI::Other::tab_1).data);
     ui.tabWidget->setTabText(UI::Other::tab_1, other_options->at(UI::Other::tab_1).name);
@@ -244,17 +259,15 @@ BatchItImage::BatchItImage(QWidget* parent) : QMainWindow(parent)
     ui.tabWidget->setTabText(UI::Other::tab_3, other_options->at(UI::Other::tab_3).name);
     ui.tab_3->setToolTip(other_options->at(UI::Other::tab_3).desc);
 
-    AddUiDataTo(*resize_options, std::vector<QWidget*>{
-        ui.groupBox_Resize, ui.checkBox_KeepAspectRatio });
-    AddUiDataTo(background_options, std::vector<QWidget*>{
-        ui.groupBox_Background, ui.pushButton_ColorDialog, ui.label_ColorPreview });
+    AddUiDataTo(*resize_options, std::vector<QWidget*>{ ui.groupBox_Resize, ui.checkBox_KeepAspectRatio });
+    AddUiDataTo(background_options, std::vector<QWidget*>{ ui.groupBox_Background, ui.pushButton_ColorDialog, ui.label_ColorPreview });
     AddUiDataTo(*blur_options, std::vector<QWidget*>{
         ui.groupBox_Blur, ui.checkBox_BlurNormalize, ui.label_BlurX1, ui.label_BlurY1, ui.label_BlurX2, ui.label_BlurY2, ui.label_BlurD
     });
-    AddUiDataTo(*rotation_options, std::vector<QWidget*>{
-        ui.groupBox_Rotation, ui.checkBox_IncreaseBounds, ui.checkBox_FlipImage });
+    AddUiDataTo(*rotation_options, std::vector<QWidget*>{ ui.groupBox_Rotation, ui.checkBox_IncreaseBounds, ui.checkBox_FlipImage });
     AddUiDataTo(*watermark_options, std::vector<QWidget*>{
-        ui.groupBox_Watermark, ui.comboBox_WatermarkLocation, ui.label_WatermarkLocation, ui.label_WatermarkTransparency, ui.label_WatermarkOffset
+        ui.groupBox_Watermark, ui.comboBox_WatermarkLocation, ui.label_WatermarkLocation,
+            ui.label_WatermarkTransparency, ui.label_WatermarkOffset
     });
     AddUiDataTo(ui.groupBox_FileRename, file_path_options->at(UI::FileOption::FilePath::groupBox_FileRename));
     AddUiDataTo(ui.radioButton_Overwrite, file_path_options->at(UI::FileOption::FilePath::radioButton_Overwrite));
@@ -274,36 +287,24 @@ BatchItImage::BatchItImage(QWidget* parent) : QMainWindow(parent)
     PopulateComboBox(ui.comboBox_Resample, *resampling_selections);
     PopulateComboBox(ui.comboBox_BorderType, *border_types);
     PopulateComboBox(ui.comboBox_BlurFilter, *blur_filters);
-    PopulateComboBox(ui.comboBox_WatermarkLocation, *watermark_locations, watermark_options->at(UI::EditOption::Watermark::label_WatermarkLocation).data);
+    PopulateComboBox(ui.comboBox_WatermarkLocation, *watermark_locations,
+        watermark_options->at(UI::EditOption::Watermark::label_WatermarkLocation).data);
     PopulateComboBox(ui.comboBox_AddText, *file_name_creation, 0, ImageSaver::MetadataIdentifiers);
     PopulateComboBox(ui.comboBox_ImageFormat, *image_formats, 0, extension_list);
 
     /***************************
-        Prep UI Widgets, Etc
+        Prep UI Widgets, Etc.
     ****************************/
 
-    preset_list.reserve(10);
-    current_file_metadata_list.reserve(30);
-    deleted_file_metadata_list.reserve(10);
-    recent_file_paths_loaded.reserve(recent_file_paths_loaded_max);
-
-    action_load_all_files = new QAction("Load All Files Below", this); // TODO -> text data.
-    action_clear_all_files = new QAction("Clear Recent History", this);
-    action_line_recent_top = new QAction(this);
     action_line_recent_top->setSeparator(true);
-    action_line_recent_bottom = new QAction(this);
     action_line_recent_bottom->setSeparator(true);
 
-    //ui.enhancedProgressBar->setVisible(false);
     ui.enhancedProgressBar->setParentContainer(ui.widget_EnhancedProgressBar);
     ui.enhancedProgressBar->setCancelButton(ui.pushButton_CancelProgress);
     ui.pushButton_CancelProgress->setIcon(QIcon(":/BatchItImage/res/x-24850.svg"));
 
     ui.dial_Rotation->setInvertedAppearance(true);
     ui.dial_Rotation->setInvertedControls(true);
-
-    // TODO: get settings for search sub dirs, recent images loaded (last 10?), others?
-    //ui.checkBox_SearchSubDirs->setChecked(search_subdirs);
 
     SetupFileTree();
     SetupFileTreeContextMenu();
@@ -321,20 +322,21 @@ BatchItImage::BatchItImage(QWidget* parent) : QMainWindow(parent)
     ui.lineEdit_AbsolutePath->setValidator(file_path_validator);
 
     // Create image extension string for "open file dialog".
-    supported_image_extensions_dialog_str.append("Images: ("); // TODO: -> Text Data
+    supported_image_extensions_dialog_str.append(
+        file_dialog_titles.at(Dialog::FileSearch::supported_image_extensions_dialog_str) + " (");
     for (const auto& ext : extension_list) {
         supported_image_extensions_dialog_str.append("*" + ext + " ");
     }
     supported_image_extensions_dialog_str.insert(supported_image_extensions_dialog_str.size() - 1, ")");
-    supported_image_extensions_dialog_str.append("\nAll Files (*)");
+    supported_image_extensions_dialog_str.append("\n" + file_dialog_titles.at(Dialog::FileSearch::all_files_dialog_str) + " (*)");
     qDebug() << supported_image_extensions_dialog_str.toStdString();
 
-    /***************************
-        UI Events
-    ****************************/
     UiConnections();
    
     // Delete all arrays on the heap that will not be reused after loading.
+    delete menu_bar_file;
+    delete menu_bar_edit;
+    delete menu_bar_help;
     delete file_tree_headers;
     delete file_tree_menu_items;
     delete file_tree_sub_menu_formats;
@@ -391,6 +393,26 @@ void BatchItImage::Test()
 
 void BatchItImage::LoadInUiData()
 {
+    menu_bar_file->at(UI::MenuBar::File::menu_File) = "File";
+    menu_bar_file->at(UI::MenuBar::File::action_AddImages) = "Add Image Files...";
+    menu_bar_file->at(UI::MenuBar::File::menu_RecentImageFiles) = "Recent Image Files";
+    menu_bar_file->at(UI::MenuBar::File::action_load_all_files) = "Load All Files Below";
+    menu_bar_file->at(UI::MenuBar::File::action_clear_all_files) = "Clear Recent History";
+    menu_bar_file->at(UI::MenuBar::File::action_OpenLogDirectory) = "Open Log File Directory";
+    menu_bar_file->at(UI::MenuBar::File::action_Close) = "Close";
+
+    menu_bar_edit->at(UI::MenuBar::Edit::menu_Edit) = "Edit";
+    menu_bar_edit->at(UI::MenuBar::Edit::action_AddNewPreset) = "Add New Preset...";
+    menu_bar_edit->at(UI::MenuBar::Edit::action_RemovePreset) = "Remove Preset...";
+    menu_bar_edit->at(UI::MenuBar::Edit::action_SavePresets) = "Save All Presets";
+    menu_bar_edit->at(UI::MenuBar::Edit::action_ChangePresetDesc) = "Change Preset Description...";
+    menu_bar_edit->at(UI::MenuBar::Edit::action_ShowFormatFilter) = "Show Extension Filter";
+
+    menu_bar_help->at(UI::MenuBar::Help::menu_Help) = "Help";
+    menu_bar_help->at(UI::MenuBar::Help::action_About) = "About";
+    menu_bar_help->at(UI::MenuBar::Help::action_AboutQt) = "About Qt";
+    menu_bar_help->at(UI::MenuBar::Help::action_Help) = "Help";
+
     // treeWidget_FileInfo
     file_tree_headers->at(FileTree::Column::FILE_SELECTED).data = 1; // TODO: 1 = Initial Sort/Bold Text (after files loaded)?
     file_tree_headers->at(FileTree::Column::FILE_SELECTED).name = "";
@@ -1254,6 +1276,8 @@ void BatchItImage::LoadInUiData()
     file_dialog_titles.at(Dialog::FileSearch::LoadImageFiles) = "Select one or more image files to edit...";
     file_dialog_titles.at(Dialog::FileSearch::GetImageFile) = "Select an image file to use...";
     file_dialog_titles.at(Dialog::FileSearch::GetSaveDirectoryPath) = "Select a directory path...";
+    file_dialog_titles.at(Dialog::FileSearch::supported_image_extensions_dialog_str) = "Images";
+    file_dialog_titles.at(Dialog::FileSearch::all_files_dialog_str) = "All Files";
     file_dialog_titles.at(Dialog::FileSearch::log_file_new_save_path) = "Save Log File As...";
     file_dialog_titles.at(Dialog::FileSearch::log_file_new_save_path_extensions) = "Log Files";
 
@@ -1290,6 +1314,27 @@ void BatchItImage::SetupFileTree()
 }
 
 template<std::size_t ui_data_size>
+void BatchItImage::AddUiDataTo(const std::array<QString, ui_data_size>& ui_data, const std::vector<QObject*>& objects)
+{
+    for (uint i = 0; i < objects.size(); i++) {
+        AddUiDataTo(objects.at(i), ui_data.at(i));
+    }
+}
+
+void BatchItImage::AddUiDataTo(QObject* object, const QString& ui_data)
+{
+    std::string object_class = object->metaObject()->className();
+    if ("QAction" == object_class) {
+        QAction* mba = qobject_cast<QAction*>(object);
+        mba->setText(ui_data);
+    }
+    else if ("QMenu" == object_class) {
+        QMenu* mbm = qobject_cast<QMenu*>(object);
+        mbm->setTitle(ui_data);
+    }
+}
+
+template<std::size_t ui_data_size>
 void BatchItImage::AddUiDataTo(const std::array<UIData, ui_data_size>& ui_data, const std::vector<QWidget*>& objects)
 {
     for (uint i = 0; i < objects.size(); i++) {
@@ -1301,7 +1346,6 @@ void BatchItImage::AddUiDataTo(QObject* object, const UIData& ui_data)
 {
     std::string object_class = object->metaObject()->className();
     //qDebug() << "AddUiDataTo:" <<  object_class;
-    
     if ("QCheckBox" == object_class) {
         QCheckBox* cb = qobject_cast<QCheckBox*>(object);
         cb->setChecked(ui_data.data);
@@ -1356,6 +1400,7 @@ void BatchItImage::PopulateComboBox(QComboBox* cb, const std::array<UIData, ui_d
     }
     PopulateComboBox(cb, ui_data, default_index, qstring_data);
 }
+
 template<std::size_t ui_data_size, std::size_t string_data_size>
 void BatchItImage::PopulateComboBox(QComboBox* cb, const std::array<UIData, ui_data_size>& ui_data,
     const uint default_index, const std::array <QString, string_data_size>& string_data)
@@ -1402,7 +1447,16 @@ void BatchItImage::UiConnections()
 {
     // Menu Bar
     Q_ASSERT(connect(ui.action_AddImages, SIGNAL(triggered(bool)), this, SLOT(LoadImageFiles())));
-    Q_ASSERT(connect(ui.action_SaveLogAs, SIGNAL(triggered(bool)), this, SLOT(Test()))); // TODO
+    Q_ASSERT(connect(ui.action_OpenLogDirectory, &QAction::triggered, this,
+        [this] {
+            bool log_directory_error = CreateDirectories(log_directory_path);
+            if (not log_directory_error) {
+                // Windows Only (Mac: open, Win: explorer)
+                const std::string open_log_dir_path = "start explorer \"" + (log_directory_path).string() + "\"";
+                qDebug() << open_log_dir_path;
+                std::system(open_log_dir_path.c_str());
+            }
+        }));
     Q_ASSERT(connect(ui.action_Close, &QAction::triggered, this, &BatchItImage::close));
     Q_ASSERT(connect(ui.action_AddNewPreset, SIGNAL(triggered(bool)), this, SLOT(CreateNewPreset())));
     Q_ASSERT(connect(ui.action_RemovePreset, SIGNAL(triggered(bool)), this, SLOT(RemoveCurrentPreset())));
@@ -1425,7 +1479,7 @@ void BatchItImage::UiConnections()
     Q_ASSERT(connect(ui.action_AboutQt, &QAction::triggered, this, [this] { QApplication::aboutQt(); }));
     Q_ASSERT(connect(ui.action_Help, &QAction::triggered, this, [this] { Test(); })); // TODO
 
-    // Submenu of ui.menu_RecentImageFiles
+    // Menu Bar: Submenu of ui.menu_RecentImageFiles
     Q_ASSERT(connect(action_load_all_files, &QAction::triggered, this, [this] { AddNewFiles(recent_file_paths_loaded); }));
     Q_ASSERT(connect(action_clear_all_files, &QAction::triggered, this,
         [this] {
@@ -3924,21 +3978,12 @@ void BatchItImage::PrintBatchImageLog()
     );
 
     // Create Log File Name and Path
-    bool log_error = false;
-    const auto log_file_name = "log_" + std::format("{0:%Y%m%d%H%M%OS}", session_start_time_zt) + ".txt";
-    const auto log_file_path = default_path / "logs";
-    try { // Create missing directories
-        if (not std::filesystem::exists(log_file_path))
-            std::filesystem::create_directories(log_file_path);
-    }
-    catch (const std::exception& err) {
-        qWarning() << "Error: Log Directory Creation Failed - " << err.what();
-        log_error = true;
-    }
+    const std::string log_file_name = "log_" + std::format("{0:%Y%m%d%H%M%OS}", session_start_time_zt) + ".txt";
+    bool log_error = CreateDirectories(log_directory_path);
 
     // Write To Log File
     if (not log_error) {
-        std::ofstream log_file(log_file_path / log_file_name, std::ios::out | std::ios::app);
+        std::ofstream log_file(log_directory_path / log_file_name, std::ios::out | std::ios::app);
         if (log_file.is_open()) {
             for (uint i = log_end_line; i < log_lines.size(); i++) {
                 log_file << log_lines.at(i) << "\n";
@@ -3953,9 +3998,8 @@ void BatchItImage::PrintBatchImageLog()
 
     // Delete Old Log Files (past the maximum allowed)
     std::array<QString, 2> log_extensions = { ".txt", ".log" };
-    QStringList all_log_files = IterateDirectory(std::filesystem::directory_iterator(log_file_path), log_extensions);
+    QStringList all_log_files = IterateDirectory(std::filesystem::directory_iterator(log_directory_path), log_extensions);
     all_log_files.sort();
-    uint max_log_files = 20; // TODO: Make User Setting
     if (all_log_files.size() > max_log_files) {
         all_log_files.erase(all_log_files.end() - max_log_files, all_log_files.end());
         for (const auto& file : all_log_files) {
@@ -3989,20 +4033,20 @@ void BatchItImage::PrintBatchImageLog()
         [=](QDialogButtonBox::ButtonRole button_role_clicked) {
             if (QDialogButtonBox::ButtonRole::ActionRole == button_role_clicked) { // Open Log
                 // Windows Only (Mac: open, Win: notepad)
-                const std::string open_log_file_path = "start notepad \"" + (log_file_path / log_file_name).string() + "\"";
+                const std::string open_log_file_path = "start notepad \"" + (log_directory_path / log_file_name).string() + "\"";
                 qDebug() << open_log_file_path;
                 std::system(open_log_file_path.c_str());
             }
             else if (QDialogButtonBox::ButtonRole::ApplyRole == button_role_clicked) { // Save Log File
                 std::string log_file_new_save_path = QFileDialog::getSaveFileName( this,
                     file_dialog_titles.at(Dialog::FileSearch::log_file_new_save_path),
-                    QString::fromStdString((log_file_path / log_file_name).string()),
+                    QString::fromStdString((log_directory_path / log_file_name).string()),
                     file_dialog_titles.at(Dialog::FileSearch::log_file_new_save_path_extensions) + \
                     " (*" + log_extensions[0] + " *" + log_extensions[1] + ")"
                 ).toStdString();
                 qDebug() << "Save:" << log_file_new_save_path;
                 if (std::filesystem::exists(std::filesystem::path(log_file_new_save_path).parent_path()))
-                    std::filesystem::copy_file(log_file_path / log_file_name, log_file_new_save_path);
+                    std::filesystem::copy_file(log_directory_path / log_file_name, log_file_new_save_path);
             }
         }
     ));
@@ -4782,6 +4826,22 @@ std::string BatchItImage::BytesToFileSizeString(std::uintmax_t bytes)
 
     return " " + file_size_str;
 }
+
+
+bool BatchItImage::CreateDirectories(std::filesystem::path file_path)
+{
+    bool error = false;
+    try { // Create missing directories
+        if (not std::filesystem::exists(file_path))
+            std::filesystem::create_directories(file_path);
+    }
+    catch (const std::exception& err) {
+        qWarning() << "Error: Directory Creation Failed - " << err.what();
+        error = true;
+    }
+    return error;
+}
+
 
 void BatchItImage::AddTextToFileName()
 {
