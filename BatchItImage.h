@@ -121,7 +121,7 @@ namespace Dialog {
     };
     const struct FileSearch {
         enum {
-            LoadImageFiles, GetImageFile, GetSaveDirectoryPath, supported_image_extensions_dialog_str, all_files_dialog_str,
+            load_image_files_dialog, load_image_files_dialog_dir, get_image_file_path_dialog, GetSaveDirectoryPath, supported_image_extensions_dialog_str, all_files_dialog_str,
             log_file_new_save_path, log_file_new_save_path_extensions, COUNT
         };
     };
@@ -355,7 +355,8 @@ public slots:
     /// <summary>
     /// Show open file dialog allowing user to load one or more image files.
     /// </summary>
-    void LoadImageFiles();
+    /// <param name="from_directory">--Select an entire directory instead of individual files.</param>
+    void LoadImageFiles(bool from_directory = false);
     /// <summary>
     /// Show open file dialog allowing user to add an image file.
     /// </summary>
@@ -705,6 +706,7 @@ private:
     std::array <std::string, LogFile::Line::COUNT> log_text; // TODO
     std::array <QString, ImageSaver::ImageExtension::COUNT> extension_list;
     QString supported_image_extensions_dialog_str = ""; // Built from extension_list
+    QStringList file_extension_filters; // Built from extension_list
     QColor background_color = QColor(0, 0, 0, 255);
 
     // Fonts
@@ -736,6 +738,7 @@ private:
     // File Paths
     const std::filesystem::path default_path = std::filesystem::current_path();
     const QString qdefault_path = QString::fromStdString(default_path.string());
+    QString last_user_loaded_path = qdefault_path;
     const std::filesystem::path log_directory_path = default_path / "logs"; // TODO: User Setting
     std::string last_existing_load_path;
     std::string last_existing_save_path;
