@@ -228,6 +228,17 @@ BatchItImage::BatchItImage(QWidget* parent) : QMainWindow(parent)
 
     preset_settings_file = QApplication::applicationDirPath() + "/settings.ini";
     qDebug() << preset_settings_file.toStdString();
+    
+    // Get last user loaded path from settings.
+    QSettings settings(preset_settings_file, QSettings::IniFormat);
+    if (settings.childGroups().indexOf("Settings") > -1) {
+        settings.beginGroup("Settings");
+        if (settings.contains("last_user_loaded_path")) {
+            last_user_loaded_path = settings.value("last_user_loaded_path").toString();
+            //qDebug() << "last_user_loaded_path: " << last_user_loaded_path;
+        }
+        settings.endGroup();
+    }
 
     preset_list.reserve(10);
     current_file_metadata_list.reserve(30);
@@ -321,16 +332,30 @@ BatchItImage::BatchItImage(QWidget* parent) : QMainWindow(parent)
     ui.lineEdit_RelativePath->setValidator(file_path_validator);
     ui.lineEdit_AbsolutePath->setValidator(file_path_validator);
 
-    // Create image extension string for "open file dialog".
-    supported_image_extensions_dialog_str.append(
-        file_dialog_titles.at(Dialog::FileSearch::supported_image_extensions_dialog_str) + " (");
+    // Create image extension filter for "open file dialog".
+    //supported_image_extensions_dialog_str.append(file_dialog_titles.at(Dialog::FileSearch::all_images_dialog_str) + " (");
+    file_extension_filters.append(file_dialog_titles.at(Dialog::FileSearch::all_images_dialog_str) + " (");
     for (const auto& ext : extension_list) {
-        supported_image_extensions_dialog_str.append("*" + ext + " ");
+        //supported_image_extensions_dialog_str.append("*" + ext + " ");
+        file_extension_filters.back() += "*" + ext + " ";
     }
-    supported_image_extensions_dialog_str.insert(supported_image_extensions_dialog_str.size() - 1, ")");
-    supported_image_extensions_dialog_str.append("\n" + file_dialog_titles.at(Dialog::FileSearch::all_files_dialog_str) + " (*)");
-    qDebug() << supported_image_extensions_dialog_str.toStdString();
+    //supported_image_extensions_dialog_str.insert(supported_image_extensions_dialog_str.size() - 1, ")");
+    //supported_image_extensions_dialog_str.append("\n" + file_dialog_titles.at(Dialog::FileSearch::all_files_dialog_str) + " (*)");
+    file_extension_filters.back().insert(file_extension_filters.back().size() - 1, ")");
+    file_extension_filters.append(
+        "Jpeg (*" + extension_list.at(ImageSaver::ImageExtension::jpeg) + \
+        " *" + extension_list.at(ImageSaver::ImageExtension::jpg) + \
+        " *" + extension_list.at(ImageSaver::ImageExtension::jpe) + ")");
+    file_extension_filters.append(
+        "PNG (*" + extension_list.at(ImageSaver::ImageExtension::png) + ")");
+    file_extension_filters.append(
+        "WebP (*" + extension_list.at(ImageSaver::ImageExtension::webp) + ")");
+    file_extension_filters.append(
+        "Bitmap (*" + extension_list.at(ImageSaver::ImageExtension::bmp) + \
+        " *" + extension_list.at(ImageSaver::ImageExtension::dib) + ")");
+    file_extension_filters.append(file_dialog_titles.at(Dialog::FileSearch::all_files_dialog_str) + " (*)");
 
+    // Ui Event Conections
     UiConnections();
    
     // Delete all arrays on the heap that will not be reused after loading.
@@ -1273,10 +1298,11 @@ void BatchItImage::LoadInUiData()
     dialog_messages.at(Dialog::Messages::log_created_dialog_error).name = "Image Editing Finished";
     dialog_messages.at(Dialog::Messages::log_created_dialog_error).desc = "While image editing has finished (possibly with errors), the log file could not be created or written too.";
 
-    file_dialog_titles.at(Dialog::FileSearch::LoadImageFiles) = "Select one or more image files to edit...";
-    file_dialog_titles.at(Dialog::FileSearch::GetImageFile) = "Select an image file to use...";
+    file_dialog_titles.at(Dialog::FileSearch::load_image_files_dialog) = "Select one or more image files...";
+    file_dialog_titles.at(Dialog::FileSearch::load_image_files_dialog_dir) = "Select a directory of image files...";
+    file_dialog_titles.at(Dialog::FileSearch::get_image_file_path_dialog) = "Select an image file to use...";
     file_dialog_titles.at(Dialog::FileSearch::GetSaveDirectoryPath) = "Select a directory path...";
-    file_dialog_titles.at(Dialog::FileSearch::supported_image_extensions_dialog_str) = "Images";
+    file_dialog_titles.at(Dialog::FileSearch::all_images_dialog_str) = "All Images";
     file_dialog_titles.at(Dialog::FileSearch::all_files_dialog_str) = "All Files";
     file_dialog_titles.at(Dialog::FileSearch::log_file_new_save_path) = "Save Log File As...";
     file_dialog_titles.at(Dialog::FileSearch::log_file_new_save_path_extensions) = "Log Files";
@@ -1446,7 +1472,8 @@ void BatchItImage::UpdateLineEditTextTips(QLineEdit* line_edit)
 void BatchItImage::UiConnections()
 {
     // Menu Bar
-    Q_ASSERT(connect(ui.action_AddImages, SIGNAL(triggered(bool)), this, SLOT(LoadImageFiles())));
+    Q_ASSERT(connect(ui.action_AddImages, &QAction::triggered, this, [this] { LoadImageFiles(); }));
+    Q_ASSERT(connect(ui.action_AddImageDirectory, &QAction::triggered, this, [this] { LoadImageFiles(true); }));
     Q_ASSERT(connect(ui.action_OpenLogDirectory, &QAction::triggered, this,
         [this] {
             bool log_directory_error = CreateDirectories(log_directory_path);
@@ -1690,6 +1717,7 @@ void BatchItImage::UiConnections()
             QString last_verified_watermark_path = (last_existing_wm_path.length() > 0) ? 
                 last_existing_wm_path : preset_list.at(CurrentSelectedPreset()).watermarkPath();
             ui.lineEdit_WatermarkPath->setText(GetImageFile(last_verified_watermark_path));
+            CheckWatermarkPath();
             UpdateLineEditTextTips(ui.lineEdit_WatermarkPath);
             edit_options_change_tracker = TrackOptionChanges(
                 edit_options_change_tracker,
@@ -3078,7 +3106,6 @@ void BatchItImage::BuildRecentFilesMenu()
     ui.menu_RecentImageFiles->addActions({ action_line_recent_bottom, action_clear_all_files });
 }
 
-
 void BatchItImage::LoadPreset(Preset preset)
 {
     ui.comboBox_WidthMod->setCurrentIndex(preset.widthModifierIndex());
@@ -4059,29 +4086,59 @@ void BatchItImage::PrintBatchImageLog()
     image_save_errors = 0;
 }
 
-void BatchItImage::LoadImageFiles()
+void BatchItImage::LoadImageFiles(bool from_directory)
 {
-    QStringList files = QFileDialog::getOpenFileNames(
-        this,
-        file_dialog_titles.at(Dialog::FileSearch::LoadImageFiles),
-        qdefault_path, // TODO: Default config setting, "recent"
-        supported_image_extensions_dialog_str
-    );
+    QStringList files;
+    QString title;
+
+    if (from_directory)
+        title = file_dialog_titles.at(Dialog::FileSearch::load_image_files_dialog_dir);
+    else
+        title = file_dialog_titles.at(Dialog::FileSearch::load_image_files_dialog);
+    
+    QFileDialog load_image_files_dialog(this, title);
+    
+    if (from_directory)
+        load_image_files_dialog.setFileMode(QFileDialog::FileMode::Directory);
+    else
+        load_image_files_dialog.setFileMode(QFileDialog::FileMode::ExistingFiles);
+    
+    // TODO: Change Text Here?
+    //load_image_files_dialog.setLabelText(QFileDialog::LookIn, "LookIn"); // Only in DontUseNativeDialog
+    //load_image_files_dialog.setLabelText(QFileDialog::FileName, "FileName");
+    //load_image_files_dialog.setLabelText(QFileDialog::FileType, "FileType"); // Only in DontUseNativeDialog
+    //load_image_files_dialog.setLabelText(QFileDialog::Accept, "Accept");
+    //load_image_files_dialog.setLabelText(QFileDialog::Reject, "Reject");
+    //load_image_files_dialog.setOption(QFileDialog::DontUseNativeDialog);
+    load_image_files_dialog.setDirectory(last_user_loaded_path);
+    load_image_files_dialog.setNameFilters(file_extension_filters);
+    load_image_files_dialog.setViewMode(QFileDialog::ViewMode::Detail);
+
+    if (load_image_files_dialog.exec())
+        files = load_image_files_dialog.selectedFiles();
+
     if (not files.empty()) {
+        std::filesystem::path recent_parent_path = std::filesystem::path(files.at(0).toStdString()).parent_path();
+        if (std::filesystem::exists(recent_parent_path)) {
+            last_user_loaded_path = QString::fromStdString(recent_parent_path.string());
+            QSettings settings(preset_settings_file, QSettings::IniFormat);
+            settings.beginGroup("Settings");
+            settings.setValue("last_user_loaded_path", last_user_loaded_path);
+            settings.endGroup();
+        }
         AddNewFiles(files);
     }
 }
 
 QString BatchItImage::GetImageFile(QString default_image_path)
 {
-    QString file = QFileDialog::getOpenFileName(
-        this,
-        file_dialog_titles.at(Dialog::FileSearch::GetImageFile),
-        default_image_path,
-        supported_image_extensions_dialog_str
-    );
-    if (file.length() > 0)
-        return file;
+    QFileDialog get_image_file_path_dialog(this, file_dialog_titles.at(Dialog::FileSearch::get_image_file_path_dialog), default_image_path);
+    get_image_file_path_dialog.setFileMode(QFileDialog::FileMode::ExistingFile);
+    get_image_file_path_dialog.setViewMode(QFileDialog::ViewMode::Detail);
+    get_image_file_path_dialog.setNameFilters(file_extension_filters);
+
+    if (get_image_file_path_dialog.exec())
+        return get_image_file_path_dialog.selectedFiles().first();
     else
         return default_image_path;
 }
@@ -4969,7 +5026,7 @@ QString BatchItImage::GetSaveDirectoryPath()
 QString BatchItImage::GetLastExistingSavePath()
 {
     if (last_existing_save_path.empty())
-        return qdefault_path;
+        return qdefault_path; // TODO: Default config setting, "recent" ??
     else
         return QString::fromStdString(last_existing_save_path);
 }
