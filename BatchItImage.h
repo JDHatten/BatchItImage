@@ -121,7 +121,7 @@ namespace Dialog {
     };
     const struct FileSearch {
         enum {
-            load_image_files_dialog, load_image_files_dialog_dir, get_image_file_path_dialog, GetSaveDirectoryPath, supported_image_extensions_dialog_str, all_files_dialog_str,
+            load_image_files_dialog, load_image_files_dialog_dir, get_image_file_path_dialog, GetSaveDirectoryPath, all_images_dialog_str, all_files_dialog_str,
             log_file_new_save_path, log_file_new_save_path_extensions, COUNT
         };
     };
@@ -664,8 +664,7 @@ private:
     // Tab, Label, Check Box, and Button UIData
     std::array<UIData, UI::FileOption::FilePath::COUNT>* file_path_options = new std::array<UIData, UI::FileOption::FilePath::COUNT>;
     std::array<UIData, UI::EditOption::Resize::COUNT>* resize_options = new std::array<UIData, UI::EditOption::Resize::COUNT>;
-    //std::array<UIData, UI::EditOption::Background::COUNT>* background_options = new std::array<UIData, UI::EditOption::Background::COUNT>; // TODO: desc
-    std::array<UIData, UI::EditOption::Background::COUNT> background_options; // TODO: desc
+    std::array<UIData, UI::EditOption::Background::COUNT> background_options;// = new std::array<UIData, UI::EditOption::Background::COUNT>; // TODO: desc
     std::array<UIData, UI::EditOption::Blur::COUNT>* blur_options = new std::array<UIData, UI::EditOption::Blur::COUNT>; // TODO: desc
     std::array<UIData, UI::EditOption::Rotation::COUNT>* rotation_options = new std::array<UIData, UI::EditOption::Rotation::COUNT>; // TODO: desc
     std::array<UIData, UI::EditOption::Watermark::COUNT>* watermark_options = new std::array<UIData, UI::EditOption::Watermark::COUNT>;
@@ -705,7 +704,7 @@ private:
     std::array <QString, Dialog::FileSearch::COUNT> file_dialog_titles;
     std::array <std::string, LogFile::Line::COUNT> log_text; // TODO
     std::array <QString, ImageSaver::ImageExtension::COUNT> extension_list;
-    QString supported_image_extensions_dialog_str = ""; // Built from extension_list
+    //QString supported_image_extensions_dialog_str = ""; // Built from extension_list
     QStringList file_extension_filters; // Built from extension_list
     QColor background_color = QColor(0, 0, 0, 255);
 
