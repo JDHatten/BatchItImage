@@ -8,18 +8,56 @@ EnhancedProgressBar::EnhancedProgressBar(Qt::Orientation orientation, QWidget* p
     QProgressBar::setOrientation(orientation);
 }
 
-void EnhancedProgressBar::configure(float max_tick_count, float multiplier, std::function<void()> finished_callback)
+void EnhancedProgressBar::setParentContainer(QWidget* parent_container)
 {
-    current_progress = 0.0f;
-    progress_interval = enhancedMaximum() / max_tick_count / multiplier;
-    finished_callback_function = std::move(finished_callback);
+    EnhancedProgressBar::parent_container = parent_container;
+    EnhancedProgressBar::parent_container->setVisible(false);
+}
+
+void EnhancedProgressBar::setCancelButton(QPushButton* button)
+{
+    EnhancedProgressBar::cancel_button = button;
+    EnhancedProgressBar::cancel_button->setVisible(false);
+}
+
+void EnhancedProgressBar::restartProgressBar(float max_tick_count, float multiplier, bool show_cancel_button, std::function<void()> finished_callback)
+{
+    EnhancedProgressBar::current_progress = 0.0f;
+    EnhancedProgressBar::progress_interval = enhancedMaximum() / max_tick_count / multiplier;
+    EnhancedProgressBar::show_cancel_button = show_cancel_button;
+    EnhancedProgressBar::finished_callback_function = std::move(finished_callback);
     setVisible(true);
     setValue(minimum());
+}
+void EnhancedProgressBar::restartProgressBar(float max_tick_count, float multiplier, std::function<void()> finished_callback)
+{
+    restartProgressBar(max_tick_count, multiplier, false, std::move(finished_callback));
+}
+void EnhancedProgressBar::restartProgressBar(float max_tick_count, float multiplier)
+{
+    restartProgressBar(max_tick_count, multiplier, false, NULL);
 }
 
 void EnhancedProgressBar::setMinimum(float minimum)
 {
     minimum_f = minimum;
+}
+
+void EnhancedProgressBar::setVisible(bool visible)
+{
+    if (parent_container)
+        parent_container->setVisible(visible);
+    if (cancel_button and show_cancel_button)
+        cancel_button->setVisible(visible);
+    QProgressBar::setVisible(visible);
+}
+
+bool EnhancedProgressBar::isVisible()
+{
+    if (parent_container)
+        return parent_container->isVisible();
+    else
+        return QProgressBar::isVisible();
 }
 
 void EnhancedProgressBar::setMaximum(float maximum)
@@ -47,7 +85,7 @@ float EnhancedProgressBar::enhancedMaximum()
 void EnhancedProgressBar::updateProgressBar(float multiplier)
 {
     if (isVisible() == false) {
-        qWarning() << "Enhanced Progress Bar failed to update because \"configure()\" has to be called first.\n" \
+        qWarning() << "Enhanced Progress Bar failed to update because \"restartProgressBar()\" has to be called first.\n" \
             "Misuse of the \"multiplier\" parameter may also cause issues. Current progress (" << current_progress << ") reset.";
         current_progress = 0.0f;
         setValue(minimum());
