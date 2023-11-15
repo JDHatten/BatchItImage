@@ -734,6 +734,11 @@ private:
     QAction* action_preview;
     QMenu* submenu_format_filter;
 
+    // File Tree Scrolling
+    QScroller* scroller_file_tree;
+    int mouse_button_down = Qt::MouseButton::NoButton;
+    bool is_horizontal_scrolling = false;
+
     // File Paths
     const std::filesystem::path default_path = std::filesystem::current_path();
     const QString qdefault_path = QString::fromStdString(default_path.string());
@@ -936,6 +941,9 @@ protected:
     /// </summary>
     /// <param name="event"></param>
     void keyPressEvent(QKeyEvent* event) override;
+
+    void mouseMoveEvent(QMouseEvent* event) override;
+    void mousePressEvent(QMouseEvent* event) override;
 };
 
 #endif // BATCHITIMAGE_H
