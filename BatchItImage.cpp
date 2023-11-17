@@ -3,7 +3,6 @@
 /*
 TODOs: 
     Log Actions
-    Holding right click scrolls left to right
     Track changes to undo file list deletes or image edit ui changes
     Image File Filters... select: files > 100 width, < 1 MB, < 1/1/2021 date, etc. Via right click context menu?
     Application Settings Dialog
@@ -431,7 +430,7 @@ void BatchItImage::LoadInUiData()
     menu_bar_edit->at(UI::MenuBar::Edit::action_RemovePreset) = "Remove Preset...";
     menu_bar_edit->at(UI::MenuBar::Edit::action_SavePresets) = "Save All Presets";
     menu_bar_edit->at(UI::MenuBar::Edit::action_ChangePresetDesc) = "Change Preset Description...";
-    menu_bar_edit->at(UI::MenuBar::Edit::action_ShowFormatFilter) = "Show Extension Filter";
+    menu_bar_edit->at(UI::MenuBar::Edit::action_ShowFormatFilter) = "Show Format Filter";
 
     menu_bar_help->at(UI::MenuBar::Help::menu_Help) = "Help";
     menu_bar_help->at(UI::MenuBar::Help::action_About) = "About";
@@ -721,37 +720,6 @@ void BatchItImage::LoadInUiData()
     rotation_options->at(UI::EditOption::Rotation::checkBox_FlipImage).name = "Flip / Mirror";
     rotation_options->at(UI::EditOption::Rotation::checkBox_FlipImage).desc = "";
 
-    file_path_options->at(UI::FileOption::FilePath::groupBox_FileRename).data = 1;
-    file_path_options->at(UI::FileOption::FilePath::groupBox_FileRename).name = "Modify Image File Names:";
-    file_path_options->at(UI::FileOption::FilePath::groupBox_FileRename).desc = "";
-    file_path_options->at(UI::FileOption::FilePath::radioButton_Overwrite).data = 0;
-    file_path_options->at(UI::FileOption::FilePath::radioButton_Overwrite).name = "Overwrite Original File";
-    file_path_options->at(UI::FileOption::FilePath::radioButton_Overwrite).desc = "If selected, this will overwrite the original image file with the new edited image file.";
-    file_path_options->at(UI::FileOption::FilePath::radioButton_RenameOriginal).data = 0;
-    file_path_options->at(UI::FileOption::FilePath::radioButton_RenameOriginal).name = "Rename Original File";
-    file_path_options->at(UI::FileOption::FilePath::radioButton_RenameOriginal).desc = "If selected, this will rename the original image file, and use it's name for the new edited image file.";
-    file_path_options->at(UI::FileOption::FilePath::radioButton_NewFileName).data = 1;
-    file_path_options->at(UI::FileOption::FilePath::radioButton_NewFileName).name = "Create New File Name";
-    file_path_options->at(UI::FileOption::FilePath::radioButton_NewFileName).desc = "If selected, a new file name will be used for the new edited image file.";
-    file_path_options->at(UI::FileOption::FilePath::label_Add).data = 0;
-    file_path_options->at(UI::FileOption::FilePath::label_Add).name = "Add:";
-    file_path_options->at(UI::FileOption::FilePath::label_Add).desc = "Add metadata to file name edit text box (to be included in a new file name).";
-    file_path_options->at(UI::FileOption::FilePath::groupBox_SaveDir).data = 1;
-    file_path_options->at(UI::FileOption::FilePath::groupBox_SaveDir).name = "Save All Image Files In:";
-    file_path_options->at(UI::FileOption::FilePath::groupBox_SaveDir).desc = "";
-    file_path_options->at(UI::FileOption::FilePath::radioButton_RelativePath).data = 1;
-    file_path_options->at(UI::FileOption::FilePath::radioButton_RelativePath).name = "Relative Paths:";
-    file_path_options->at(UI::FileOption::FilePath::radioButton_RelativePath).desc = "Relative to the currently edited image file path.";
-    file_path_options->at(UI::FileOption::FilePath::radioButton_AbsolutePath).data = 0;
-    file_path_options->at(UI::FileOption::FilePath::radioButton_AbsolutePath).name = "Absolute Path:";
-    file_path_options->at(UI::FileOption::FilePath::radioButton_AbsolutePath).desc = "The absolute path all edited images will be saved to.";
-    file_path_options->at(UI::FileOption::FilePath::pushButton_AddBackOneDir).data = 0;
-    file_path_options->at(UI::FileOption::FilePath::pushButton_AddBackOneDir).name = "Add \"Back One Directory\" For Relative Paths";
-    file_path_options->at(UI::FileOption::FilePath::pushButton_AddBackOneDir).desc = "Start relative path up one directory level.";
-    file_path_options->at(UI::FileOption::FilePath::pushButton_FindAbsolutePath).data = 0;
-    file_path_options->at(UI::FileOption::FilePath::pushButton_FindAbsolutePath).name = "Search For An Absolute Path";
-    file_path_options->at(UI::FileOption::FilePath::pushButton_FindAbsolutePath).desc = "Open dialog window to select a directory adding it to the absolute path text box.";
-
     watermark_options->at(UI::EditOption::Watermark::groupBox_Watermark).data = 0;
     watermark_options->at(UI::EditOption::Watermark::groupBox_Watermark).name = "Add Watermark:";
     watermark_options->at(UI::EditOption::Watermark::groupBox_Watermark).desc = "";
@@ -796,6 +764,37 @@ void BatchItImage::LoadInUiData()
     watermark_locations->at(ImageEditor::WatermarkLocation::BottomRight).data = ImageEditor::WatermarkLocation::BottomRight;
     watermark_locations->at(ImageEditor::WatermarkLocation::BottomRight).name = "Bottom Right";
     watermark_locations->at(ImageEditor::WatermarkLocation::BottomRight).desc = "Place a watermark at the bottom right position of each edited image.";
+
+    file_path_options->at(UI::FileOption::FilePath::groupBox_FileRename).data = 1;
+    file_path_options->at(UI::FileOption::FilePath::groupBox_FileRename).name = "Modify Image File Names:";
+    file_path_options->at(UI::FileOption::FilePath::groupBox_FileRename).desc = "";
+    file_path_options->at(UI::FileOption::FilePath::radioButton_Overwrite).data = 0;
+    file_path_options->at(UI::FileOption::FilePath::radioButton_Overwrite).name = "Overwrite Original File";
+    file_path_options->at(UI::FileOption::FilePath::radioButton_Overwrite).desc = "If selected, this will overwrite the original image file with the new edited image file.";
+    file_path_options->at(UI::FileOption::FilePath::radioButton_RenameOriginal).data = 0;
+    file_path_options->at(UI::FileOption::FilePath::radioButton_RenameOriginal).name = "Rename Original File";
+    file_path_options->at(UI::FileOption::FilePath::radioButton_RenameOriginal).desc = "If selected, this will rename the original image file, and use it's name for the new edited image file.";
+    file_path_options->at(UI::FileOption::FilePath::radioButton_NewFileName).data = 1;
+    file_path_options->at(UI::FileOption::FilePath::radioButton_NewFileName).name = "Create New File Name";
+    file_path_options->at(UI::FileOption::FilePath::radioButton_NewFileName).desc = "If selected, a new file name will be used for the new edited image file.";
+    file_path_options->at(UI::FileOption::FilePath::label_Add).data = 0;
+    file_path_options->at(UI::FileOption::FilePath::label_Add).name = "Add:";
+    file_path_options->at(UI::FileOption::FilePath::label_Add).desc = "Add metadata to file name edit text box (to be included in a new file name).";
+    file_path_options->at(UI::FileOption::FilePath::groupBox_SaveDir).data = 1;
+    file_path_options->at(UI::FileOption::FilePath::groupBox_SaveDir).name = "Save All Image Files In:";
+    file_path_options->at(UI::FileOption::FilePath::groupBox_SaveDir).desc = "";
+    file_path_options->at(UI::FileOption::FilePath::radioButton_RelativePath).data = 1;
+    file_path_options->at(UI::FileOption::FilePath::radioButton_RelativePath).name = "Relative Paths:";
+    file_path_options->at(UI::FileOption::FilePath::radioButton_RelativePath).desc = "Relative to the currently edited image file path.";
+    file_path_options->at(UI::FileOption::FilePath::radioButton_AbsolutePath).data = 0;
+    file_path_options->at(UI::FileOption::FilePath::radioButton_AbsolutePath).name = "Absolute Path:";
+    file_path_options->at(UI::FileOption::FilePath::radioButton_AbsolutePath).desc = "The absolute path all edited images will be saved to.";
+    file_path_options->at(UI::FileOption::FilePath::pushButton_AddBackOneDir).data = 0;
+    file_path_options->at(UI::FileOption::FilePath::pushButton_AddBackOneDir).name = "Add \"Back One Directory\" For Relative Paths";
+    file_path_options->at(UI::FileOption::FilePath::pushButton_AddBackOneDir).desc = "Start relative path up one directory level.";
+    file_path_options->at(UI::FileOption::FilePath::pushButton_FindAbsolutePath).data = 0;
+    file_path_options->at(UI::FileOption::FilePath::pushButton_FindAbsolutePath).name = "Search For An Absolute Path";
+    file_path_options->at(UI::FileOption::FilePath::pushButton_FindAbsolutePath).desc = "Open dialog window to select a directory adding it to the absolute path text box.";
 
     // comboBox_AddText
     file_name_creation->at(ImageSaver::MetadataFlags::FILE_NAME).data = ImageSaver::MetadataFlags::FILE_NAME;
@@ -1335,8 +1334,9 @@ void BatchItImage::SetupFileTree()
     ui.treeWidget_FileInfo->setColumnWidth(FileTree::Column::FILE_SELECTED, ui.treeWidget_FileInfo->minimumWidth());
     ui.treeWidget_FileInfo->header()->setSectionsClickable(true);
     ui.treeWidget_FileInfo->header()->sortIndicatorOrder();
-    ui.treeWidget_FileInfo->installEventFilter(this); // Keep watch of all events happening in file tree. -> eventFilter()
+    ui.treeWidget_FileInfo->viewport()->installEventFilter(this); // Keep watch of all events happening in file tree. -> eventFilter()
     ui.treeWidget_FileInfo->setMouseTracking(true);
+    scroller_file_tree = QScroller::scroller(ui.treeWidget_FileInfo);
 }
 
 template<std::size_t ui_data_size>
@@ -4631,11 +4631,71 @@ void BatchItImage::SortFileTreeByColumn(int index)
 bool BatchItImage::eventFilter(QObject* watched, QEvent* event) 
 {
     //qDebug() << "Object Watched:" << watched->objectName().toStdString() << "  eventFiltered:" << event->type();
-    if (event->type() == QEvent::ContextMenu) {
-        qDebug() << "ContextMenu Called";
+
+    QActionEvent* action_event = static_cast<QActionEvent*>(event);
+    QMouseEvent* mouse_event = static_cast<QMouseEvent*>(event);
+    QWheelEvent* mouse_wheel_event = static_cast<QWheelEvent*>(event);
+    //qDebug() << "Mouse Button:" << mouse_event->button();
+
+    // Mouse Button Down
+    if (mouse_event->type() == QEvent::MouseButtonPress) {
+        if (mouse_event->button() == Qt::MouseButton::LeftButton) {
+            qDebug() << "-Left Mouse Down";
+        }
+        if (mouse_event->button() == Qt::MouseButton::RightButton) {
+            qDebug() << "-Right Mouse Down";
+            mouse_button_down = Qt::MouseButton::RightButton;
+        }
     }
-    if (event->type() == QEvent::ChildPolished) { // Used in-place of "no ActionsContextMenu event"
-        qDebug() << "ActionsContextMenu Called?";
+
+    // Mouse Button Up
+    else if (mouse_event->type() == QEvent::MouseButtonRelease) {
+        if (mouse_event->button() == Qt::RightButton) {
+            qDebug() << "-Right Mouse Up";
+            mouse_button_down = Qt::MouseButton::NoButton;
+            //is_horizontal_scrolling = false;
+        }
+    }
+
+    // Mouse Right Down + Wheel
+    else if (mouse_event->type() == QEvent::Wheel) {
+        if (mouse_button_down == Qt::MouseButton::RightButton and ui.treeWidget_FileInfo->topLevelItemCount() > 0) {
+            qDebug() << "-Mouse Right Down + Wheel";
+
+            QTreeWidgetItem* top_visible_item = ui.treeWidget_FileInfo->itemAt(0, 0);
+            int top_visible_item_index = ui.treeWidget_FileInfo->indexOfTopLevelItem(top_visible_item);
+            int scroll_horizontally_by = mouse_wheel_event->angleDelta().y();
+            int viewport_position_x = abs(ui.treeWidget_FileInfo->columnViewportPosition(0)); // ScrollPerPixel
+            int viewport_position_y = 0; // ScrollPerItem
+
+            for (int i = 0; i < top_visible_item_index; i++) {
+                //viewport_position_y += ui.treeWidget_FileInfo->topLevelItem(i)->sizeHint(0).height();
+                //viewport_position_y += ui.treeWidget_FileInfo->sizeHintForRow(i);
+                viewport_position_y++;
+                if (ui.treeWidget_FileInfo->topLevelItem(i)->isExpanded()) {
+                    viewport_position_y += ui.treeWidget_FileInfo->topLevelItem(i)->childCount();
+                }
+            }
+            qDebug() << "--Top Visible Item Index:" << top_visible_item_index;
+            qDebug() << "--Scroll Horizontal Position By:" << scroll_horizontally_by;
+            qDebug() << "--Before:" << scroller_file_tree->finalPosition();
+
+            is_horizontal_scrolling = true;
+            scroller_file_tree->scrollTo(QPointF(viewport_position_x - scroll_horizontally_by, viewport_position_y));
+
+            qDebug() << "--After:" << scroller_file_tree->finalPosition();
+
+            return true;
+        }
+    }
+
+    // Mouse Right Click Action
+    else if (action_event->type() == QEvent::ContextMenu) {
+        if (is_horizontal_scrolling) {
+            is_horizontal_scrolling = false;
+            return true; // If previously (right click + wheel) scrolling, don't bring up ContextMenu.
+        }
+        qDebug() << "ContextMenu Called";
         int current_file_tree_row = GetCurrentFileTreeRow();
         if (current_file_tree_row > -1) {
             if (current_file_metadata_list.at(current_file_tree_row).selected)
@@ -4644,6 +4704,7 @@ bool BatchItImage::eventFilter(QObject* watched, QEvent* event)
                 action_select->setText(select_text);
         }
     }
+
     // Pass on the event.
     return QWidget::eventFilter(watched, event);
 }
@@ -4690,6 +4751,15 @@ void BatchItImage::keyPressEvent(QKeyEvent* event)
         qDebug() << "Delete Key Pressed";
         DeleteConfirmationPopup();
     }
+}
+
+void BatchItImage::mouseMoveEvent(QMouseEvent* event)
+{
+    //qDebug() << "Type:" << event->type() << "- Button:" << event->button();
+}
+void BatchItImage::mousePressEvent(QMouseEvent* event)
+{
+    //qDebug() << "Type:" << event->type() << "- Button:" << event->button();
 }
 
 void BatchItImage::DeleteConfirmationPopup(bool clear_all)
@@ -4884,7 +4954,6 @@ std::string BatchItImage::BytesToFileSizeString(std::uintmax_t bytes)
     return " " + file_size_str;
 }
 
-
 bool BatchItImage::CreateDirectories(std::filesystem::path file_path)
 {
     bool error = false;
@@ -4898,7 +4967,6 @@ bool BatchItImage::CreateDirectories(std::filesystem::path file_path)
     }
     return error;
 }
-
 
 void BatchItImage::AddTextToFileName()
 {
