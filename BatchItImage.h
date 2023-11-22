@@ -18,27 +18,32 @@ namespace UI {
     namespace MenuBar { // TODO
         const struct File {
             enum {
-                menu_File, action_AddImages, menu_RecentImageFiles, action_load_all_files, action_clear_all_files, action_OpenLogDirectory, action_Close, COUNT
+                menu_File, action_AddImages, menu_RecentImageFiles, action_load_all_files, action_clear_all_files,
+                action_OpenLogDirectory, action_Close, COUNT
             };
         };
         const struct Edit {
             enum {
-                menu_Edit, action_AddNewPreset, action_RemovePreset, action_SavePresets, action_ChangePresetDesc, action_ShowFormatFilter, COUNT
+                menu_Edit, action_AddNewPreset, action_RemovePreset, action_SavePresets, action_ChangePresetDesc,
+                action_ShowFormatFilter, COUNT
             };
         };
         const struct Help {
             enum { menu_Help, action_About, action_AboutQt, action_Help, COUNT };
         };
-
     };
     namespace EditOption {
         const struct Resize { enum { groupBox_Resize, checkBox_KeepAspectRatio, COUNT }; };
         const struct Background { enum { groupBox_Background, pushButton_ColorDialog, label_ColorPreview, COUNT }; };
-        const struct Blur {
-            enum {
-                groupBox_Blur, checkBox_BlurNormalize, label_BlurX1, label_BlurY1, label_BlurX2, label_BlurY2, label_BlurD, COUNT
-            };
+        const struct Blur { enum { groupBox_Blur, COUNT }; };
+        const struct BlurBox {
+            enum { checkBox_BlurNormalize, label_BlurX1, label_BlurY1, label_BlurX2, label_BlurY2, label_BlurD, COUNT };
         };
+        const struct BlurBilateral { enum { label_BlurX1, label_BlurX2, label_BlurY2, COUNT }; };
+        const struct BlurGaussian { enum { label_BlurX1, label_BlurY1, label_BlurX2, label_BlurY2, COUNT }; };
+        const struct BlurMedian { enum { label_BlurX1, COUNT }; };
+        const struct BlurPYRDown { enum { COUNT }; };
+        const struct BlurPYRUp { enum { COUNT }; };
         const struct Rotation { enum { groupBox_Rotation, checkBox_IncreaseBounds, checkBox_FlipImage, COUNT }; };
         const struct Watermark {
             enum {
@@ -55,6 +60,7 @@ namespace UI {
                 pushButton_FindAbsolutePath, COUNT
             };
         };
+        const struct Format { enum { groupBox_ChangeFormat, label_ImageFormat, COUNT }; };
         const struct FormatJpeg {
             enum {
                 label_FormatFlags, label_Quality, checkBox_Optimize, checkBox_Progressive, label_Compression, label_ExtraSetting1,
@@ -664,10 +670,15 @@ private:
     // Tab, Label, Check Box, and Button UIData
     std::array<UIData, UI::FileOption::FilePath::COUNT>* file_path_options = new std::array<UIData, UI::FileOption::FilePath::COUNT>;
     std::array<UIData, UI::EditOption::Resize::COUNT>* resize_options = new std::array<UIData, UI::EditOption::Resize::COUNT>;
-    std::array<UIData, UI::EditOption::Background::COUNT> background_options;// = new std::array<UIData, UI::EditOption::Background::COUNT>; // TODO: desc
-    std::array<UIData, UI::EditOption::Blur::COUNT>* blur_options = new std::array<UIData, UI::EditOption::Blur::COUNT>; // TODO: desc
-    std::array<UIData, UI::EditOption::Rotation::COUNT>* rotation_options = new std::array<UIData, UI::EditOption::Rotation::COUNT>; // TODO: desc
+    std::array<UIData, UI::EditOption::Background::COUNT> background_options;
+    std::array<UIData, UI::EditOption::Blur::COUNT>* blur_options = new std::array<UIData, UI::EditOption::Blur::COUNT>;
+    std::array<UIData, UI::EditOption::BlurBox::COUNT> blur_box;
+    std::array<UIData, UI::EditOption::BlurBilateral::COUNT> blur_bilateral;
+    std::array<UIData, UI::EditOption::BlurGaussian::COUNT> blur_gaussian;
+    std::array<UIData, UI::EditOption::BlurMedian::COUNT> blur_median;
+    std::array<UIData, UI::EditOption::Rotation::COUNT>* rotation_options = new std::array<UIData, UI::EditOption::Rotation::COUNT>;
     std::array<UIData, UI::EditOption::Watermark::COUNT>* watermark_options = new std::array<UIData, UI::EditOption::Watermark::COUNT>;
+    std::array<UIData, UI::FileOption::Format::COUNT>* format_options = new std::array<UIData, UI::FileOption::Format::COUNT>;
     std::array<UIData, UI::FileOption::FormatJpeg::COUNT> format_jpeg_options;
     std::array<UIData, UI::FileOption::FormatJp2::COUNT> format_jp2_options;
     std::array<UIData, UI::FileOption::FormatPng::COUNT> format_png_options;
