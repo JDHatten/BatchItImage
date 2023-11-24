@@ -271,14 +271,16 @@ BatchItImage::BatchItImage(QWidget* parent) : QMainWindow(parent)
 
     AddUiDataTo(*resize_options, std::vector<QWidget*>{ ui.groupBox_Resize, ui.checkBox_KeepAspectRatio });
     AddUiDataTo(background_options, std::vector<QWidget*>{ ui.groupBox_Background, ui.pushButton_ColorDialog, ui.label_ColorPreview });
-    AddUiDataTo(*blur_options, std::vector<QWidget*>{
+    /*AddUiDataTo(*blur_options, std::vector<QWidget*>{
         ui.groupBox_Blur, ui.checkBox_BlurNormalize, ui.label_BlurX1, ui.label_BlurY1, ui.label_BlurX2, ui.label_BlurY2, ui.label_BlurD
-    });
+    });*/
+    AddUiDataTo(ui.groupBox_Blur, blur_options->at(UI::EditOption::Blur::groupBox_Blur));
     AddUiDataTo(*rotation_options, std::vector<QWidget*>{ ui.groupBox_Rotation, ui.checkBox_IncreaseBounds, ui.checkBox_FlipImage });
     AddUiDataTo(*watermark_options, std::vector<QWidget*>{
         ui.groupBox_Watermark, ui.comboBox_WatermarkLocation, ui.label_WatermarkLocation,
             ui.label_WatermarkTransparency, ui.label_WatermarkOffset
     });
+    AddUiDataTo(*format_options, std::vector<QWidget*>{ ui.groupBox_ChangeFormat, ui.label_ImageFormat });
     AddUiDataTo(ui.groupBox_FileRename, file_path_options->at(UI::FileOption::FilePath::groupBox_FileRename));
     AddUiDataTo(ui.radioButton_Overwrite, file_path_options->at(UI::FileOption::FilePath::radioButton_Overwrite));
     AddUiDataTo(ui.radioButton_RenameOriginal, file_path_options->at(UI::FileOption::FilePath::radioButton_RenameOriginal));
@@ -300,7 +302,9 @@ BatchItImage::BatchItImage(QWidget* parent) : QMainWindow(parent)
     PopulateComboBox(ui.comboBox_WatermarkLocation, *watermark_locations,
         watermark_options->at(UI::EditOption::Watermark::label_WatermarkLocation).data);
     PopulateComboBox(ui.comboBox_AddText, *file_name_creation, 0, ImageSaver::MetadataIdentifiers);
-    PopulateComboBox(ui.comboBox_ImageFormat, *image_formats, 0, extension_list);
+    PopulateComboBox(
+        ui.comboBox_ImageFormat, *image_formats, format_options->at(UI::FileOption::Format::label_ImageFormat).data, extension_list
+    ); // TODO: LoadPreset overwrites "default_index", even if groupBox_ChangeFormat not checked. Change?
 
     /***************************
         Prep UI Widgets, Etc.
@@ -354,7 +358,7 @@ BatchItImage::BatchItImage(QWidget* parent) : QMainWindow(parent)
         " *" + extension_list.at(ImageSaver::ImageExtension::dib) + ")");
     file_extension_filters.append(file_dialog_titles.at(Dialog::FileSearch::all_files_dialog_str) + " (*)");
 
-    // Ui Event Conections
+    // Ui Event Connections
     UiConnections();
    
     // Delete all arrays on the heap that will not be reused after loading.
@@ -377,6 +381,7 @@ BatchItImage::BatchItImage(QWidget* parent) : QMainWindow(parent)
     delete blur_filters;
     delete watermark_locations;
     delete file_name_creation;
+    delete format_options;
     delete image_formats;
 
     session_start_time = std::chrono::system_clock::now();
@@ -396,10 +401,6 @@ BatchItImage::BatchItImage(QWidget* parent) : QMainWindow(parent)
     comboBox->addItems(QStringList() << "item1" << "item2");
     ui.treeWidget_Combine->setItemWidget(new_item, 1, comboBox);
     ui.treeWidget_Combine->addTopLevelItem(new_item);*/
-
-    // TODO: Status Bar
-    //QString status_message = "BatchItImage";
-    //ui.statusbar->showMessage(status_message, -1);
 
     //qDebug().noquote() << Option.printAllTrackerFlags();
 
@@ -635,24 +636,59 @@ void BatchItImage::LoadInUiData()
     blur_options->at(UI::EditOption::Blur::groupBox_Blur).data = 0;
     blur_options->at(UI::EditOption::Blur::groupBox_Blur).name = "Blur Filters:";
     blur_options->at(UI::EditOption::Blur::groupBox_Blur).desc = "";
-    blur_options->at(UI::EditOption::Blur::checkBox_BlurNormalize).data = 0;
-    blur_options->at(UI::EditOption::Blur::checkBox_BlurNormalize).name = "Normalize";
-    blur_options->at(UI::EditOption::Blur::checkBox_BlurNormalize).desc = "";
-    blur_options->at(UI::EditOption::Blur::label_BlurX1).data = 0;
-    blur_options->at(UI::EditOption::Blur::label_BlurX1).name = "  X";
-    blur_options->at(UI::EditOption::Blur::label_BlurX1).desc = "";
-    blur_options->at(UI::EditOption::Blur::label_BlurY1).data = 0;
-    blur_options->at(UI::EditOption::Blur::label_BlurY1).name = "  Y";
-    blur_options->at(UI::EditOption::Blur::label_BlurY1).desc = "";
-    blur_options->at(UI::EditOption::Blur::label_BlurX2).data = 0;
-    blur_options->at(UI::EditOption::Blur::label_BlurX2).name = " sX";
-    blur_options->at(UI::EditOption::Blur::label_BlurX2).desc = "";
-    blur_options->at(UI::EditOption::Blur::label_BlurY2).data = 0;
-    blur_options->at(UI::EditOption::Blur::label_BlurY2).name = " sY";
-    blur_options->at(UI::EditOption::Blur::label_BlurY2).desc = "";
-    blur_options->at(UI::EditOption::Blur::label_BlurD).data = 0;
-    blur_options->at(UI::EditOption::Blur::label_BlurD).name = "  D";
-    blur_options->at(UI::EditOption::Blur::label_BlurD).desc = "";
+
+    blur_box.at(UI::EditOption::BlurBox::checkBox_BlurNormalize).data = 1;
+    blur_box.at(UI::EditOption::BlurBox::checkBox_BlurNormalize).name = "Normalize";
+    blur_box.at(UI::EditOption::BlurBox::checkBox_BlurNormalize).desc = "Unnormalized box filter is useful for computing various integral characteristics over each\n" \
+                                                                        "pixel neighborhood, such as covariance matrices of image derivatives (used in dense optical\n" \
+                                                                        "flow algorithms, and so on).";
+    blur_box.at(UI::EditOption::BlurBox::label_BlurX1).data = 1;
+    blur_box.at(UI::EditOption::BlurBox::label_BlurX1).name = "  X";
+    blur_box.at(UI::EditOption::BlurBox::label_BlurX1).desc = "The blurring kernel size in the X-axis direction (width).";
+    blur_box.at(UI::EditOption::BlurBox::label_BlurY1).data = 1;
+    blur_box.at(UI::EditOption::BlurBox::label_BlurY1).name = "  Y";
+    blur_box.at(UI::EditOption::BlurBox::label_BlurY1).desc = "The blurring Kernel Size in the Y-axis direction (height)";
+    blur_box.at(UI::EditOption::BlurBox::label_BlurX2).data = -1;
+    blur_box.at(UI::EditOption::BlurBox::label_BlurX2).name = " aX";
+    blur_box.at(UI::EditOption::BlurBox::label_BlurX2).desc = "The X anchor point; Point(-1,-1) means that the anchor is at the kernel center.";
+    blur_box.at(UI::EditOption::BlurBox::label_BlurY2).data = -1;
+    blur_box.at(UI::EditOption::BlurBox::label_BlurY2).name = " aY";
+    blur_box.at(UI::EditOption::BlurBox::label_BlurY2).desc = "The Y anchor point; Point(-1,-1) means that the anchor is at the kernel center.";
+    blur_box.at(UI::EditOption::BlurBox::label_BlurD).data = -1;
+    blur_box.at(UI::EditOption::BlurBox::label_BlurD).name = "  D";
+    blur_box.at(UI::EditOption::BlurBox::label_BlurD).desc = "A variable type representing the depth of the output image.";
+
+    blur_bilateral.at(UI::EditOption::BlurBilateral::label_BlurX1).data = 0;
+    blur_bilateral.at(UI::EditOption::BlurBilateral::label_BlurX1).name = "  D";
+    blur_bilateral.at(UI::EditOption::BlurBilateral::label_BlurX1).desc = "The diameter of each pixel neighborhood that is used during filtering.";
+    blur_bilateral.at(UI::EditOption::BlurBilateral::label_BlurX2).data = 0;
+    blur_bilateral.at(UI::EditOption::BlurBilateral::label_BlurX2).name = " sC";
+    blur_bilateral.at(UI::EditOption::BlurBilateral::label_BlurX2).desc = "The filter sigma in the color space. A larger value of the parameter means that farther colors\n" \
+                                                                          "within the pixel neighborhood (see sigma space / sS) will be mixed together, resulting in larger\n" \
+                                                                          "areas of semi-equal color.";
+    blur_bilateral.at(UI::EditOption::BlurBilateral::label_BlurY2).data = 0;
+    blur_bilateral.at(UI::EditOption::BlurBilateral::label_BlurY2).name = " sS";
+    blur_bilateral.at(UI::EditOption::BlurBilateral::label_BlurY2).desc = "The filter sigma in the coordinate space. A larger value of the parameter means that farther pixels\n" \
+                                                                          "will influence each other as long as their colors are close enough (see sigma color / sC). When the\n" \
+                                                                          "diameter (D) is greater than 0, it specifies the neighborhood size regardless of sigma space.\n" \
+                                                                          "Otherwise, the diameter (D) is proportional to sigma space.";
+    
+    blur_gaussian.at(UI::EditOption::BlurGaussian::label_BlurX1).data = 1;
+    blur_gaussian.at(UI::EditOption::BlurGaussian::label_BlurX1).name = "  X";
+    blur_gaussian.at(UI::EditOption::BlurGaussian::label_BlurX1).desc = "The blurring kernel size in the X-axis direction (width).";
+    blur_gaussian.at(UI::EditOption::BlurGaussian::label_BlurY1).data = 1;
+    blur_gaussian.at(UI::EditOption::BlurGaussian::label_BlurY1).name = "  Y";
+    blur_gaussian.at(UI::EditOption::BlurGaussian::label_BlurY1).desc = "The blurring Kernel Size in the Y-axis direction (height)";
+    blur_gaussian.at(UI::EditOption::BlurGaussian::label_BlurX2).data = 0;
+    blur_gaussian.at(UI::EditOption::BlurGaussian::label_BlurX2).name = " sX";
+    blur_gaussian.at(UI::EditOption::BlurGaussian::label_BlurX2).desc = "The kernel standard deviation in X-axis direction (width).";
+    blur_gaussian.at(UI::EditOption::BlurGaussian::label_BlurY2).data = 0;
+    blur_gaussian.at(UI::EditOption::BlurGaussian::label_BlurY2).name = " sY";
+    blur_gaussian.at(UI::EditOption::BlurGaussian::label_BlurY2).desc = "The kernel standard deviation in Y-axis direction (height).";
+
+    blur_median.at(UI::EditOption::BlurMedian::label_BlurX1).data = 3;
+    blur_median.at(UI::EditOption::BlurMedian::label_BlurX1).name = "  A";
+    blur_median.at(UI::EditOption::BlurMedian::label_BlurX1).desc = "The linear kernel size of the aperture; it must be odd and greater than 1, for example: 3, 5, 7 ...";
 
     // comboBox_BlurFilter
     blur_filters->at(0).data = ImageEditor::BlurFilter::NO_FILTER;
@@ -664,31 +700,31 @@ void BatchItImage::LoadInUiData()
     blur_filters->at(1).data = ImageEditor::BlurFilter::BOX_FILTER;
     blur_filters->at(1).name = "Box Filter";
     blur_filters->at(1).desc = "Blurs an image using the box filter. An unnormalized box filter is useful for computing\n" \
-                           "various integral characteristics over each pixel neighborhood, such as covariance\n" \
-                           "matrices of image derivatives (used in dense optical flow algorithms, and so on).";
+                               "various integral characteristics over each pixel neighborhood, such as covariance\n" \
+                               "matrices of image derivatives (used in dense optical flow algorithms, and so on).";
     blur_filters->at(2).data = ImageEditor::BlurFilter::BILATERAL_FILTER;
     blur_filters->at(2).name = "Bilateral Filter";
     blur_filters->at(2).desc = "Applies the bilateral filter to an image, which can reduce unwanted noise very well while\n" \
-                           "keeping edges fairly sharp. However, it is very slow compared to most other filters.";
+                               "keeping edges fairly sharp. However, it is very slow compared to most other filters.";
     blur_filters->at(3).data = ImageEditor::BlurFilter::GAUSSIAN_BLUR;
     blur_filters->at(3).name = "Gaussian Blur Filter";
     blur_filters->at(3).desc = "Applies the Gaussian blur filter to an image, which convolves the source image with the\n" \
-                           "specified Gaussian kernel.";
+                               "specified Gaussian kernel.";
     blur_filters->at(4).data = ImageEditor::BlurFilter::MEDIAN_BLUR;
     blur_filters->at(4).name = "Median Blur Filter";
     blur_filters->at(4).desc = "Blurs an image using the median filter, which smooths an image with the x/y size aperture.\n" \
-                           "Each channel of a multi-channel image is processed independently.";
+                               "Each channel of a multi-channel image is processed independently.";
     blur_filters->at(5).data = ImageEditor::BlurFilter::PYR_DOWN_BLUR;
     blur_filters->at(5).name = "PYR Down-Sample Blur";
     blur_filters->at(5).desc = "Blurs an image and down-samples it. This performs the down-sampling step of the Gaussian\n" \
-                           "pyramid construction. First, it convolves the source image with the Gaussian kernel, then\n" \
-                           "down-samples the image by rejecting even rows and columns.";
+                               "pyramid construction. First, it convolves the source image with the Gaussian kernel, then\n" \
+                               "down-samples the image by rejecting even rows and columns.";
     blur_filters->at(6).data = ImageEditor::BlurFilter::PYR_UP_BLUR;
     blur_filters->at(6).name = "PYR Up-Sample Blur";
     blur_filters->at(6).desc = "Up-samples an image and then blurs it. This performs the up-sampling step of the Gaussian\n" \
-                           "pyramid construction, though it can actually be used to construct the Laplacian pyramid.\n" \
-                           "First, it up-samples the source image by injecting even zero rows and columns and then\n" \
-                           "convolves the result with the same kernel as in \"PYR Down-Sample\" multiplied by 4.";
+                               "pyramid construction, though it can actually be used to construct the Laplacian pyramid.\n" \
+                               "First, it up-samples the source image by injecting even zero rows and columns and then\n" \
+                               "convolves the result with the same kernel as in \"PYR Down-Sample\" multiplied by 4.";
     
     // verticalSlider_BlurD
     blur_depth_selections.at(0).data = -1;
@@ -709,16 +745,16 @@ void BatchItImage::LoadInUiData()
     blur_depth_selections.at(5).data = CV_64F;
     blur_depth_selections.at(5).name = "64-bit Floating Point";
     blur_depth_selections.at(5).desc = "";
-
+    
     rotation_options->at(UI::EditOption::Rotation::groupBox_Rotation).data = 0;
     rotation_options->at(UI::EditOption::Rotation::groupBox_Rotation).name = "Rotation:";
-    rotation_options->at(UI::EditOption::Rotation::groupBox_Rotation).desc = "";
+    rotation_options->at(UI::EditOption::Rotation::groupBox_Rotation).desc = "Rotate image by left clicking and dragging dial. For more precision use mouse wheel or arrow keys.";
     rotation_options->at(UI::EditOption::Rotation::checkBox_IncreaseBounds).data = 0;
     rotation_options->at(UI::EditOption::Rotation::checkBox_IncreaseBounds).name = "Increase Image\nBoundaries";
-    rotation_options->at(UI::EditOption::Rotation::checkBox_IncreaseBounds).desc = "";
+    rotation_options->at(UI::EditOption::Rotation::checkBox_IncreaseBounds).desc = "Check to increase boundaries or size of an image so the entire rotated image is shown, else the image will be cropped.";
     rotation_options->at(UI::EditOption::Rotation::checkBox_FlipImage).data = 0;
     rotation_options->at(UI::EditOption::Rotation::checkBox_FlipImage).name = "Flip / Mirror";
-    rotation_options->at(UI::EditOption::Rotation::checkBox_FlipImage).desc = "";
+    rotation_options->at(UI::EditOption::Rotation::checkBox_FlipImage).desc = "If checked an image will be flipped or mirrored before rotating.";
 
     watermark_options->at(UI::EditOption::Watermark::groupBox_Watermark).data = 0;
     watermark_options->at(UI::EditOption::Watermark::groupBox_Watermark).name = "Add Watermark:";
@@ -814,6 +850,13 @@ void BatchItImage::LoadInUiData()
     for (uint i = 0; i < ImageSaver::ExtensionList.size(); i++) {
         extension_list.at(i) = QString::fromStdString(ImageSaver::ExtensionList.at(i));
     }
+
+    format_options->at(UI::FileOption::Format::groupBox_ChangeFormat).data = 0; // Note: The preset (user or default) overwrites this as it should.
+    format_options->at(UI::FileOption::Format::groupBox_ChangeFormat).name = "Change Image Format:";
+    format_options->at(UI::FileOption::Format::groupBox_ChangeFormat).desc = "";
+    format_options->at(UI::FileOption::Format::label_ImageFormat).data = 0; // TODO: LoadPreset overwrites default_index, even if groupBox_ChangeFormat not checked. Change?
+    format_options->at(UI::FileOption::Format::label_ImageFormat).name = "Image Format:";
+    format_options->at(UI::FileOption::Format::label_ImageFormat).desc = "Choose an image format that all edited images will be converted to.";
 
     // comboBox_ImageFormat
     image_formats->at(ImageSaver::ImageExtension::jpeg).data = ImageSaver::ImageExtension::jpeg;
@@ -2133,6 +2176,7 @@ void BatchItImage::EnableSpecificBlurOptions(bool loading_preset)
                 ui.checkBox_BlurNormalize->setFont(*font_default);
             }
             else {
+                ui.checkBox_BlurNormalize->setStatusTip("");
                 ui.checkBox_BlurNormalize->setToolTip("");
                 ui.checkBox_BlurNormalize->setEnabled(false);
                 ui.checkBox_BlurNormalize->setFont(*font_default_light);
@@ -2196,6 +2240,7 @@ void BatchItImage::EnableSpecificBlurOptions(bool loading_preset)
     }
     else if (blur_filter_selected == ImageEditor::BlurFilter::BOX_FILTER) {
         enableOptions(NORMALIZE + X1 + Y1 + X2 + Y2 + DEPTH);
+
         ui.verticalSlider_BlurX1->setRange(0, 100);
         ui.verticalSlider_BlurY1->setRange(0, 100);
         ui.verticalSlider_BlurX2->setRange(-20, 20);
@@ -2239,28 +2284,60 @@ void BatchItImage::EnableSpecificBlurOptions(bool loading_preset)
             blur_depth_selections[5].name,
             false
         );
+        ui.checkBox_BlurNormalize->setText(blur_box.at(UI::EditOption::BlurBox::checkBox_BlurNormalize).name);
+        ui.checkBox_BlurNormalize->setStatusTip(blur_box.at(UI::EditOption::BlurBox::checkBox_BlurNormalize).desc);
+        ui.checkBox_BlurNormalize->setToolTip(blur_box.at(UI::EditOption::BlurBox::checkBox_BlurNormalize).desc);
+        ui.label_BlurX1->setText(blur_box.at(UI::EditOption::BlurBox::label_BlurX1).name);
+        ui.label_BlurX1->setStatusTip(blur_box.at(UI::EditOption::BlurBox::label_BlurX1).desc);
+        ui.label_BlurX1->setToolTip(blur_box.at(UI::EditOption::BlurBox::label_BlurX1).desc);
+        ui.label_BlurY1->setText(blur_box.at(UI::EditOption::BlurBox::label_BlurY1).name);
+        ui.label_BlurY1->setStatusTip(blur_box.at(UI::EditOption::BlurBox::label_BlurY1).desc);
+        ui.label_BlurY1->setToolTip(blur_box.at(UI::EditOption::BlurBox::label_BlurY1).desc);
+        ui.label_BlurX2->setText(blur_box.at(UI::EditOption::BlurBox::label_BlurX2).name);
+        ui.label_BlurX2->setStatusTip(blur_box.at(UI::EditOption::BlurBox::label_BlurX2).desc);
+        ui.label_BlurX2->setToolTip(blur_box.at(UI::EditOption::BlurBox::label_BlurX2).desc);
+        ui.label_BlurY2->setText(blur_box.at(UI::EditOption::BlurBox::label_BlurY2).name);
+        ui.label_BlurY2->setStatusTip(blur_box.at(UI::EditOption::BlurBox::label_BlurY2).desc);
+        ui.label_BlurY2->setToolTip(blur_box.at(UI::EditOption::BlurBox::label_BlurY2).desc);
+        ui.label_BlurD->setText(blur_box.at(UI::EditOption::BlurBox::label_BlurD).name);
+        ui.label_BlurD->setStatusTip(blur_box.at(UI::EditOption::BlurBox::label_BlurD).desc);
+        ui.label_BlurD->setToolTip(blur_box.at(UI::EditOption::BlurBox::label_BlurD).desc);
+
         if (not loading_preset) {
-            ui.checkBox_BlurNormalize->setChecked(true);
-            ui.verticalSlider_BlurX1->setValue(1);
-            ui.verticalSlider_BlurY1->setValue(1);
-            ui.verticalSlider_BlurX2->setValue(-1);
-            ui.verticalSlider_BlurY2->setValue(-1);
-            ui.verticalSlider_BlurD->setValue(-1);
+            ui.checkBox_BlurNormalize->setChecked(blur_box.at(UI::EditOption::BlurBox::checkBox_BlurNormalize).data);
+            ui.verticalSlider_BlurX1->setValue(blur_box.at(UI::EditOption::BlurBox::label_BlurX1).data);
+            ui.verticalSlider_BlurY1->setValue(blur_box.at(UI::EditOption::BlurBox::label_BlurY1).data);
+            ui.verticalSlider_BlurX2->setValue(blur_box.at(UI::EditOption::BlurBox::label_BlurX2).data);
+            ui.verticalSlider_BlurY2->setValue(blur_box.at(UI::EditOption::BlurBox::label_BlurY2).data);
+            ui.verticalSlider_BlurD->setValue(blur_box.at(UI::EditOption::BlurBox::label_BlurD).data);
         }
     }
     else if (blur_filter_selected == ImageEditor::BlurFilter::BILATERAL_FILTER) {
         enableOptions(X1 + X2 + Y2);
+        
         ui.verticalSlider_BlurX1->setRange(0, 12);
         ui.verticalSlider_BlurX2->setRange(0, 300);
         ui.verticalSlider_BlurY2->setRange(0, 300);
+
+        ui.label_BlurX1->setText(blur_bilateral.at(UI::EditOption::BlurBilateral::label_BlurX1).name);
+        ui.label_BlurX1->setStatusTip(blur_bilateral.at(UI::EditOption::BlurBilateral::label_BlurX1).desc);
+        ui.label_BlurX1->setToolTip(blur_bilateral.at(UI::EditOption::BlurBilateral::label_BlurX1).desc);
+        ui.label_BlurX2->setText(blur_bilateral.at(UI::EditOption::BlurBilateral::label_BlurX2).name);
+        ui.label_BlurX2->setStatusTip(blur_bilateral.at(UI::EditOption::BlurBilateral::label_BlurX2).desc);
+        ui.label_BlurX2->setToolTip(blur_bilateral.at(UI::EditOption::BlurBilateral::label_BlurX2).desc);
+        ui.label_BlurY2->setText(blur_bilateral.at(UI::EditOption::BlurBilateral::label_BlurY2).name);
+        ui.label_BlurY2->setStatusTip(blur_bilateral.at(UI::EditOption::BlurBilateral::label_BlurY2).desc);
+        ui.label_BlurY2->setToolTip(blur_bilateral.at(UI::EditOption::BlurBilateral::label_BlurY2).desc);
+
         if (not loading_preset) {
-            ui.verticalSlider_BlurX1->setValue(0);
-            ui.verticalSlider_BlurX2->setValue(0);
-            ui.verticalSlider_BlurY2->setValue(0);
+            ui.verticalSlider_BlurX1->setValue(blur_bilateral.at(UI::EditOption::BlurBilateral::label_BlurX1).data);
+            ui.verticalSlider_BlurX2->setValue(blur_bilateral.at(UI::EditOption::BlurBilateral::label_BlurX2).data);
+            ui.verticalSlider_BlurY2->setValue(blur_bilateral.at(UI::EditOption::BlurBilateral::label_BlurY2).data);
         }
     }
     else if (blur_filter_selected == ImageEditor::BlurFilter::GAUSSIAN_BLUR) {
         enableOptions(X1 + Y1 + X2 + Y2);
+
         ui.verticalSlider_BlurX1->forceSingleStepInterval(true);
         ui.verticalSlider_BlurX1->setRange(1, 99);
         ui.verticalSlider_BlurX1->setSingleStep(2);
@@ -2271,20 +2348,40 @@ void BatchItImage::EnableSpecificBlurOptions(bool loading_preset)
         ui.verticalSlider_BlurX2->setSingleStep(0.1);
         ui.verticalSlider_BlurY2->setRange(0.0, 10.0);
         ui.verticalSlider_BlurY2->setSingleStep(0.1);
+
+        ui.label_BlurX1->setText(blur_gaussian.at(UI::EditOption::BlurGaussian::label_BlurX1).name);
+        ui.label_BlurX1->setStatusTip(blur_gaussian.at(UI::EditOption::BlurGaussian::label_BlurX1).desc);
+        ui.label_BlurX1->setToolTip(blur_gaussian.at(UI::EditOption::BlurGaussian::label_BlurX1).desc);
+        ui.label_BlurY1->setText(blur_gaussian.at(UI::EditOption::BlurGaussian::label_BlurY1).name);
+        ui.label_BlurY1->setStatusTip(blur_gaussian.at(UI::EditOption::BlurGaussian::label_BlurY1).desc);
+        ui.label_BlurY1->setToolTip(blur_gaussian.at(UI::EditOption::BlurGaussian::label_BlurY1).desc);
+        ui.label_BlurX2->setText(blur_gaussian.at(UI::EditOption::BlurGaussian::label_BlurX2).name);
+        ui.label_BlurX2->setStatusTip(blur_gaussian.at(UI::EditOption::BlurGaussian::label_BlurX2).desc);
+        ui.label_BlurX2->setToolTip(blur_gaussian.at(UI::EditOption::BlurGaussian::label_BlurX2).desc);
+        ui.label_BlurY2->setText(blur_gaussian.at(UI::EditOption::BlurGaussian::label_BlurY2).name);
+        ui.label_BlurY2->setStatusTip(blur_gaussian.at(UI::EditOption::BlurGaussian::label_BlurY2).desc);
+        ui.label_BlurY2->setToolTip(blur_gaussian.at(UI::EditOption::BlurGaussian::label_BlurY2).desc);
+
         if (not loading_preset) {
-            ui.verticalSlider_BlurX1->setValue(1);
-            ui.verticalSlider_BlurY1->setValue(1);
-            ui.verticalSlider_BlurX2->setValue(0.0);
-            ui.verticalSlider_BlurY2->setValue(0.0);
+            ui.verticalSlider_BlurX1->setValue(blur_gaussian.at(UI::EditOption::BlurGaussian::label_BlurX1).data);
+            ui.verticalSlider_BlurY1->setValue(blur_gaussian.at(UI::EditOption::BlurGaussian::label_BlurY1).data);
+            ui.verticalSlider_BlurX2->setValue(double(blur_gaussian.at(UI::EditOption::BlurGaussian::label_BlurX2).data));
+            ui.verticalSlider_BlurY2->setValue(double(blur_gaussian.at(UI::EditOption::BlurGaussian::label_BlurY2).data));
         }
     }
     else if (blur_filter_selected == ImageEditor::BlurFilter::MEDIAN_BLUR) {
         enableOptions(X1);
+
         ui.verticalSlider_BlurX1->forceSingleStepInterval(true);
         ui.verticalSlider_BlurX1->setRange(3, 99);
         ui.verticalSlider_BlurX1->setSingleStep(2);
+
+        ui.label_BlurX1->setText(blur_median.at(UI::EditOption::BlurMedian::label_BlurX1).name);
+        ui.label_BlurX1->setStatusTip(blur_median.at(UI::EditOption::BlurMedian::label_BlurX1).desc);
+        ui.label_BlurX1->setToolTip(blur_median.at(UI::EditOption::BlurMedian::label_BlurX1).desc);
+
         if (not loading_preset) {
-            ui.verticalSlider_BlurX1->setValue(3);
+            ui.verticalSlider_BlurX1->setValue(blur_median.at(UI::EditOption::BlurMedian::label_BlurX1).data);
         }
     }
     else if (blur_filter_selected == ImageEditor::BlurFilter::PYR_DOWN_BLUR) {
