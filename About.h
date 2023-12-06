@@ -10,6 +10,7 @@
 #include "ui_DialogAbout.h"
 #include <curl/curl.h>
 #include <shellapi.h>
+#include <thread>
 #include <windows.h>
 #include <QtWidgets>
 #include <QObject>
@@ -21,20 +22,22 @@ class DialogAbout : public QDialog
     Q_OBJECT
 
 public:
-    DialogAbout(QString dialog_title, QString app_title, QString app_version, QString app_creator, QString app_desciption, std::string readme, QWidget* parent = nullptr);
+    DialogAbout(QString dialog_title, QString app_title, QString app_version, QString app_creator, QString app_description,
+        QString updating_message, QString update_available, QString update_not_available, std::string readme, QWidget* parent = nullptr);
     ~DialogAbout();
-    Ui::Dialog_About ui;
 
 signals:
-    //void buttonClicked(const QDialogButtonBox::StandardButton&);
+    void updateFound(bool);
 
 private slots:
-    //void buttonBoxClicked(QAbstractButton* button);
+    void showDownloadButton(bool show);
 
 private:
     static size_t WriteCallback(void* contents, size_t size, size_t nmemb, void* userp);
-    QString getDateLastUpdated();
-    bool checkForUpdate();
+    bool isUpdateAvailable();
+    Ui::Dialog_About ui;
+    QString update_available;
+    QString update_not_available;
 
 protected:
     //void closeEvent(QCloseEvent* event) override;
