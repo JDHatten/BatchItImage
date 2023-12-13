@@ -4,6 +4,7 @@
 
 #include "common.h"
 #include "Preset.h"
+#include "About.h"
 #include "EnhancedProgressBar.h"
 #include "EnhancedSlider.h"
 #include "ImageEditor.h"
@@ -13,8 +14,30 @@
 #include "ui_DialogMessage.h"
 
 
+namespace AppVersion {
+    const int Major = 1;
+    const int Minor = 0;
+    const int Build = 0;
+
+    inline const QString toQString() {
+        QString app_version = "v";
+        app_version.append(QVariant::fromValue(Major).toString() + ".");
+        app_version.append(QVariant::fromValue(Minor).toString() + ".");
+        app_version.append(QVariant::fromValue(Build).toString());
+        return app_version;
+    }
+    inline const std::string toString() {
+        std::string app_version = "v";
+        app_version.append(std::to_string(Major) + ".");
+        app_version.append(std::to_string(Minor) + ".");
+        app_version.append(std::to_string(Build));
+        return app_version;
+    }
+}
+
+
 // Enums
-namespace UI {
+namespace BUI {
     namespace MenuBar { // TODO
         const struct File {
             enum {
@@ -120,15 +143,20 @@ namespace Dialog {
             log_created_dialog, log_created_dialog_updated, log_created_dialog_error, COUNT
         };
     };
-    const struct Buttons { // TODO
+    const struct Buttons {
         enum {
-            COUNT
+            SaveContinue, Continue, ResetCancel, SaveClose, Close, Delete, OpenLog, SaveLogAs, COUNT
         };
     };
     const struct FileSearch {
         enum {
             load_image_files_dialog, load_image_files_dialog_dir, get_image_file_path_dialog, GetSaveDirectoryPath, all_images_dialog_str, all_files_dialog_str,
             log_file_new_save_path, log_file_new_save_path_extensions, COUNT
+        };
+    };
+    const struct About {
+        enum {
+            dialog_title, app_creator, app_description, updating_message, update_available, update_not_available, COUNT
         };
     };
 };
@@ -504,9 +532,11 @@ signals:
     void progressMade(float multiplier = 1.0f);
 
 private:
+    QString app_title;
     Ui::BatchItImageClass ui;
     QString preset_settings_file;
     bool non_image_file_dialog_shown = false;
+    //DialogAbout* about_dialog;
 
     // Flags for preset options that were changed in the ui.
     struct OptionTrackerFlags {
@@ -653,9 +683,9 @@ private:
     };
 
     // Menu Bar
-    std::array<QString, UI::MenuBar::File::COUNT>* menu_bar_file = new std::array<QString, UI::MenuBar::File::COUNT>;
-    std::array<QString, UI::MenuBar::Edit::COUNT>* menu_bar_edit = new std::array<QString, UI::MenuBar::Edit::COUNT>;
-    std::array<QString, UI::MenuBar::Help::COUNT>* menu_bar_help = new std::array<QString, UI::MenuBar::Help::COUNT>;
+    std::array<QString, BUI::MenuBar::File::COUNT>* menu_bar_file = new std::array<QString, BUI::MenuBar::File::COUNT>;
+    std::array<QString, BUI::MenuBar::Edit::COUNT>* menu_bar_edit = new std::array<QString, BUI::MenuBar::Edit::COUNT>;
+    std::array<QString, BUI::MenuBar::Help::COUNT>* menu_bar_help = new std::array<QString, BUI::MenuBar::Help::COUNT>;
 
     // Tree UIData (Arrays placed on the heap will be deleted after use.)
     std::array<UIData, FileTree::Column::COUNT>* file_tree_headers = new std::array<UIData, FileTree::Column::COUNT>;
@@ -668,29 +698,29 @@ private:
     QString unselect_text;
 
     // Tab, Label, Check Box, and Button UIData
-    std::array<UIData, UI::FileOption::FilePath::COUNT>* file_path_options = new std::array<UIData, UI::FileOption::FilePath::COUNT>;
-    std::array<UIData, UI::EditOption::Resize::COUNT>* resize_options = new std::array<UIData, UI::EditOption::Resize::COUNT>;
-    std::array<UIData, UI::EditOption::Background::COUNT> background_options;
-    std::array<UIData, UI::EditOption::Blur::COUNT>* blur_options = new std::array<UIData, UI::EditOption::Blur::COUNT>;
-    std::array<UIData, UI::EditOption::BlurBox::COUNT> blur_box;
-    std::array<UIData, UI::EditOption::BlurBilateral::COUNT> blur_bilateral;
-    std::array<UIData, UI::EditOption::BlurGaussian::COUNT> blur_gaussian;
-    std::array<UIData, UI::EditOption::BlurMedian::COUNT> blur_median;
-    std::array<UIData, UI::EditOption::Rotation::COUNT>* rotation_options = new std::array<UIData, UI::EditOption::Rotation::COUNT>;
-    std::array<UIData, UI::EditOption::Watermark::COUNT>* watermark_options = new std::array<UIData, UI::EditOption::Watermark::COUNT>;
-    std::array<UIData, UI::FileOption::Format::COUNT>* format_options = new std::array<UIData, UI::FileOption::Format::COUNT>;
-    std::array<UIData, UI::FileOption::FormatJpeg::COUNT> format_jpeg_options;
-    std::array<UIData, UI::FileOption::FormatJp2::COUNT> format_jp2_options;
-    std::array<UIData, UI::FileOption::FormatPng::COUNT> format_png_options;
-    std::array<UIData, UI::FileOption::FormatPng::COUNT> format_webp_options;
-    std::array<UIData, UI::FileOption::FormatAvif::COUNT> format_avif_options;
-    std::array<UIData, UI::FileOption::FormatPbm::COUNT> format_pbm_options;
-    std::array<UIData, UI::FileOption::FormatPam::COUNT> format_pam_options;
-    std::array<UIData, UI::FileOption::FormatTiff::COUNT> format_tiff_options;
-    std::array<UIData, UI::FileOption::FormatExr::COUNT> format_exr_options;
-    std::array<UIData, UI::FileOption::FormatHdr::COUNT> format_hdr_options;
-    std::array<UIData, UI::StatusBar::COUNT> status_bar_messages;
-    std::array<UIData, UI::Other::COUNT>* other_options = new std::array<UIData, UI::Other::COUNT>;
+    std::array<UIData, BUI::FileOption::FilePath::COUNT>* file_path_options = new std::array<UIData, BUI::FileOption::FilePath::COUNT>;
+    std::array<UIData, BUI::EditOption::Resize::COUNT>* resize_options = new std::array<UIData, BUI::EditOption::Resize::COUNT>;
+    std::array<UIData, BUI::EditOption::Background::COUNT> background_options;
+    std::array<UIData, BUI::EditOption::Blur::COUNT>* blur_options = new std::array<UIData, BUI::EditOption::Blur::COUNT>;
+    std::array<UIData, BUI::EditOption::BlurBox::COUNT> blur_box;
+    std::array<UIData, BUI::EditOption::BlurBilateral::COUNT> blur_bilateral;
+    std::array<UIData, BUI::EditOption::BlurGaussian::COUNT> blur_gaussian;
+    std::array<UIData, BUI::EditOption::BlurMedian::COUNT> blur_median;
+    std::array<UIData, BUI::EditOption::Rotation::COUNT>* rotation_options = new std::array<UIData, BUI::EditOption::Rotation::COUNT>;
+    std::array<UIData, BUI::EditOption::Watermark::COUNT>* watermark_options = new std::array<UIData, BUI::EditOption::Watermark::COUNT>;
+    std::array<UIData, BUI::FileOption::Format::COUNT>* format_options = new std::array<UIData, BUI::FileOption::Format::COUNT>;
+    std::array<UIData, BUI::FileOption::FormatJpeg::COUNT> format_jpeg_options;
+    std::array<UIData, BUI::FileOption::FormatJp2::COUNT> format_jp2_options;
+    std::array<UIData, BUI::FileOption::FormatPng::COUNT> format_png_options;
+    std::array<UIData, BUI::FileOption::FormatPng::COUNT> format_webp_options;
+    std::array<UIData, BUI::FileOption::FormatAvif::COUNT> format_avif_options;
+    std::array<UIData, BUI::FileOption::FormatPbm::COUNT> format_pbm_options;
+    std::array<UIData, BUI::FileOption::FormatPam::COUNT> format_pam_options;
+    std::array<UIData, BUI::FileOption::FormatTiff::COUNT> format_tiff_options;
+    std::array<UIData, BUI::FileOption::FormatExr::COUNT> format_exr_options;
+    std::array<UIData, BUI::FileOption::FormatHdr::COUNT> format_hdr_options;
+    std::array<UIData, BUI::StatusBar::COUNT> status_bar_messages;
+    std::array<UIData, BUI::Other::COUNT>* other_options = new std::array<UIData, BUI::Other::COUNT>;
 
     // Combo Box UIData
     std::array<UIData, 6>* width_selections = new std::array<UIData, 6>;
@@ -710,6 +740,8 @@ private:
     std::array<UIData, 2> format_hdr_compression;
 
     // Other UIData
+    std::array<QString, Dialog::About::COUNT> about_text;
+    std::array<QString, Dialog::Buttons::COUNT> button_text; // TODO
     std::array<UIData, Dialog::Messages::COUNT> dialog_messages;
     std::array<UIData, 6> blur_depth_selections;
     std::array <QString, Dialog::FileSearch::COUNT> file_dialog_titles;
