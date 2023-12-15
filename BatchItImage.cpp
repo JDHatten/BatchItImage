@@ -251,6 +251,8 @@ BatchItImage::BatchItImage(QWidget* parent) : QMainWindow(parent)
     LoadInUiData();
     qDebug() << "LoadInUiData = Successful";
 
+    setWindowTitle(app_title);
+
     AddUiDataTo(*menu_bar_file, std::vector<QObject*>{
         ui.menu_File, ui.action_AddImages, ui.menu_RecentImageFiles, action_load_all_files,
             action_clear_all_files, ui.action_OpenLogDirectory, ui.action_Close
@@ -261,38 +263,38 @@ BatchItImage::BatchItImage(QWidget* parent) : QMainWindow(parent)
     });
     AddUiDataTo(*menu_bar_help, std::vector<QObject*>{ ui.menu_Help, ui.action_About, ui.action_AboutQt, ui.action_Help });
 
-    ui.tabWidget->setCurrentIndex(other_options->at(UI::Other::tab_1).data);
-    ui.tabWidget->setTabText(UI::Other::tab_1, other_options->at(UI::Other::tab_1).name);
-    ui.tab_1->setToolTip(other_options->at(UI::Other::tab_1).desc);
-    ui.tabWidget->setTabText(UI::Other::tab_2, other_options->at(UI::Other::tab_2).name);
-    ui.tab_2->setToolTip(other_options->at(UI::Other::tab_2).desc);
-    ui.tabWidget->setTabText(UI::Other::tab_3, other_options->at(UI::Other::tab_3).name);
-    ui.tab_3->setToolTip(other_options->at(UI::Other::tab_3).desc);
+    ui.tabWidget->setCurrentIndex(other_options->at(BUI::Other::tab_1).data);
+    ui.tabWidget->setTabText(BUI::Other::tab_1, other_options->at(BUI::Other::tab_1).name);
+    ui.tab_1->setToolTip(other_options->at(BUI::Other::tab_1).desc);
+    ui.tabWidget->setTabText(BUI::Other::tab_2, other_options->at(BUI::Other::tab_2).name);
+    ui.tab_2->setToolTip(other_options->at(BUI::Other::tab_2).desc);
+    ui.tabWidget->setTabText(BUI::Other::tab_3, other_options->at(BUI::Other::tab_3).name);
+    ui.tab_3->setToolTip(other_options->at(BUI::Other::tab_3).desc);
 
     AddUiDataTo(*resize_options, std::vector<QWidget*>{ ui.groupBox_Resize, ui.checkBox_KeepAspectRatio });
     AddUiDataTo(background_options, std::vector<QWidget*>{ ui.groupBox_Background, ui.pushButton_ColorDialog, ui.label_ColorPreview });
     /*AddUiDataTo(*blur_options, std::vector<QWidget*>{
         ui.groupBox_Blur, ui.checkBox_BlurNormalize, ui.label_BlurX1, ui.label_BlurY1, ui.label_BlurX2, ui.label_BlurY2, ui.label_BlurD
     });*/
-    AddUiDataTo(ui.groupBox_Blur, blur_options->at(UI::EditOption::Blur::groupBox_Blur));
+    AddUiDataTo(ui.groupBox_Blur, blur_options->at(BUI::EditOption::Blur::groupBox_Blur));
     AddUiDataTo(*rotation_options, std::vector<QWidget*>{ ui.groupBox_Rotation, ui.checkBox_IncreaseBounds, ui.checkBox_FlipImage });
     AddUiDataTo(*watermark_options, std::vector<QWidget*>{
         ui.groupBox_Watermark, ui.comboBox_WatermarkLocation, ui.label_WatermarkLocation,
             ui.label_WatermarkTransparency, ui.label_WatermarkOffset
     });
     AddUiDataTo(*format_options, std::vector<QWidget*>{ ui.groupBox_ChangeFormat, ui.label_ImageFormat });
-    AddUiDataTo(ui.groupBox_FileRename, file_path_options->at(UI::FileOption::FilePath::groupBox_FileRename));
-    AddUiDataTo(ui.radioButton_Overwrite, file_path_options->at(UI::FileOption::FilePath::radioButton_Overwrite));
-    AddUiDataTo(ui.radioButton_RenameOriginal, file_path_options->at(UI::FileOption::FilePath::radioButton_RenameOriginal));
-    AddUiDataTo(ui.radioButton_NewFileName, file_path_options->at(UI::FileOption::FilePath::radioButton_NewFileName));
-    AddUiDataTo(ui.label_Add, file_path_options->at(UI::FileOption::FilePath::label_Add));
-    AddUiDataTo(ui.groupBox_SaveDir, file_path_options->at(UI::FileOption::FilePath::groupBox_SaveDir));
-    AddUiDataTo(ui.radioButton_RelativePath, file_path_options->at(UI::FileOption::FilePath::radioButton_RelativePath));
-    AddUiDataTo(ui.radioButton_AbsolutePath, file_path_options->at(UI::FileOption::FilePath::radioButton_AbsolutePath));
-    AddUiDataTo(ui.pushButton_AddBackOneDir, file_path_options->at(UI::FileOption::FilePath::pushButton_AddBackOneDir));
-    AddUiDataTo(ui.pushButton_FindAbsolutePath, file_path_options->at(UI::FileOption::FilePath::pushButton_FindAbsolutePath));
-    AddUiDataTo(ui.checkBox_SearchSubDirs, other_options->at(UI::Other::checkBox_SearchSubDirs));
-    AddUiDataTo(ui.pushButton_EditSaveAll, other_options->at(UI::Other::pushButton_EditSaveAll));
+    AddUiDataTo(ui.groupBox_FileRename, file_path_options->at(BUI::FileOption::FilePath::groupBox_FileRename));
+    AddUiDataTo(ui.radioButton_Overwrite, file_path_options->at(BUI::FileOption::FilePath::radioButton_Overwrite));
+    AddUiDataTo(ui.radioButton_RenameOriginal, file_path_options->at(BUI::FileOption::FilePath::radioButton_RenameOriginal));
+    AddUiDataTo(ui.radioButton_NewFileName, file_path_options->at(BUI::FileOption::FilePath::radioButton_NewFileName));
+    AddUiDataTo(ui.label_Add, file_path_options->at(BUI::FileOption::FilePath::label_Add));
+    AddUiDataTo(ui.groupBox_SaveDir, file_path_options->at(BUI::FileOption::FilePath::groupBox_SaveDir));
+    AddUiDataTo(ui.radioButton_RelativePath, file_path_options->at(BUI::FileOption::FilePath::radioButton_RelativePath));
+    AddUiDataTo(ui.radioButton_AbsolutePath, file_path_options->at(BUI::FileOption::FilePath::radioButton_AbsolutePath));
+    AddUiDataTo(ui.pushButton_AddBackOneDir, file_path_options->at(BUI::FileOption::FilePath::pushButton_AddBackOneDir));
+    AddUiDataTo(ui.pushButton_FindAbsolutePath, file_path_options->at(BUI::FileOption::FilePath::pushButton_FindAbsolutePath));
+    AddUiDataTo(ui.checkBox_SearchSubDirs, other_options->at(BUI::Other::checkBox_SearchSubDirs));
+    AddUiDataTo(ui.pushButton_EditSaveAll, other_options->at(BUI::Other::pushButton_EditSaveAll));
 
     PopulateComboBox(ui.comboBox_WidthMod, *width_selections);
     PopulateComboBox(ui.comboBox_HeightMod, *height_selections);
@@ -300,10 +302,10 @@ BatchItImage::BatchItImage(QWidget* parent) : QMainWindow(parent)
     PopulateComboBox(ui.comboBox_BorderType, *border_types);
     PopulateComboBox(ui.comboBox_BlurFilter, *blur_filters);
     PopulateComboBox(ui.comboBox_WatermarkLocation, *watermark_locations,
-        watermark_options->at(UI::EditOption::Watermark::label_WatermarkLocation).data);
+        watermark_options->at(BUI::EditOption::Watermark::label_WatermarkLocation).data);
     PopulateComboBox(ui.comboBox_AddText, *file_name_creation, 0, ImageSaver::MetadataIdentifiers);
     PopulateComboBox(
-        ui.comboBox_ImageFormat, *image_formats, format_options->at(UI::FileOption::Format::label_ImageFormat).data, extension_list
+        ui.comboBox_ImageFormat, *image_formats, format_options->at(BUI::FileOption::Format::label_ImageFormat).data, extension_list
     ); // TODO: LoadPreset overwrites "default_index", even if groupBox_ChangeFormat not checked. Change?
 
     /***************************
@@ -418,25 +420,27 @@ void BatchItImage::Test()
 
 void BatchItImage::LoadInUiData()
 {
-    menu_bar_file->at(UI::MenuBar::File::menu_File) = "File";
-    menu_bar_file->at(UI::MenuBar::File::action_AddImages) = "Add Image Files...";
-    menu_bar_file->at(UI::MenuBar::File::menu_RecentImageFiles) = "Recent Image Files";
-    menu_bar_file->at(UI::MenuBar::File::action_load_all_files) = "Load All Files Below";
-    menu_bar_file->at(UI::MenuBar::File::action_clear_all_files) = "Clear Recent History";
-    menu_bar_file->at(UI::MenuBar::File::action_OpenLogDirectory) = "Open Log File Directory";
-    menu_bar_file->at(UI::MenuBar::File::action_Close) = "Close";
+    app_title = "BatchIt Image";
 
-    menu_bar_edit->at(UI::MenuBar::Edit::menu_Edit) = "Edit";
-    menu_bar_edit->at(UI::MenuBar::Edit::action_AddNewPreset) = "Add New Preset...";
-    menu_bar_edit->at(UI::MenuBar::Edit::action_RemovePreset) = "Remove Preset...";
-    menu_bar_edit->at(UI::MenuBar::Edit::action_SavePresets) = "Save All Presets";
-    menu_bar_edit->at(UI::MenuBar::Edit::action_ChangePresetDesc) = "Change Preset Description...";
-    menu_bar_edit->at(UI::MenuBar::Edit::action_ShowFormatFilter) = "Show Format Filter";
+    menu_bar_file->at(BUI::MenuBar::File::menu_File) = "File";
+    menu_bar_file->at(BUI::MenuBar::File::action_AddImages) = "Add Image Files...";
+    menu_bar_file->at(BUI::MenuBar::File::menu_RecentImageFiles) = "Recent Image Files";
+    menu_bar_file->at(BUI::MenuBar::File::action_load_all_files) = "Load All Files Below";
+    menu_bar_file->at(BUI::MenuBar::File::action_clear_all_files) = "Clear Recent History";
+    menu_bar_file->at(BUI::MenuBar::File::action_OpenLogDirectory) = "Open Log File Directory";
+    menu_bar_file->at(BUI::MenuBar::File::action_Close) = "Close";
 
-    menu_bar_help->at(UI::MenuBar::Help::menu_Help) = "Help";
-    menu_bar_help->at(UI::MenuBar::Help::action_About) = "About";
-    menu_bar_help->at(UI::MenuBar::Help::action_AboutQt) = "About Qt";
-    menu_bar_help->at(UI::MenuBar::Help::action_Help) = "Help";
+    menu_bar_edit->at(BUI::MenuBar::Edit::menu_Edit) = "Edit";
+    menu_bar_edit->at(BUI::MenuBar::Edit::action_AddNewPreset) = "Add New Preset...";
+    menu_bar_edit->at(BUI::MenuBar::Edit::action_RemovePreset) = "Remove Preset...";
+    menu_bar_edit->at(BUI::MenuBar::Edit::action_SavePresets) = "Save All Presets";
+    menu_bar_edit->at(BUI::MenuBar::Edit::action_ChangePresetDesc) = "Change Preset Description...";
+    menu_bar_edit->at(BUI::MenuBar::Edit::action_ShowFormatFilter) = "Show Format Filter";
+
+    menu_bar_help->at(BUI::MenuBar::Help::menu_Help) = "Help";
+    menu_bar_help->at(BUI::MenuBar::Help::action_About) = "About";
+    menu_bar_help->at(BUI::MenuBar::Help::action_AboutQt) = "About Qt";
+    menu_bar_help->at(BUI::MenuBar::Help::action_Help) = "Help";
 
     // treeWidget_FileInfo
     file_tree_headers->at(FileTree::Column::FILE_SELECTED).data = 1; // TODO: 1 = Initial Sort/Bold Text (after files loaded)?
@@ -537,12 +541,12 @@ void BatchItImage::LoadInUiData()
     file_tree_sub_menu_formats->at(FileTree::ActionMenu::SubMenu::FilterImageFormats::action_filter_hdr).name = "Select All Radiance HDR Images";
     file_tree_sub_menu_formats->at(FileTree::ActionMenu::SubMenu::FilterImageFormats::action_filter_hdr).desc = "";
 
-    resize_options->at(UI::EditOption::Resize::groupBox_Resize).data = 0;
-    resize_options->at(UI::EditOption::Resize::groupBox_Resize).name = "Resize:";
-    resize_options->at(UI::EditOption::Resize::groupBox_Resize).desc = "Options to increase or decrease the dimensions of an image.";
-    resize_options->at(UI::EditOption::Resize::checkBox_KeepAspectRatio).data = 1;
-    resize_options->at(UI::EditOption::Resize::checkBox_KeepAspectRatio).name = "Keep Aspect Ratio";
-    resize_options->at(UI::EditOption::Resize::checkBox_KeepAspectRatio).desc = "In order to keep aspect ratio, either width or height must be set to \"No Change\" or \"0\".";
+    resize_options->at(BUI::EditOption::Resize::groupBox_Resize).data = 0;
+    resize_options->at(BUI::EditOption::Resize::groupBox_Resize).name = "Resize:";
+    resize_options->at(BUI::EditOption::Resize::groupBox_Resize).desc = "Options to increase or decrease the dimensions of an image.";
+    resize_options->at(BUI::EditOption::Resize::checkBox_KeepAspectRatio).data = 1;
+    resize_options->at(BUI::EditOption::Resize::checkBox_KeepAspectRatio).name = "Keep Aspect Ratio";
+    resize_options->at(BUI::EditOption::Resize::checkBox_KeepAspectRatio).desc = "In order to keep aspect ratio, either width or height must be set to \"No Change\" or \"0\".";
 
     // comboBox_WidthMod
     width_selections->at(0).data = ImageEditor::SizeModifier::NO_CHANGE;
@@ -600,15 +604,15 @@ void BatchItImage::LoadInUiData()
     resampling_selections->at(2).desc = "Bicubic Interpolation";
     // TODO: add more Resampling Filters
 
-    background_options.at(UI::EditOption::Background::groupBox_Background).data = 0;
-    background_options.at(UI::EditOption::Background::groupBox_Background).name = "Border Type / Background Color:";
-    background_options.at(UI::EditOption::Background::groupBox_Background).desc = "Options on how to handle images when a background must be shown.";
-    background_options.at(UI::EditOption::Background::pushButton_ColorDialog).data = 0;
-    background_options.at(UI::EditOption::Background::pushButton_ColorDialog).name = "Background Color Picker";
-    background_options.at(UI::EditOption::Background::pushButton_ColorDialog).desc = "Choose an Image Background Color (Alpha/Transparency is Format Dependant)";
-    background_options.at(UI::EditOption::Background::label_ColorPreview).data = 0;
-    background_options.at(UI::EditOption::Background::label_ColorPreview).name = "Background Color Preview";
-    background_options.at(UI::EditOption::Background::label_ColorPreview).desc = "Background of this label will be the color used in an image background if needed.";
+    background_options.at(BUI::EditOption::Background::groupBox_Background).data = 0;
+    background_options.at(BUI::EditOption::Background::groupBox_Background).name = "Border Type / Background Color:";
+    background_options.at(BUI::EditOption::Background::groupBox_Background).desc = "Options on how to handle images when a background must be shown.";
+    background_options.at(BUI::EditOption::Background::pushButton_ColorDialog).data = 0;
+    background_options.at(BUI::EditOption::Background::pushButton_ColorDialog).name = "Background Color Picker";
+    background_options.at(BUI::EditOption::Background::pushButton_ColorDialog).desc = "Choose an Image Background Color (Alpha/Transparency is Format Dependant)";
+    background_options.at(BUI::EditOption::Background::label_ColorPreview).data = 0;
+    background_options.at(BUI::EditOption::Background::label_ColorPreview).name = "Background Color Preview";
+    background_options.at(BUI::EditOption::Background::label_ColorPreview).desc = "Background of this label will be the color used in an image background if needed.";
 
     // comboBox_BorderType
     border_types->at(0).data = cv::BORDER_CONSTANT;
@@ -633,62 +637,62 @@ void BatchItImage::LoadInUiData()
     border_types->at(6).name = "Isolated Border";
     border_types->at(6).desc = "Does not look outside of ROI |border|?";
     
-    blur_options->at(UI::EditOption::Blur::groupBox_Blur).data = 0;
-    blur_options->at(UI::EditOption::Blur::groupBox_Blur).name = "Blur Filters:";
-    blur_options->at(UI::EditOption::Blur::groupBox_Blur).desc = "";
+    blur_options->at(BUI::EditOption::Blur::groupBox_Blur).data = 0;
+    blur_options->at(BUI::EditOption::Blur::groupBox_Blur).name = "Blur Filters:";
+    blur_options->at(BUI::EditOption::Blur::groupBox_Blur).desc = "";
 
-    blur_box.at(UI::EditOption::BlurBox::checkBox_BlurNormalize).data = 1;
-    blur_box.at(UI::EditOption::BlurBox::checkBox_BlurNormalize).name = "Normalize";
-    blur_box.at(UI::EditOption::BlurBox::checkBox_BlurNormalize).desc = "Unnormalized box filter is useful for computing various integral characteristics over each\n" \
+    blur_box.at(BUI::EditOption::BlurBox::checkBox_BlurNormalize).data = 1;
+    blur_box.at(BUI::EditOption::BlurBox::checkBox_BlurNormalize).name = "Normalize";
+    blur_box.at(BUI::EditOption::BlurBox::checkBox_BlurNormalize).desc = "Unnormalized box filter is useful for computing various integral characteristics over each\n" \
                                                                         "pixel neighborhood, such as covariance matrices of image derivatives (used in dense optical\n" \
                                                                         "flow algorithms, and so on).";
-    blur_box.at(UI::EditOption::BlurBox::label_BlurX1).data = 1;
-    blur_box.at(UI::EditOption::BlurBox::label_BlurX1).name = "  X";
-    blur_box.at(UI::EditOption::BlurBox::label_BlurX1).desc = "The blurring kernel size in the X-axis direction (width).";
-    blur_box.at(UI::EditOption::BlurBox::label_BlurY1).data = 1;
-    blur_box.at(UI::EditOption::BlurBox::label_BlurY1).name = "  Y";
-    blur_box.at(UI::EditOption::BlurBox::label_BlurY1).desc = "The blurring Kernel Size in the Y-axis direction (height)";
-    blur_box.at(UI::EditOption::BlurBox::label_BlurX2).data = -1;
-    blur_box.at(UI::EditOption::BlurBox::label_BlurX2).name = " aX";
-    blur_box.at(UI::EditOption::BlurBox::label_BlurX2).desc = "The X anchor point; Point(-1,-1) means that the anchor is at the kernel center.";
-    blur_box.at(UI::EditOption::BlurBox::label_BlurY2).data = -1;
-    blur_box.at(UI::EditOption::BlurBox::label_BlurY2).name = " aY";
-    blur_box.at(UI::EditOption::BlurBox::label_BlurY2).desc = "The Y anchor point; Point(-1,-1) means that the anchor is at the kernel center.";
-    blur_box.at(UI::EditOption::BlurBox::label_BlurD).data = -1;
-    blur_box.at(UI::EditOption::BlurBox::label_BlurD).name = "  D";
-    blur_box.at(UI::EditOption::BlurBox::label_BlurD).desc = "A variable type representing the depth of the output image.";
+    blur_box.at(BUI::EditOption::BlurBox::label_BlurX1).data = 1;
+    blur_box.at(BUI::EditOption::BlurBox::label_BlurX1).name = "  X";
+    blur_box.at(BUI::EditOption::BlurBox::label_BlurX1).desc = "The blurring kernel size in the X-axis direction (width).";
+    blur_box.at(BUI::EditOption::BlurBox::label_BlurY1).data = 1;
+    blur_box.at(BUI::EditOption::BlurBox::label_BlurY1).name = "  Y";
+    blur_box.at(BUI::EditOption::BlurBox::label_BlurY1).desc = "The blurring Kernel Size in the Y-axis direction (height)";
+    blur_box.at(BUI::EditOption::BlurBox::label_BlurX2).data = -1;
+    blur_box.at(BUI::EditOption::BlurBox::label_BlurX2).name = " aX";
+    blur_box.at(BUI::EditOption::BlurBox::label_BlurX2).desc = "The X anchor point; Point(-1,-1) means that the anchor is at the kernel center.";
+    blur_box.at(BUI::EditOption::BlurBox::label_BlurY2).data = -1;
+    blur_box.at(BUI::EditOption::BlurBox::label_BlurY2).name = " aY";
+    blur_box.at(BUI::EditOption::BlurBox::label_BlurY2).desc = "The Y anchor point; Point(-1,-1) means that the anchor is at the kernel center.";
+    blur_box.at(BUI::EditOption::BlurBox::label_BlurD).data = -1;
+    blur_box.at(BUI::EditOption::BlurBox::label_BlurD).name = "  D";
+    blur_box.at(BUI::EditOption::BlurBox::label_BlurD).desc = "A variable type representing the depth of the output image.";
 
-    blur_bilateral.at(UI::EditOption::BlurBilateral::label_BlurX1).data = 0;
-    blur_bilateral.at(UI::EditOption::BlurBilateral::label_BlurX1).name = "  D";
-    blur_bilateral.at(UI::EditOption::BlurBilateral::label_BlurX1).desc = "The diameter of each pixel neighborhood that is used during filtering.";
-    blur_bilateral.at(UI::EditOption::BlurBilateral::label_BlurX2).data = 0;
-    blur_bilateral.at(UI::EditOption::BlurBilateral::label_BlurX2).name = " sC";
-    blur_bilateral.at(UI::EditOption::BlurBilateral::label_BlurX2).desc = "The filter sigma in the color space. A larger value of the parameter means that farther colors\n" \
+    blur_bilateral.at(BUI::EditOption::BlurBilateral::label_BlurX1).data = 0;
+    blur_bilateral.at(BUI::EditOption::BlurBilateral::label_BlurX1).name = "  D";
+    blur_bilateral.at(BUI::EditOption::BlurBilateral::label_BlurX1).desc = "The diameter of each pixel neighborhood that is used during filtering.";
+    blur_bilateral.at(BUI::EditOption::BlurBilateral::label_BlurX2).data = 0;
+    blur_bilateral.at(BUI::EditOption::BlurBilateral::label_BlurX2).name = " sC";
+    blur_bilateral.at(BUI::EditOption::BlurBilateral::label_BlurX2).desc = "The filter sigma in the color space. A larger value of the parameter means that farther colors\n" \
                                                                           "within the pixel neighborhood (see sigma space / sS) will be mixed together, resulting in larger\n" \
                                                                           "areas of semi-equal color.";
-    blur_bilateral.at(UI::EditOption::BlurBilateral::label_BlurY2).data = 0;
-    blur_bilateral.at(UI::EditOption::BlurBilateral::label_BlurY2).name = " sS";
-    blur_bilateral.at(UI::EditOption::BlurBilateral::label_BlurY2).desc = "The filter sigma in the coordinate space. A larger value of the parameter means that farther pixels\n" \
+    blur_bilateral.at(BUI::EditOption::BlurBilateral::label_BlurY2).data = 0;
+    blur_bilateral.at(BUI::EditOption::BlurBilateral::label_BlurY2).name = " sS";
+    blur_bilateral.at(BUI::EditOption::BlurBilateral::label_BlurY2).desc = "The filter sigma in the coordinate space. A larger value of the parameter means that farther pixels\n" \
                                                                           "will influence each other as long as their colors are close enough (see sigma color / sC). When the\n" \
                                                                           "diameter (D) is greater than 0, it specifies the neighborhood size regardless of sigma space.\n" \
                                                                           "Otherwise, the diameter (D) is proportional to sigma space.";
     
-    blur_gaussian.at(UI::EditOption::BlurGaussian::label_BlurX1).data = 1;
-    blur_gaussian.at(UI::EditOption::BlurGaussian::label_BlurX1).name = "  X";
-    blur_gaussian.at(UI::EditOption::BlurGaussian::label_BlurX1).desc = "The blurring kernel size in the X-axis direction (width).";
-    blur_gaussian.at(UI::EditOption::BlurGaussian::label_BlurY1).data = 1;
-    blur_gaussian.at(UI::EditOption::BlurGaussian::label_BlurY1).name = "  Y";
-    blur_gaussian.at(UI::EditOption::BlurGaussian::label_BlurY1).desc = "The blurring Kernel Size in the Y-axis direction (height)";
-    blur_gaussian.at(UI::EditOption::BlurGaussian::label_BlurX2).data = 0;
-    blur_gaussian.at(UI::EditOption::BlurGaussian::label_BlurX2).name = " sX";
-    blur_gaussian.at(UI::EditOption::BlurGaussian::label_BlurX2).desc = "The kernel standard deviation in X-axis direction (width).";
-    blur_gaussian.at(UI::EditOption::BlurGaussian::label_BlurY2).data = 0;
-    blur_gaussian.at(UI::EditOption::BlurGaussian::label_BlurY2).name = " sY";
-    blur_gaussian.at(UI::EditOption::BlurGaussian::label_BlurY2).desc = "The kernel standard deviation in Y-axis direction (height).";
+    blur_gaussian.at(BUI::EditOption::BlurGaussian::label_BlurX1).data = 1;
+    blur_gaussian.at(BUI::EditOption::BlurGaussian::label_BlurX1).name = "  X";
+    blur_gaussian.at(BUI::EditOption::BlurGaussian::label_BlurX1).desc = "The blurring kernel size in the X-axis direction (width).";
+    blur_gaussian.at(BUI::EditOption::BlurGaussian::label_BlurY1).data = 1;
+    blur_gaussian.at(BUI::EditOption::BlurGaussian::label_BlurY1).name = "  Y";
+    blur_gaussian.at(BUI::EditOption::BlurGaussian::label_BlurY1).desc = "The blurring Kernel Size in the Y-axis direction (height)";
+    blur_gaussian.at(BUI::EditOption::BlurGaussian::label_BlurX2).data = 0;
+    blur_gaussian.at(BUI::EditOption::BlurGaussian::label_BlurX2).name = " sX";
+    blur_gaussian.at(BUI::EditOption::BlurGaussian::label_BlurX2).desc = "The kernel standard deviation in X-axis direction (width).";
+    blur_gaussian.at(BUI::EditOption::BlurGaussian::label_BlurY2).data = 0;
+    blur_gaussian.at(BUI::EditOption::BlurGaussian::label_BlurY2).name = " sY";
+    blur_gaussian.at(BUI::EditOption::BlurGaussian::label_BlurY2).desc = "The kernel standard deviation in Y-axis direction (height).";
 
-    blur_median.at(UI::EditOption::BlurMedian::label_BlurX1).data = 3;
-    blur_median.at(UI::EditOption::BlurMedian::label_BlurX1).name = "  A";
-    blur_median.at(UI::EditOption::BlurMedian::label_BlurX1).desc = "The linear kernel size of the aperture; it must be odd and greater than 1, for example: 3, 5, 7 ...";
+    blur_median.at(BUI::EditOption::BlurMedian::label_BlurX1).data = 3;
+    blur_median.at(BUI::EditOption::BlurMedian::label_BlurX1).name = "  A";
+    blur_median.at(BUI::EditOption::BlurMedian::label_BlurX1).desc = "The linear kernel size of the aperture; it must be odd and greater than 1, for example: 3, 5, 7 ...";
 
     // comboBox_BlurFilter
     blur_filters->at(0).data = ImageEditor::BlurFilter::NO_FILTER;
@@ -746,31 +750,31 @@ void BatchItImage::LoadInUiData()
     blur_depth_selections.at(5).name = "64-bit Floating Point";
     blur_depth_selections.at(5).desc = "";
     
-    rotation_options->at(UI::EditOption::Rotation::groupBox_Rotation).data = 0;
-    rotation_options->at(UI::EditOption::Rotation::groupBox_Rotation).name = "Rotation:";
-    rotation_options->at(UI::EditOption::Rotation::groupBox_Rotation).desc = "Rotate image by left clicking and dragging dial. For more precision use mouse wheel or arrow keys.";
-    rotation_options->at(UI::EditOption::Rotation::checkBox_IncreaseBounds).data = 0;
-    rotation_options->at(UI::EditOption::Rotation::checkBox_IncreaseBounds).name = "Increase Image\nBoundaries";
-    rotation_options->at(UI::EditOption::Rotation::checkBox_IncreaseBounds).desc = "Check to increase boundaries or size of an image so the entire rotated image is shown, else the image will be cropped.";
-    rotation_options->at(UI::EditOption::Rotation::checkBox_FlipImage).data = 0;
-    rotation_options->at(UI::EditOption::Rotation::checkBox_FlipImage).name = "Flip / Mirror";
-    rotation_options->at(UI::EditOption::Rotation::checkBox_FlipImage).desc = "If checked an image will be flipped or mirrored before rotating.";
+    rotation_options->at(BUI::EditOption::Rotation::groupBox_Rotation).data = 0;
+    rotation_options->at(BUI::EditOption::Rotation::groupBox_Rotation).name = "Rotation:";
+    rotation_options->at(BUI::EditOption::Rotation::groupBox_Rotation).desc = "Rotate image by left clicking and dragging dial. For more precision use mouse wheel or arrow keys.";
+    rotation_options->at(BUI::EditOption::Rotation::checkBox_IncreaseBounds).data = 0;
+    rotation_options->at(BUI::EditOption::Rotation::checkBox_IncreaseBounds).name = "Increase Image\nBoundaries";
+    rotation_options->at(BUI::EditOption::Rotation::checkBox_IncreaseBounds).desc = "Check to increase boundaries or size of an image so the entire rotated image is shown, else the image will be cropped.";
+    rotation_options->at(BUI::EditOption::Rotation::checkBox_FlipImage).data = 0;
+    rotation_options->at(BUI::EditOption::Rotation::checkBox_FlipImage).name = "Flip / Mirror";
+    rotation_options->at(BUI::EditOption::Rotation::checkBox_FlipImage).desc = "If checked an image will be flipped or mirrored before rotating.";
 
-    watermark_options->at(UI::EditOption::Watermark::groupBox_Watermark).data = 0;
-    watermark_options->at(UI::EditOption::Watermark::groupBox_Watermark).name = "Add Watermark:";
-    watermark_options->at(UI::EditOption::Watermark::groupBox_Watermark).desc = "";
-    watermark_options->at(UI::EditOption::Watermark::pushButton_Watermark).data = 0;
-    watermark_options->at(UI::EditOption::Watermark::pushButton_Watermark).name = "Add Watermark";
-    watermark_options->at(UI::EditOption::Watermark::pushButton_Watermark).desc = "";
-    watermark_options->at(UI::EditOption::Watermark::label_WatermarkLocation).data = ImageEditor::WatermarkLocation::BottomRight;
-    watermark_options->at(UI::EditOption::Watermark::label_WatermarkLocation).name = "Location:";
-    watermark_options->at(UI::EditOption::Watermark::label_WatermarkLocation).desc = "Choose where to place the watermark image.";
-    watermark_options->at(UI::EditOption::Watermark::label_WatermarkTransparency).data = 100;
-    watermark_options->at(UI::EditOption::Watermark::label_WatermarkTransparency).name = "Transparency:";
-    watermark_options->at(UI::EditOption::Watermark::label_WatermarkTransparency).desc = "Decreasing the transparency (alpha channel) of the watermark will blend it into the background making it \"see-through\".";
-    watermark_options->at(UI::EditOption::Watermark::label_WatermarkOffset).data = 0;
-    watermark_options->at(UI::EditOption::Watermark::label_WatermarkOffset).name = "X / Y Offset:";
-    watermark_options->at(UI::EditOption::Watermark::label_WatermarkOffset).desc = "Offset the watermark position relative to the chosen location.";
+    watermark_options->at(BUI::EditOption::Watermark::groupBox_Watermark).data = 0;
+    watermark_options->at(BUI::EditOption::Watermark::groupBox_Watermark).name = "Add Watermark:";
+    watermark_options->at(BUI::EditOption::Watermark::groupBox_Watermark).desc = "";
+    watermark_options->at(BUI::EditOption::Watermark::pushButton_Watermark).data = 0;
+    watermark_options->at(BUI::EditOption::Watermark::pushButton_Watermark).name = "Add Watermark";
+    watermark_options->at(BUI::EditOption::Watermark::pushButton_Watermark).desc = "";
+    watermark_options->at(BUI::EditOption::Watermark::label_WatermarkLocation).data = ImageEditor::WatermarkLocation::BottomRight;
+    watermark_options->at(BUI::EditOption::Watermark::label_WatermarkLocation).name = "Location:";
+    watermark_options->at(BUI::EditOption::Watermark::label_WatermarkLocation).desc = "Choose where to place the watermark image.";
+    watermark_options->at(BUI::EditOption::Watermark::label_WatermarkTransparency).data = 100;
+    watermark_options->at(BUI::EditOption::Watermark::label_WatermarkTransparency).name = "Transparency:";
+    watermark_options->at(BUI::EditOption::Watermark::label_WatermarkTransparency).desc = "Decreasing the transparency (alpha channel) of the watermark will blend it into the background making it \"see-through\".";
+    watermark_options->at(BUI::EditOption::Watermark::label_WatermarkOffset).data = 0;
+    watermark_options->at(BUI::EditOption::Watermark::label_WatermarkOffset).name = "X / Y Offset:";
+    watermark_options->at(BUI::EditOption::Watermark::label_WatermarkOffset).desc = "Offset the watermark position relative to the chosen location.";
 
     // comboBox_WatermarkLocation
     watermark_locations->at(ImageEditor::WatermarkLocation::TopLeft).data = ImageEditor::WatermarkLocation::TopLeft;
@@ -801,36 +805,36 @@ void BatchItImage::LoadInUiData()
     watermark_locations->at(ImageEditor::WatermarkLocation::BottomRight).name = "Bottom Right";
     watermark_locations->at(ImageEditor::WatermarkLocation::BottomRight).desc = "Place a watermark at the bottom right position of each edited image.";
 
-    file_path_options->at(UI::FileOption::FilePath::groupBox_FileRename).data = 1;
-    file_path_options->at(UI::FileOption::FilePath::groupBox_FileRename).name = "Modify Image File Names:";
-    file_path_options->at(UI::FileOption::FilePath::groupBox_FileRename).desc = "";
-    file_path_options->at(UI::FileOption::FilePath::radioButton_Overwrite).data = 0;
-    file_path_options->at(UI::FileOption::FilePath::radioButton_Overwrite).name = "Overwrite Original File";
-    file_path_options->at(UI::FileOption::FilePath::radioButton_Overwrite).desc = "If selected, this will overwrite the original image file with the new edited image file.";
-    file_path_options->at(UI::FileOption::FilePath::radioButton_RenameOriginal).data = 0;
-    file_path_options->at(UI::FileOption::FilePath::radioButton_RenameOriginal).name = "Rename Original File";
-    file_path_options->at(UI::FileOption::FilePath::radioButton_RenameOriginal).desc = "If selected, this will rename the original image file, and use it's name for the new edited image file.";
-    file_path_options->at(UI::FileOption::FilePath::radioButton_NewFileName).data = 1;
-    file_path_options->at(UI::FileOption::FilePath::radioButton_NewFileName).name = "Create New File Name";
-    file_path_options->at(UI::FileOption::FilePath::radioButton_NewFileName).desc = "If selected, a new file name will be used for the new edited image file.";
-    file_path_options->at(UI::FileOption::FilePath::label_Add).data = 0;
-    file_path_options->at(UI::FileOption::FilePath::label_Add).name = "Add:";
-    file_path_options->at(UI::FileOption::FilePath::label_Add).desc = "Add metadata to file name edit text box (to be included in a new file name).";
-    file_path_options->at(UI::FileOption::FilePath::groupBox_SaveDir).data = 1;
-    file_path_options->at(UI::FileOption::FilePath::groupBox_SaveDir).name = "Save All Image Files In:";
-    file_path_options->at(UI::FileOption::FilePath::groupBox_SaveDir).desc = "";
-    file_path_options->at(UI::FileOption::FilePath::radioButton_RelativePath).data = 1;
-    file_path_options->at(UI::FileOption::FilePath::radioButton_RelativePath).name = "Relative Paths:";
-    file_path_options->at(UI::FileOption::FilePath::radioButton_RelativePath).desc = "Relative to the currently edited image file path.";
-    file_path_options->at(UI::FileOption::FilePath::radioButton_AbsolutePath).data = 0;
-    file_path_options->at(UI::FileOption::FilePath::radioButton_AbsolutePath).name = "Absolute Path:";
-    file_path_options->at(UI::FileOption::FilePath::radioButton_AbsolutePath).desc = "The absolute path all edited images will be saved to.";
-    file_path_options->at(UI::FileOption::FilePath::pushButton_AddBackOneDir).data = 0;
-    file_path_options->at(UI::FileOption::FilePath::pushButton_AddBackOneDir).name = "Add \"Back One Directory\" For Relative Paths";
-    file_path_options->at(UI::FileOption::FilePath::pushButton_AddBackOneDir).desc = "Start relative path up one directory level.";
-    file_path_options->at(UI::FileOption::FilePath::pushButton_FindAbsolutePath).data = 0;
-    file_path_options->at(UI::FileOption::FilePath::pushButton_FindAbsolutePath).name = "Search For An Absolute Path";
-    file_path_options->at(UI::FileOption::FilePath::pushButton_FindAbsolutePath).desc = "Open dialog window to select a directory adding it to the absolute path text box.";
+    file_path_options->at(BUI::FileOption::FilePath::groupBox_FileRename).data = 1;
+    file_path_options->at(BUI::FileOption::FilePath::groupBox_FileRename).name = "Modify Image File Names:";
+    file_path_options->at(BUI::FileOption::FilePath::groupBox_FileRename).desc = "";
+    file_path_options->at(BUI::FileOption::FilePath::radioButton_Overwrite).data = 0;
+    file_path_options->at(BUI::FileOption::FilePath::radioButton_Overwrite).name = "Overwrite Original File";
+    file_path_options->at(BUI::FileOption::FilePath::radioButton_Overwrite).desc = "If selected, this will overwrite the original image file with the new edited image file.";
+    file_path_options->at(BUI::FileOption::FilePath::radioButton_RenameOriginal).data = 0;
+    file_path_options->at(BUI::FileOption::FilePath::radioButton_RenameOriginal).name = "Rename Original File";
+    file_path_options->at(BUI::FileOption::FilePath::radioButton_RenameOriginal).desc = "If selected, this will rename the original image file, and use it's name for the new edited image file.";
+    file_path_options->at(BUI::FileOption::FilePath::radioButton_NewFileName).data = 1;
+    file_path_options->at(BUI::FileOption::FilePath::radioButton_NewFileName).name = "Create New File Name";
+    file_path_options->at(BUI::FileOption::FilePath::radioButton_NewFileName).desc = "If selected, a new file name will be used for the new edited image file.";
+    file_path_options->at(BUI::FileOption::FilePath::label_Add).data = 0;
+    file_path_options->at(BUI::FileOption::FilePath::label_Add).name = "Add:";
+    file_path_options->at(BUI::FileOption::FilePath::label_Add).desc = "Add metadata to file name edit text box (to be included in a new file name).";
+    file_path_options->at(BUI::FileOption::FilePath::groupBox_SaveDir).data = 1;
+    file_path_options->at(BUI::FileOption::FilePath::groupBox_SaveDir).name = "Save All Image Files In:";
+    file_path_options->at(BUI::FileOption::FilePath::groupBox_SaveDir).desc = "";
+    file_path_options->at(BUI::FileOption::FilePath::radioButton_RelativePath).data = 1;
+    file_path_options->at(BUI::FileOption::FilePath::radioButton_RelativePath).name = "Relative Paths:";
+    file_path_options->at(BUI::FileOption::FilePath::radioButton_RelativePath).desc = "Relative to the currently edited image file path.";
+    file_path_options->at(BUI::FileOption::FilePath::radioButton_AbsolutePath).data = 0;
+    file_path_options->at(BUI::FileOption::FilePath::radioButton_AbsolutePath).name = "Absolute Path:";
+    file_path_options->at(BUI::FileOption::FilePath::radioButton_AbsolutePath).desc = "The absolute path all edited images will be saved to.";
+    file_path_options->at(BUI::FileOption::FilePath::pushButton_AddBackOneDir).data = 0;
+    file_path_options->at(BUI::FileOption::FilePath::pushButton_AddBackOneDir).name = "Add \"Back One Directory\" For Relative Paths";
+    file_path_options->at(BUI::FileOption::FilePath::pushButton_AddBackOneDir).desc = "Start relative path up one directory level.";
+    file_path_options->at(BUI::FileOption::FilePath::pushButton_FindAbsolutePath).data = 0;
+    file_path_options->at(BUI::FileOption::FilePath::pushButton_FindAbsolutePath).name = "Search For An Absolute Path";
+    file_path_options->at(BUI::FileOption::FilePath::pushButton_FindAbsolutePath).desc = "Open dialog window to select a directory adding it to the absolute path text box.";
 
     // comboBox_AddText
     file_name_creation->at(ImageSaver::MetadataFlags::FILE_NAME).data = ImageSaver::MetadataFlags::FILE_NAME;
@@ -851,12 +855,12 @@ void BatchItImage::LoadInUiData()
         extension_list.at(i) = QString::fromStdString(ImageSaver::ExtensionList.at(i));
     }
 
-    format_options->at(UI::FileOption::Format::groupBox_ChangeFormat).data = 0; // Note: The preset (user or default) overwrites this as it should.
-    format_options->at(UI::FileOption::Format::groupBox_ChangeFormat).name = "Change Image Format:";
-    format_options->at(UI::FileOption::Format::groupBox_ChangeFormat).desc = "";
-    format_options->at(UI::FileOption::Format::label_ImageFormat).data = 0; // TODO: LoadPreset overwrites default_index, even if groupBox_ChangeFormat not checked. Change?
-    format_options->at(UI::FileOption::Format::label_ImageFormat).name = "Image Format:";
-    format_options->at(UI::FileOption::Format::label_ImageFormat).desc = "Choose an image format that all edited images will be converted to.";
+    format_options->at(BUI::FileOption::Format::groupBox_ChangeFormat).data = 0; // Note: The preset (user or default) overwrites this as it should.
+    format_options->at(BUI::FileOption::Format::groupBox_ChangeFormat).name = "Change Image Format:";
+    format_options->at(BUI::FileOption::Format::groupBox_ChangeFormat).desc = "";
+    format_options->at(BUI::FileOption::Format::label_ImageFormat).data = 0; // TODO: LoadPreset overwrites default_index, even if groupBox_ChangeFormat not checked. Change?
+    format_options->at(BUI::FileOption::Format::label_ImageFormat).name = "Image Format:";
+    format_options->at(BUI::FileOption::Format::label_ImageFormat).desc = "Choose an image format that all edited images will be converted to.";
 
     // comboBox_ImageFormat
     image_formats->at(ImageSaver::ImageExtension::jpeg).data = ImageSaver::ImageExtension::jpeg;
@@ -975,115 +979,115 @@ void BatchItImage::LoadInUiData()
     image_formats->at(ImageSaver::ImageExtension::pic).desc = image_formats->at(ImageSaver::ImageExtension::hdr).desc;
 
     // Specific Format Widget Options (multiple sets)
-    format_jpeg_options[UI::FileOption::FormatJpeg::label_FormatFlags].data = 1;
-    format_jpeg_options[UI::FileOption::FormatJpeg::label_FormatFlags].name = "Subsampling:";
-    format_jpeg_options[UI::FileOption::FormatJpeg::label_FormatFlags].desc = "Chroma subsampling is the practice of encoding images by implementing less resolution\n" \
+    format_jpeg_options[BUI::FileOption::FormatJpeg::label_FormatFlags].data = 1;
+    format_jpeg_options[BUI::FileOption::FormatJpeg::label_FormatFlags].name = "Subsampling:";
+    format_jpeg_options[BUI::FileOption::FormatJpeg::label_FormatFlags].desc = "Chroma subsampling is the practice of encoding images by implementing less resolution\n" \
         "for chroma information than for luma information, taking advantage of the human visual\n" \
         "system's lower acuity for color differences than for luminance.";
-    format_jpeg_options[UI::FileOption::FormatJpeg::label_Quality].data = 95;
-    format_jpeg_options[UI::FileOption::FormatJpeg::label_Quality].name = "Quality:";
-    format_jpeg_options[UI::FileOption::FormatJpeg::label_Quality].desc = "JPEG quality can be between 0 and 100 (the higher the better). Default value is 95.";
-    format_jpeg_options[UI::FileOption::FormatJpeg::checkBox_Optimize].data = 0;
-    format_jpeg_options[UI::FileOption::FormatJpeg::checkBox_Optimize].name = "Optimize";
-    format_jpeg_options[UI::FileOption::FormatJpeg::checkBox_Optimize].desc = "JPEG optimize can lower file sizes by striping unnecessary metadata, but only noticeable\n" \
+    format_jpeg_options[BUI::FileOption::FormatJpeg::label_Quality].data = 95;
+    format_jpeg_options[BUI::FileOption::FormatJpeg::label_Quality].name = "Quality:";
+    format_jpeg_options[BUI::FileOption::FormatJpeg::label_Quality].desc = "JPEG quality can be between 0 and 100 (the higher the better). Default value is 95.";
+    format_jpeg_options[BUI::FileOption::FormatJpeg::checkBox_Optimize].data = 0;
+    format_jpeg_options[BUI::FileOption::FormatJpeg::checkBox_Optimize].name = "Optimize";
+    format_jpeg_options[BUI::FileOption::FormatJpeg::checkBox_Optimize].desc = "JPEG optimize can lower file sizes by striping unnecessary metadata, but only noticeable\n" \
         "at higher quality ranges (95+). Default is unchecked.";
-    format_jpeg_options[UI::FileOption::FormatJpeg::checkBox_Progressive].data = 0;
-    format_jpeg_options[UI::FileOption::FormatJpeg::checkBox_Progressive].name = "Progressive";
-    format_jpeg_options[UI::FileOption::FormatJpeg::checkBox_Progressive].desc = "Using the JPEG interlaced progressive format data is compressed in multiple passes of\n" \
+    format_jpeg_options[BUI::FileOption::FormatJpeg::checkBox_Progressive].data = 0;
+    format_jpeg_options[BUI::FileOption::FormatJpeg::checkBox_Progressive].name = "Progressive";
+    format_jpeg_options[BUI::FileOption::FormatJpeg::checkBox_Progressive].desc = "Using the JPEG interlaced progressive format data is compressed in multiple passes of\n" \
         "progressively higher detail.This is ideal for large images that will be displayed while\n" \
         "downloading over a slow connection, allowing a reasonable preview after receiving only a\n" \
         "portion of the data. Default is unchecked.";
-    format_jpeg_options[UI::FileOption::FormatJpeg::label_Compression].data = 0;
-    format_jpeg_options[UI::FileOption::FormatJpeg::label_Compression].name = "Restart Interval:";
-    format_jpeg_options[UI::FileOption::FormatJpeg::label_Compression].desc = "Restart interval specifies the interval between restart markers, in Minimum Coded Units\n" \
+    format_jpeg_options[BUI::FileOption::FormatJpeg::label_Compression].data = 0;
+    format_jpeg_options[BUI::FileOption::FormatJpeg::label_Compression].name = "Restart Interval:";
+    format_jpeg_options[BUI::FileOption::FormatJpeg::label_Compression].desc = "Restart interval specifies the interval between restart markers, in Minimum Coded Units\n" \
         "(MCUs).They were designed to allow resynchronization after an error, but also now serve a\n" \
         "new purpose, to allow for multi - threaded JPEG encoders and decoders. Default value is 0.";
-    format_jpeg_options[UI::FileOption::FormatJpeg::label_ExtraSetting1].data = -1;
-    format_jpeg_options[UI::FileOption::FormatJpeg::label_ExtraSetting1].name = "Luma:";
-    format_jpeg_options[UI::FileOption::FormatJpeg::label_ExtraSetting1].desc = "Separate and adjust the luma quality between to 0 and 100 (-1 don't use, default). When an\n" \
+    format_jpeg_options[BUI::FileOption::FormatJpeg::label_ExtraSetting1].data = -1;
+    format_jpeg_options[BUI::FileOption::FormatJpeg::label_ExtraSetting1].name = "Luma:";
+    format_jpeg_options[BUI::FileOption::FormatJpeg::label_ExtraSetting1].desc = "Separate and adjust the luma quality between to 0 and 100 (-1 don't use, default). When an\n" \
         "image is converted from RGB to Y'CBCR, the luma component is the (Y'), representing brightness.";
-    format_jpeg_options[UI::FileOption::FormatJpeg::label_ExtraSetting2].data = -1;
-    format_jpeg_options[UI::FileOption::FormatJpeg::label_ExtraSetting2].name = "Chroma:";
-    format_jpeg_options[UI::FileOption::FormatJpeg::label_ExtraSetting2].desc = "Separate and adjust the chroma quality between to 0 and 100 (-1 don't use, default). When an\n" \
+    format_jpeg_options[BUI::FileOption::FormatJpeg::label_ExtraSetting2].data = -1;
+    format_jpeg_options[BUI::FileOption::FormatJpeg::label_ExtraSetting2].name = "Chroma:";
+    format_jpeg_options[BUI::FileOption::FormatJpeg::label_ExtraSetting2].desc = "Separate and adjust the chroma quality between to 0 and 100 (-1 don't use, default). When an\n" \
         "image is converted from RGB to Y'CBCR, the chroma component is the (CB and CR), representing color.";
 
-    format_jp2_options[UI::FileOption::FormatJp2::label_Compression].data = 1000;
-    format_jp2_options[UI::FileOption::FormatJp2::label_Compression].name = "Compression Level:";
-    format_jp2_options[UI::FileOption::FormatJp2::label_Compression].desc = "Use to specify the JPEG 2000 target compression rate with values from 0 to 1000. Default value is 1000.";
+    format_jp2_options[BUI::FileOption::FormatJp2::label_Compression].data = 1000;
+    format_jp2_options[BUI::FileOption::FormatJp2::label_Compression].name = "Compression Level:";
+    format_jp2_options[BUI::FileOption::FormatJp2::label_Compression].desc = "Use to specify the JPEG 2000 target compression rate with values from 0 to 1000. Default value is 1000.";
 
-    format_png_options[UI::FileOption::FormatPng::label_FormatFlags].data = 0;
-    format_png_options[UI::FileOption::FormatPng::label_FormatFlags].name = "Compression Strategy:";
-    format_png_options[UI::FileOption::FormatPng::label_FormatFlags].desc = "PNG compression strategies are passed to the underlying zlib processing stage, and only affect the\n" \
+    format_png_options[BUI::FileOption::FormatPng::label_FormatFlags].data = 0;
+    format_png_options[BUI::FileOption::FormatPng::label_FormatFlags].name = "Compression Strategy:";
+    format_png_options[BUI::FileOption::FormatPng::label_FormatFlags].desc = "PNG compression strategies are passed to the underlying zlib processing stage, and only affect the\n" \
         "compression ratio, but not the correctness of the compressed output even if it is not set appropriately\n" \
         "The effect of the [Filter] strategy is to force more Huffman coding and less string matching; it is\n" \
         "somewhat intermediate between [Default] and [Huffman Only]. [Run-Length Encoding] is designed to be\n" \
         "almost as fast as [Huffman Only], but gives better compression for PNG image data. [Fixed (No Huffman)]\n" \
         "prevents the use of dynamic Huffman codes, allowing for a simpler decoder for special applications.";
-    format_png_options[UI::FileOption::FormatPng::checkBox_Optimize].data = 0;
-    format_png_options[UI::FileOption::FormatPng::checkBox_Optimize].name = "Binary Level";
-    format_png_options[UI::FileOption::FormatPng::checkBox_Optimize].desc = "If binary level (bi-level) is checked a grayscale PNG image will be created. Default is unchecked.";
-    format_png_options[UI::FileOption::FormatPng::label_Compression].data = 1;
-    format_png_options[UI::FileOption::FormatPng::label_Compression].name = "Compression Level:";
-    format_png_options[UI::FileOption::FormatPng::label_Compression].desc = "PNG compression levels are from 0 to 9 with higher values meaning a smaller file size and longer\n" \
+    format_png_options[BUI::FileOption::FormatPng::checkBox_Optimize].data = 0;
+    format_png_options[BUI::FileOption::FormatPng::checkBox_Optimize].name = "Binary Level";
+    format_png_options[BUI::FileOption::FormatPng::checkBox_Optimize].desc = "If binary level (bi-level) is checked a grayscale PNG image will be created. Default is unchecked.";
+    format_png_options[BUI::FileOption::FormatPng::label_Compression].data = 1;
+    format_png_options[BUI::FileOption::FormatPng::label_Compression].name = "Compression Level:";
+    format_png_options[BUI::FileOption::FormatPng::label_Compression].desc = "PNG compression levels are from 0 to 9 with higher values meaning a smaller file size and longer\n" \
         "compression time. If specified, the strategy is changed to [Default].\n" \
         "Default value is 1 (best speed setting).";
 
-    format_webp_options[UI::FileOption::FormatWebp::label_Quality].data = 100;
-    format_webp_options[UI::FileOption::FormatWebp::label_Quality].name = "Quality:";
-    format_webp_options[UI::FileOption::FormatWebp::label_Quality].desc = "WebP quality can be between 0 and 100 (the higher the better). With 100 quality, the lossless\n" \
+    format_webp_options[BUI::FileOption::FormatWebp::label_Quality].data = 100;
+    format_webp_options[BUI::FileOption::FormatWebp::label_Quality].name = "Quality:";
+    format_webp_options[BUI::FileOption::FormatWebp::label_Quality].desc = "WebP quality can be between 0 and 100 (the higher the better). With 100 quality, the lossless\n" \
         "compression is used. Default value is 100.";
 
-    format_avif_options[UI::FileOption::FormatAvif::label_Quality].data = 95;
-    format_avif_options[UI::FileOption::FormatAvif::label_Quality].name = "Quality:";
-    format_avif_options[UI::FileOption::FormatAvif::label_Quality].desc = "AVIF quality can be between 0 and 100 (the higher the better). Default value is 95.";
-    format_avif_options[UI::FileOption::FormatAvif::label_Compression].data = 9;
-    format_avif_options[UI::FileOption::FormatAvif::label_Compression].name = "Speed:";
-    format_avif_options[UI::FileOption::FormatAvif::label_Compression].desc = "The AVIF creation speed can be between 0 (slowest) and 9 (fastest). Default value is 9.";
-    format_avif_options[UI::FileOption::FormatAvif::label_ExtraSetting2].data = 8;
-    format_avif_options[UI::FileOption::FormatAvif::label_ExtraSetting2].name = "Color Depth:";
-    format_avif_options[UI::FileOption::FormatAvif::label_ExtraSetting2].desc = "AVIF can have 8-, 10- or 12-bit color depths. If greater than 8, it is stored/read as a float with\n" \
+    format_avif_options[BUI::FileOption::FormatAvif::label_Quality].data = 95;
+    format_avif_options[BUI::FileOption::FormatAvif::label_Quality].name = "Quality:";
+    format_avif_options[BUI::FileOption::FormatAvif::label_Quality].desc = "AVIF quality can be between 0 and 100 (the higher the better). Default value is 95.";
+    format_avif_options[BUI::FileOption::FormatAvif::label_Compression].data = 9;
+    format_avif_options[BUI::FileOption::FormatAvif::label_Compression].name = "Speed:";
+    format_avif_options[BUI::FileOption::FormatAvif::label_Compression].desc = "The AVIF creation speed can be between 0 (slowest) and 9 (fastest). Default value is 9.";
+    format_avif_options[BUI::FileOption::FormatAvif::label_ExtraSetting2].data = 8;
+    format_avif_options[BUI::FileOption::FormatAvif::label_ExtraSetting2].name = "Color Depth:";
+    format_avif_options[BUI::FileOption::FormatAvif::label_ExtraSetting2].desc = "AVIF can have 8-, 10- or 12-bit color depths. If greater than 8, it is stored/read as a float with\n" \
         "pixels having any value between 0 and 1.0. Default value is 8.";
 
-    format_pbm_options[UI::FileOption::FormatPbm::checkBox_Optimize].data = 1;
-    format_pbm_options[UI::FileOption::FormatPbm::checkBox_Optimize].name = "Binary Format";
-    format_pbm_options[UI::FileOption::FormatPbm::checkBox_Optimize].desc = "For PBM, PGM, or PPM, using a binary format creates a grayscale image. Default is checked.";
+    format_pbm_options[BUI::FileOption::FormatPbm::checkBox_Optimize].data = 1;
+    format_pbm_options[BUI::FileOption::FormatPbm::checkBox_Optimize].name = "Binary Format";
+    format_pbm_options[BUI::FileOption::FormatPbm::checkBox_Optimize].desc = "For PBM, PGM, or PPM, using a binary format creates a grayscale image. Default is checked.";
 
-    format_pam_options[UI::FileOption::FormatPam::label_FormatFlags].data = 0;
-    format_pam_options[UI::FileOption::FormatPam::label_FormatFlags].name = "Tuple Type:";
-    format_pam_options[UI::FileOption::FormatPam::label_FormatFlags].desc = "The tuple type attribute specifies what kind of image the PAM file represents, thus enabling it to\n" \
+    format_pam_options[BUI::FileOption::FormatPam::label_FormatFlags].data = 0;
+    format_pam_options[BUI::FileOption::FormatPam::label_FormatFlags].name = "Tuple Type:";
+    format_pam_options[BUI::FileOption::FormatPam::label_FormatFlags].desc = "The tuple type attribute specifies what kind of image the PAM file represents, thus enabling it to\n" \
         "stand for the older Netpbm formats, as well as to be extended to new uses, like transparency.";
 
-    format_tiff_options[UI::FileOption::FormatTiff::label_FormatFlags].data = 4;
-    format_tiff_options[UI::FileOption::FormatTiff::label_FormatFlags].name = "Compression Scheme:";
-    format_tiff_options[UI::FileOption::FormatTiff::label_FormatFlags].desc = "The compression scheme used on the image data. Note that this is a complete list of schemes from the\n" \
+    format_tiff_options[BUI::FileOption::FormatTiff::label_FormatFlags].data = 4;
+    format_tiff_options[BUI::FileOption::FormatTiff::label_FormatFlags].name = "Compression Scheme:";
+    format_tiff_options[BUI::FileOption::FormatTiff::label_FormatFlags].desc = "The compression scheme used on the image data. Note that this is a complete list of schemes from the\n" \
         "libtiff documents and some may not be currently supported in this app.\n" \
         "Compression schemes that do work: LWZ (default), Adobe Deflate, and Deflate.";
-    format_tiff_options[UI::FileOption::FormatTiff::label_Quality].data = 2;
-    format_tiff_options[UI::FileOption::FormatTiff::label_Quality].name = "Resolution Unit:";
-    format_tiff_options[UI::FileOption::FormatTiff::label_Quality].desc = "The resolution unit of measurement for X and Y directions.";
-    format_tiff_options[UI::FileOption::FormatTiff::label_ExtraSetting1].data = 0;
-    format_tiff_options[UI::FileOption::FormatTiff::label_ExtraSetting1].name = "X:";
-    format_tiff_options[UI::FileOption::FormatTiff::label_ExtraSetting1].desc = "The number of pixels per \"resolution unit\" in the image's width or X direction. Default value is 0.";
-    format_tiff_options[UI::FileOption::FormatTiff::label_ExtraSetting2].data = 0;
-    format_tiff_options[UI::FileOption::FormatTiff::label_ExtraSetting2].name = "Y:";
-    format_tiff_options[UI::FileOption::FormatTiff::label_ExtraSetting2].desc = "The number of pixels per \"resolution unit\" in the image's height (length) or Y direction. Default value is 0.";
+    format_tiff_options[BUI::FileOption::FormatTiff::label_Quality].data = 2;
+    format_tiff_options[BUI::FileOption::FormatTiff::label_Quality].name = "Resolution Unit:";
+    format_tiff_options[BUI::FileOption::FormatTiff::label_Quality].desc = "The resolution unit of measurement for X and Y directions.";
+    format_tiff_options[BUI::FileOption::FormatTiff::label_ExtraSetting1].data = 0;
+    format_tiff_options[BUI::FileOption::FormatTiff::label_ExtraSetting1].name = "X:";
+    format_tiff_options[BUI::FileOption::FormatTiff::label_ExtraSetting1].desc = "The number of pixels per \"resolution unit\" in the image's width or X direction. Default value is 0.";
+    format_tiff_options[BUI::FileOption::FormatTiff::label_ExtraSetting2].data = 0;
+    format_tiff_options[BUI::FileOption::FormatTiff::label_ExtraSetting2].name = "Y:";
+    format_tiff_options[BUI::FileOption::FormatTiff::label_ExtraSetting2].desc = "The number of pixels per \"resolution unit\" in the image's height (length) or Y direction. Default value is 0.";
 
-    format_exr_options[UI::FileOption::FormatExr::label_FormatFlags].data = 3;
-    format_exr_options[UI::FileOption::FormatExr::label_FormatFlags].name = "Compression Type:";
-    format_exr_options[UI::FileOption::FormatExr::label_FormatFlags].desc = "Override EXR compression type (ZLib is default)";
-    format_exr_options[UI::FileOption::FormatExr::checkBox_Optimize].data = 0;
-    format_exr_options[UI::FileOption::FormatExr::checkBox_Optimize].name = "Store as FP16 (HALF)";
-    format_exr_options[UI::FileOption::FormatExr::checkBox_Optimize].desc = "Override EXR Storage Type";
-    format_exr_options[UI::FileOption::FormatExr::checkBox_Progressive].data = 1;
-    format_exr_options[UI::FileOption::FormatExr::checkBox_Progressive].name = "Store as FP32 (Default)";
-    format_exr_options[UI::FileOption::FormatExr::checkBox_Progressive].desc = "Override EXR Storage Type";
-    format_exr_options[UI::FileOption::FormatExr::label_Compression].data = 45;
-    format_exr_options[UI::FileOption::FormatExr::label_Compression].name = "Compression Level:";
-    format_exr_options[UI::FileOption::FormatExr::label_Compression].desc = "Override EXR DWA Compression Level. Default value is 45.";
+    format_exr_options[BUI::FileOption::FormatExr::label_FormatFlags].data = 3;
+    format_exr_options[BUI::FileOption::FormatExr::label_FormatFlags].name = "Compression Type:";
+    format_exr_options[BUI::FileOption::FormatExr::label_FormatFlags].desc = "Override EXR compression type (ZLib is default)";
+    format_exr_options[BUI::FileOption::FormatExr::checkBox_Optimize].data = 0;
+    format_exr_options[BUI::FileOption::FormatExr::checkBox_Optimize].name = "Store as FP16 (HALF)";
+    format_exr_options[BUI::FileOption::FormatExr::checkBox_Optimize].desc = "Override EXR Storage Type";
+    format_exr_options[BUI::FileOption::FormatExr::checkBox_Progressive].data = 1;
+    format_exr_options[BUI::FileOption::FormatExr::checkBox_Progressive].name = "Store as FP32 (Default)";
+    format_exr_options[BUI::FileOption::FormatExr::checkBox_Progressive].desc = "Override EXR Storage Type";
+    format_exr_options[BUI::FileOption::FormatExr::label_Compression].data = 45;
+    format_exr_options[BUI::FileOption::FormatExr::label_Compression].name = "Compression Level:";
+    format_exr_options[BUI::FileOption::FormatExr::label_Compression].desc = "Override EXR DWA Compression Level. Default value is 45.";
 
-    format_hdr_options[UI::FileOption::FormatHdr::label_FormatFlags].data = 0;
-    format_hdr_options[UI::FileOption::FormatHdr::label_FormatFlags].name = "Compression Strategy:";
-    format_hdr_options[UI::FileOption::FormatHdr::label_FormatFlags].desc = "For HDR files there are only really two strategies: compress or don't compress.";
+    format_hdr_options[BUI::FileOption::FormatHdr::label_FormatFlags].data = 0;
+    format_hdr_options[BUI::FileOption::FormatHdr::label_FormatFlags].name = "Compression Strategy:";
+    format_hdr_options[BUI::FileOption::FormatHdr::label_FormatFlags].desc = "For HDR files there are only really two strategies: compress or don't compress.";
 
     // comboBox_FormatFlags (multiple sets)
     format_jpeg_subsamplings[0].data = cv::IMWRITE_JPEG_SAMPLING_FACTOR_411;
@@ -1267,36 +1271,43 @@ void BatchItImage::LoadInUiData()
     format_hdr_compression[1].name = "Run-Length Encoding";
     format_hdr_compression[1].desc = "The only compression option.";
 
-    status_bar_messages.at(UI::StatusBar::SavePreset).data = 5000;
-    status_bar_messages.at(UI::StatusBar::SavePreset).name = "All Presets Saved!";
-    status_bar_messages.at(UI::StatusBar::clear_all_files).data = 5000;
-    status_bar_messages.at(UI::StatusBar::clear_all_files).name = "Recent File History Cleared!";
+    status_bar_messages.at(BUI::StatusBar::SavePreset).data = 5000;
+    status_bar_messages.at(BUI::StatusBar::SavePreset).name = "All Presets Saved!";
+    status_bar_messages.at(BUI::StatusBar::clear_all_files).data = 5000;
+    status_bar_messages.at(BUI::StatusBar::clear_all_files).name = "Recent File History Cleared!";
 
     // Various Other Widget Data
-    other_options->at(UI::Other::tab_1).data = 0; // Default current tab index, ignores other tab.data.
-    other_options->at(UI::Other::tab_1).name = "Images";
-    //other_options->at(UI::Other::tab_1).desc = "Image File Viewer Tab";
-    other_options->at(UI::Other::tab_2).data = 0;
-    other_options->at(UI::Other::tab_2).name = "Image Edits";
-    //other_options->at(UI::Other::tab_2).desc = "Image Edit Tools Tab";
-    other_options->at(UI::Other::tab_3).data = 0;
-    other_options->at(UI::Other::tab_3).name = "Save Options";
-    //other_options->at(UI::Other::tab_3).desc = "File Save Options Tab";
-    other_options->at(UI::Other::checkBox_SearchSubDirs).data = 1;
-    other_options->at(UI::Other::checkBox_SearchSubDirs).name = "When Searching Directories Search Sub-Directories As Well";
-    other_options->at(UI::Other::checkBox_SearchSubDirs).desc = "When file directories/folders are dropped into the image file viewer an image file search will begin\n" \
+    other_options->at(BUI::Other::tab_1).data = 0; // Default current tab index, ignores other tab.data.
+    other_options->at(BUI::Other::tab_1).name = "Images";
+    //other_options->at(BUI::Other::tab_1).desc = "Image File Viewer Tab";
+    other_options->at(BUI::Other::tab_2).data = 0;
+    other_options->at(BUI::Other::tab_2).name = "Image Edits";
+    //other_options->at(BUI::Other::tab_2).desc = "Image Edit Tools Tab";
+    other_options->at(BUI::Other::tab_3).data = 0;
+    other_options->at(BUI::Other::tab_3).name = "Save Options";
+    //other_options->at(BUI::Other::tab_3).desc = "File Save Options Tab";
+    other_options->at(BUI::Other::checkBox_SearchSubDirs).data = 1;
+    other_options->at(BUI::Other::checkBox_SearchSubDirs).name = "When Searching Directories Search Sub-Directories As Well";
+    other_options->at(BUI::Other::checkBox_SearchSubDirs).desc = "When file directories/folders are dropped into the image file viewer an image file search will begin\n" \
                                                                    "in the directory, and it this is checked, all its sub-directories too.";
-    other_options->at(UI::Other::label_EditSave).data = 0;
-    other_options->at(UI::Other::label_EditSave).name = "Start Editing And Saving:";
-    other_options->at(UI::Other::label_EditSave).desc = "\"All Images\" means all images loaded into file tree. \"Only Selected Images\" means only\n" \
+    other_options->at(BUI::Other::label_EditSave).data = 0;
+    other_options->at(BUI::Other::label_EditSave).name = "Start Editing And Saving:";
+    other_options->at(BUI::Other::label_EditSave).desc = "\"All Images\" means all images loaded into file tree. \"Only Selected Images\" means only\n" \
                                                            "images in file tree that have their checkboxes checked.";
-    other_options->at(UI::Other::pushButton_EditSaveAll).data = 0;
-    other_options->at(UI::Other::pushButton_EditSaveAll).name = "All Images";
-    other_options->at(UI::Other::pushButton_EditSaveAll).desc = "";
-    other_options->at(UI::Other::pushButton_EditSaveSelected).data = 0;
-    other_options->at(UI::Other::pushButton_EditSaveSelected).name = "Selected Images";
-    other_options->at(UI::Other::pushButton_EditSaveSelected).desc = "";
-    
+    other_options->at(BUI::Other::pushButton_EditSaveAll).data = 0;
+    other_options->at(BUI::Other::pushButton_EditSaveAll).name = "All Images";
+    other_options->at(BUI::Other::pushButton_EditSaveAll).desc = "";
+    other_options->at(BUI::Other::pushButton_EditSaveSelected).data = 0;
+    other_options->at(BUI::Other::pushButton_EditSaveSelected).name = "Selected Images";
+    other_options->at(BUI::Other::pushButton_EditSaveSelected).desc = "";
+
+    about_text.at(Dialog::About::dialog_title) = "About ";
+    about_text.at(Dialog::About::app_creator) = "Created By ";
+    about_text.at(Dialog::About::app_description) = "A multi-threaded image editing application that automates the editing of large batches of images.";
+    about_text.at(Dialog::About::updating_message) = "Checking For Updates...";
+    about_text.at(Dialog::About::update_available) = "New Version Available";
+    about_text.at(Dialog::About::update_not_available) = "Latest Version Installed";
+
     dialog_messages.at(Dialog::Messages::delete_dialog).data = 0; // 1 = bold message/desc text. | ## = #[current preset number]
     dialog_messages.at(Dialog::Messages::delete_dialog).name = "Delete?";
     dialog_messages.at(Dialog::Messages::delete_dialog).desc = "Delete currently highlighted image file -or- all image files selected/checked?";
@@ -1545,7 +1556,23 @@ void BatchItImage::UiConnections()
                 FileTree::ActionMenu::SubMenu::FilterImageFormats::action_submenu_undock)->setVisible(false);
             submenu_format_filter->showTearOffMenu();
         }));
-    Q_ASSERT(connect(ui.action_About, SIGNAL(triggered(bool)), this, SLOT(Test()))); // TODO
+    Q_ASSERT(connect(ui.action_About, &QAction::triggered, this,
+        [this] {
+            auto* about_dialog = new DialogAbout( // TODO: Create new one time, outside of this? It will check for update one time in the background (updating_message will not be seen).
+                about_text.at(Dialog::About::dialog_title) + app_title,
+                app_title,
+                AppVersion::toQString(),
+                about_text.at(Dialog::About::app_creator) + "JDHatten",
+                about_text.at(Dialog::About::app_description),
+                about_text.at(Dialog::About::updating_message),
+                about_text.at(Dialog::About::update_available),
+                about_text.at(Dialog::About::update_not_available),
+                (default_path / "README.md").string(),
+                AppVersion::Build,
+                this
+            );
+            about_dialog->exec();
+        }));
     Q_ASSERT(connect(ui.action_AboutQt, &QAction::triggered, this, [this] { QApplication::aboutQt(); }));
     Q_ASSERT(connect(ui.action_Help, &QAction::triggered, this, [this] { Test(); })); // TODO
 
@@ -1558,8 +1585,8 @@ void BatchItImage::UiConnections()
             settings.remove("Recent");
             BuildRecentFilesMenu();
             ui.statusbar->showMessage(
-                status_bar_messages.at(UI::StatusBar::clear_all_files).name,
-                status_bar_messages.at(UI::StatusBar::clear_all_files).data
+                status_bar_messages.at(BUI::StatusBar::clear_all_files).name,
+                status_bar_messages.at(BUI::StatusBar::clear_all_files).data
             );
         }));
 
@@ -1629,7 +1656,7 @@ void BatchItImage::UiConnections()
         [this] {
             background_color = QColorDialog::getColor(
                 background_color, this,
-                background_options.at(UI::EditOption::Background::pushButton_ColorDialog).desc,
+                background_options.at(BUI::EditOption::Background::pushButton_ColorDialog).desc,
                 QColorDialog::ShowAlphaChannel
             );
             qDebug() << "pushButton_ColorDialog:" << background_color.blue() << "x" << background_color.green()
@@ -2284,32 +2311,32 @@ void BatchItImage::EnableSpecificBlurOptions(bool loading_preset)
             blur_depth_selections[5].name,
             false
         );
-        ui.checkBox_BlurNormalize->setText(blur_box.at(UI::EditOption::BlurBox::checkBox_BlurNormalize).name);
-        ui.checkBox_BlurNormalize->setStatusTip(blur_box.at(UI::EditOption::BlurBox::checkBox_BlurNormalize).desc);
-        ui.checkBox_BlurNormalize->setToolTip(blur_box.at(UI::EditOption::BlurBox::checkBox_BlurNormalize).desc);
-        ui.label_BlurX1->setText(blur_box.at(UI::EditOption::BlurBox::label_BlurX1).name);
-        ui.label_BlurX1->setStatusTip(blur_box.at(UI::EditOption::BlurBox::label_BlurX1).desc);
-        ui.label_BlurX1->setToolTip(blur_box.at(UI::EditOption::BlurBox::label_BlurX1).desc);
-        ui.label_BlurY1->setText(blur_box.at(UI::EditOption::BlurBox::label_BlurY1).name);
-        ui.label_BlurY1->setStatusTip(blur_box.at(UI::EditOption::BlurBox::label_BlurY1).desc);
-        ui.label_BlurY1->setToolTip(blur_box.at(UI::EditOption::BlurBox::label_BlurY1).desc);
-        ui.label_BlurX2->setText(blur_box.at(UI::EditOption::BlurBox::label_BlurX2).name);
-        ui.label_BlurX2->setStatusTip(blur_box.at(UI::EditOption::BlurBox::label_BlurX2).desc);
-        ui.label_BlurX2->setToolTip(blur_box.at(UI::EditOption::BlurBox::label_BlurX2).desc);
-        ui.label_BlurY2->setText(blur_box.at(UI::EditOption::BlurBox::label_BlurY2).name);
-        ui.label_BlurY2->setStatusTip(blur_box.at(UI::EditOption::BlurBox::label_BlurY2).desc);
-        ui.label_BlurY2->setToolTip(blur_box.at(UI::EditOption::BlurBox::label_BlurY2).desc);
-        ui.label_BlurD->setText(blur_box.at(UI::EditOption::BlurBox::label_BlurD).name);
-        ui.label_BlurD->setStatusTip(blur_box.at(UI::EditOption::BlurBox::label_BlurD).desc);
-        ui.label_BlurD->setToolTip(blur_box.at(UI::EditOption::BlurBox::label_BlurD).desc);
+        ui.checkBox_BlurNormalize->setText(blur_box.at(BUI::EditOption::BlurBox::checkBox_BlurNormalize).name);
+        ui.checkBox_BlurNormalize->setStatusTip(blur_box.at(BUI::EditOption::BlurBox::checkBox_BlurNormalize).desc);
+        ui.checkBox_BlurNormalize->setToolTip(blur_box.at(BUI::EditOption::BlurBox::checkBox_BlurNormalize).desc);
+        ui.label_BlurX1->setText(blur_box.at(BUI::EditOption::BlurBox::label_BlurX1).name);
+        ui.label_BlurX1->setStatusTip(blur_box.at(BUI::EditOption::BlurBox::label_BlurX1).desc);
+        ui.label_BlurX1->setToolTip(blur_box.at(BUI::EditOption::BlurBox::label_BlurX1).desc);
+        ui.label_BlurY1->setText(blur_box.at(BUI::EditOption::BlurBox::label_BlurY1).name);
+        ui.label_BlurY1->setStatusTip(blur_box.at(BUI::EditOption::BlurBox::label_BlurY1).desc);
+        ui.label_BlurY1->setToolTip(blur_box.at(BUI::EditOption::BlurBox::label_BlurY1).desc);
+        ui.label_BlurX2->setText(blur_box.at(BUI::EditOption::BlurBox::label_BlurX2).name);
+        ui.label_BlurX2->setStatusTip(blur_box.at(BUI::EditOption::BlurBox::label_BlurX2).desc);
+        ui.label_BlurX2->setToolTip(blur_box.at(BUI::EditOption::BlurBox::label_BlurX2).desc);
+        ui.label_BlurY2->setText(blur_box.at(BUI::EditOption::BlurBox::label_BlurY2).name);
+        ui.label_BlurY2->setStatusTip(blur_box.at(BUI::EditOption::BlurBox::label_BlurY2).desc);
+        ui.label_BlurY2->setToolTip(blur_box.at(BUI::EditOption::BlurBox::label_BlurY2).desc);
+        ui.label_BlurD->setText(blur_box.at(BUI::EditOption::BlurBox::label_BlurD).name);
+        ui.label_BlurD->setStatusTip(blur_box.at(BUI::EditOption::BlurBox::label_BlurD).desc);
+        ui.label_BlurD->setToolTip(blur_box.at(BUI::EditOption::BlurBox::label_BlurD).desc);
 
         if (not loading_preset) {
-            ui.checkBox_BlurNormalize->setChecked(blur_box.at(UI::EditOption::BlurBox::checkBox_BlurNormalize).data);
-            ui.verticalSlider_BlurX1->setValue(blur_box.at(UI::EditOption::BlurBox::label_BlurX1).data);
-            ui.verticalSlider_BlurY1->setValue(blur_box.at(UI::EditOption::BlurBox::label_BlurY1).data);
-            ui.verticalSlider_BlurX2->setValue(blur_box.at(UI::EditOption::BlurBox::label_BlurX2).data);
-            ui.verticalSlider_BlurY2->setValue(blur_box.at(UI::EditOption::BlurBox::label_BlurY2).data);
-            ui.verticalSlider_BlurD->setValue(blur_box.at(UI::EditOption::BlurBox::label_BlurD).data);
+            ui.checkBox_BlurNormalize->setChecked(blur_box.at(BUI::EditOption::BlurBox::checkBox_BlurNormalize).data);
+            ui.verticalSlider_BlurX1->setValue(blur_box.at(BUI::EditOption::BlurBox::label_BlurX1).data);
+            ui.verticalSlider_BlurY1->setValue(blur_box.at(BUI::EditOption::BlurBox::label_BlurY1).data);
+            ui.verticalSlider_BlurX2->setValue(blur_box.at(BUI::EditOption::BlurBox::label_BlurX2).data);
+            ui.verticalSlider_BlurY2->setValue(blur_box.at(BUI::EditOption::BlurBox::label_BlurY2).data);
+            ui.verticalSlider_BlurD->setValue(blur_box.at(BUI::EditOption::BlurBox::label_BlurD).data);
         }
     }
     else if (blur_filter_selected == ImageEditor::BlurFilter::BILATERAL_FILTER) {
@@ -2319,20 +2346,20 @@ void BatchItImage::EnableSpecificBlurOptions(bool loading_preset)
         ui.verticalSlider_BlurX2->setRange(0, 300);
         ui.verticalSlider_BlurY2->setRange(0, 300);
 
-        ui.label_BlurX1->setText(blur_bilateral.at(UI::EditOption::BlurBilateral::label_BlurX1).name);
-        ui.label_BlurX1->setStatusTip(blur_bilateral.at(UI::EditOption::BlurBilateral::label_BlurX1).desc);
-        ui.label_BlurX1->setToolTip(blur_bilateral.at(UI::EditOption::BlurBilateral::label_BlurX1).desc);
-        ui.label_BlurX2->setText(blur_bilateral.at(UI::EditOption::BlurBilateral::label_BlurX2).name);
-        ui.label_BlurX2->setStatusTip(blur_bilateral.at(UI::EditOption::BlurBilateral::label_BlurX2).desc);
-        ui.label_BlurX2->setToolTip(blur_bilateral.at(UI::EditOption::BlurBilateral::label_BlurX2).desc);
-        ui.label_BlurY2->setText(blur_bilateral.at(UI::EditOption::BlurBilateral::label_BlurY2).name);
-        ui.label_BlurY2->setStatusTip(blur_bilateral.at(UI::EditOption::BlurBilateral::label_BlurY2).desc);
-        ui.label_BlurY2->setToolTip(blur_bilateral.at(UI::EditOption::BlurBilateral::label_BlurY2).desc);
+        ui.label_BlurX1->setText(blur_bilateral.at(BUI::EditOption::BlurBilateral::label_BlurX1).name);
+        ui.label_BlurX1->setStatusTip(blur_bilateral.at(BUI::EditOption::BlurBilateral::label_BlurX1).desc);
+        ui.label_BlurX1->setToolTip(blur_bilateral.at(BUI::EditOption::BlurBilateral::label_BlurX1).desc);
+        ui.label_BlurX2->setText(blur_bilateral.at(BUI::EditOption::BlurBilateral::label_BlurX2).name);
+        ui.label_BlurX2->setStatusTip(blur_bilateral.at(BUI::EditOption::BlurBilateral::label_BlurX2).desc);
+        ui.label_BlurX2->setToolTip(blur_bilateral.at(BUI::EditOption::BlurBilateral::label_BlurX2).desc);
+        ui.label_BlurY2->setText(blur_bilateral.at(BUI::EditOption::BlurBilateral::label_BlurY2).name);
+        ui.label_BlurY2->setStatusTip(blur_bilateral.at(BUI::EditOption::BlurBilateral::label_BlurY2).desc);
+        ui.label_BlurY2->setToolTip(blur_bilateral.at(BUI::EditOption::BlurBilateral::label_BlurY2).desc);
 
         if (not loading_preset) {
-            ui.verticalSlider_BlurX1->setValue(blur_bilateral.at(UI::EditOption::BlurBilateral::label_BlurX1).data);
-            ui.verticalSlider_BlurX2->setValue(blur_bilateral.at(UI::EditOption::BlurBilateral::label_BlurX2).data);
-            ui.verticalSlider_BlurY2->setValue(blur_bilateral.at(UI::EditOption::BlurBilateral::label_BlurY2).data);
+            ui.verticalSlider_BlurX1->setValue(blur_bilateral.at(BUI::EditOption::BlurBilateral::label_BlurX1).data);
+            ui.verticalSlider_BlurX2->setValue(blur_bilateral.at(BUI::EditOption::BlurBilateral::label_BlurX2).data);
+            ui.verticalSlider_BlurY2->setValue(blur_bilateral.at(BUI::EditOption::BlurBilateral::label_BlurY2).data);
         }
     }
     else if (blur_filter_selected == ImageEditor::BlurFilter::GAUSSIAN_BLUR) {
@@ -2349,24 +2376,24 @@ void BatchItImage::EnableSpecificBlurOptions(bool loading_preset)
         ui.verticalSlider_BlurY2->setRange(0.0, 10.0);
         ui.verticalSlider_BlurY2->setSingleStep(0.1);
 
-        ui.label_BlurX1->setText(blur_gaussian.at(UI::EditOption::BlurGaussian::label_BlurX1).name);
-        ui.label_BlurX1->setStatusTip(blur_gaussian.at(UI::EditOption::BlurGaussian::label_BlurX1).desc);
-        ui.label_BlurX1->setToolTip(blur_gaussian.at(UI::EditOption::BlurGaussian::label_BlurX1).desc);
-        ui.label_BlurY1->setText(blur_gaussian.at(UI::EditOption::BlurGaussian::label_BlurY1).name);
-        ui.label_BlurY1->setStatusTip(blur_gaussian.at(UI::EditOption::BlurGaussian::label_BlurY1).desc);
-        ui.label_BlurY1->setToolTip(blur_gaussian.at(UI::EditOption::BlurGaussian::label_BlurY1).desc);
-        ui.label_BlurX2->setText(blur_gaussian.at(UI::EditOption::BlurGaussian::label_BlurX2).name);
-        ui.label_BlurX2->setStatusTip(blur_gaussian.at(UI::EditOption::BlurGaussian::label_BlurX2).desc);
-        ui.label_BlurX2->setToolTip(blur_gaussian.at(UI::EditOption::BlurGaussian::label_BlurX2).desc);
-        ui.label_BlurY2->setText(blur_gaussian.at(UI::EditOption::BlurGaussian::label_BlurY2).name);
-        ui.label_BlurY2->setStatusTip(blur_gaussian.at(UI::EditOption::BlurGaussian::label_BlurY2).desc);
-        ui.label_BlurY2->setToolTip(blur_gaussian.at(UI::EditOption::BlurGaussian::label_BlurY2).desc);
+        ui.label_BlurX1->setText(blur_gaussian.at(BUI::EditOption::BlurGaussian::label_BlurX1).name);
+        ui.label_BlurX1->setStatusTip(blur_gaussian.at(BUI::EditOption::BlurGaussian::label_BlurX1).desc);
+        ui.label_BlurX1->setToolTip(blur_gaussian.at(BUI::EditOption::BlurGaussian::label_BlurX1).desc);
+        ui.label_BlurY1->setText(blur_gaussian.at(BUI::EditOption::BlurGaussian::label_BlurY1).name);
+        ui.label_BlurY1->setStatusTip(blur_gaussian.at(BUI::EditOption::BlurGaussian::label_BlurY1).desc);
+        ui.label_BlurY1->setToolTip(blur_gaussian.at(BUI::EditOption::BlurGaussian::label_BlurY1).desc);
+        ui.label_BlurX2->setText(blur_gaussian.at(BUI::EditOption::BlurGaussian::label_BlurX2).name);
+        ui.label_BlurX2->setStatusTip(blur_gaussian.at(BUI::EditOption::BlurGaussian::label_BlurX2).desc);
+        ui.label_BlurX2->setToolTip(blur_gaussian.at(BUI::EditOption::BlurGaussian::label_BlurX2).desc);
+        ui.label_BlurY2->setText(blur_gaussian.at(BUI::EditOption::BlurGaussian::label_BlurY2).name);
+        ui.label_BlurY2->setStatusTip(blur_gaussian.at(BUI::EditOption::BlurGaussian::label_BlurY2).desc);
+        ui.label_BlurY2->setToolTip(blur_gaussian.at(BUI::EditOption::BlurGaussian::label_BlurY2).desc);
 
         if (not loading_preset) {
-            ui.verticalSlider_BlurX1->setValue(blur_gaussian.at(UI::EditOption::BlurGaussian::label_BlurX1).data);
-            ui.verticalSlider_BlurY1->setValue(blur_gaussian.at(UI::EditOption::BlurGaussian::label_BlurY1).data);
-            ui.verticalSlider_BlurX2->setValue(double(blur_gaussian.at(UI::EditOption::BlurGaussian::label_BlurX2).data));
-            ui.verticalSlider_BlurY2->setValue(double(blur_gaussian.at(UI::EditOption::BlurGaussian::label_BlurY2).data));
+            ui.verticalSlider_BlurX1->setValue(blur_gaussian.at(BUI::EditOption::BlurGaussian::label_BlurX1).data);
+            ui.verticalSlider_BlurY1->setValue(blur_gaussian.at(BUI::EditOption::BlurGaussian::label_BlurY1).data);
+            ui.verticalSlider_BlurX2->setValue(double(blur_gaussian.at(BUI::EditOption::BlurGaussian::label_BlurX2).data));
+            ui.verticalSlider_BlurY2->setValue(double(blur_gaussian.at(BUI::EditOption::BlurGaussian::label_BlurY2).data));
         }
     }
     else if (blur_filter_selected == ImageEditor::BlurFilter::MEDIAN_BLUR) {
@@ -2376,12 +2403,12 @@ void BatchItImage::EnableSpecificBlurOptions(bool loading_preset)
         ui.verticalSlider_BlurX1->setRange(3, 99);
         ui.verticalSlider_BlurX1->setSingleStep(2);
 
-        ui.label_BlurX1->setText(blur_median.at(UI::EditOption::BlurMedian::label_BlurX1).name);
-        ui.label_BlurX1->setStatusTip(blur_median.at(UI::EditOption::BlurMedian::label_BlurX1).desc);
-        ui.label_BlurX1->setToolTip(blur_median.at(UI::EditOption::BlurMedian::label_BlurX1).desc);
+        ui.label_BlurX1->setText(blur_median.at(BUI::EditOption::BlurMedian::label_BlurX1).name);
+        ui.label_BlurX1->setStatusTip(blur_median.at(BUI::EditOption::BlurMedian::label_BlurX1).desc);
+        ui.label_BlurX1->setToolTip(blur_median.at(BUI::EditOption::BlurMedian::label_BlurX1).desc);
 
         if (not loading_preset) {
-            ui.verticalSlider_BlurX1->setValue(blur_median.at(UI::EditOption::BlurMedian::label_BlurX1).data);
+            ui.verticalSlider_BlurX1->setValue(blur_median.at(BUI::EditOption::BlurMedian::label_BlurX1).data);
         }
     }
     else if (blur_filter_selected == ImageEditor::BlurFilter::PYR_DOWN_BLUR) {
@@ -2520,33 +2547,33 @@ void BatchItImage::EnableSpecificFormatOptions(bool loading_preset)
         
         enableOptions(FORMATFLAGS + QUALITY + OPTIMIZE + PROGRESSIVE + COMPRESSION + EXTRASETTING1 + EXTRASETTING2);
         
-        ui.label_FormatFlags->setText(format_jpeg_options[UI::FileOption::FormatJpeg::label_FormatFlags].name);
-        ui.label_FormatFlags->setStatusTip(format_jpeg_options[UI::FileOption::FormatJpeg::label_FormatFlags].desc);
-        ui.label_FormatFlags->setToolTip(format_jpeg_options[UI::FileOption::FormatJpeg::label_FormatFlags].desc);
-        ui.label_Quality->setText(format_jpeg_options[UI::FileOption::FormatJpeg::label_Quality].name);
-        ui.label_Quality->setStatusTip(format_jpeg_options[UI::FileOption::FormatJpeg::label_Quality].desc);
-        ui.label_Quality->setToolTip(format_jpeg_options[UI::FileOption::FormatJpeg::label_Quality].desc);
-        ui.checkBox_Optimize->setText(format_jpeg_options[UI::FileOption::FormatJpeg::checkBox_Optimize].name);
-        ui.checkBox_Optimize->setStatusTip(format_jpeg_options[UI::FileOption::FormatJpeg::checkBox_Optimize].desc);
-        ui.checkBox_Optimize->setToolTip(format_jpeg_options[UI::FileOption::FormatJpeg::checkBox_Optimize].desc);
-        ui.checkBox_Progressive->setText(format_jpeg_options[UI::FileOption::FormatJpeg::checkBox_Progressive].name);
-        ui.checkBox_Progressive->setStatusTip(format_jpeg_options[UI::FileOption::FormatJpeg::checkBox_Progressive].desc);
-        ui.checkBox_Progressive->setToolTip(format_jpeg_options[UI::FileOption::FormatJpeg::checkBox_Progressive].desc);
-        ui.label_Compression->setText(format_jpeg_options[UI::FileOption::FormatJpeg::label_Compression].name);
-        ui.label_Compression->setStatusTip(format_jpeg_options[UI::FileOption::FormatJpeg::label_Compression].desc);
-        ui.label_Compression->setToolTip(format_jpeg_options[UI::FileOption::FormatJpeg::label_Compression].desc);
-        ui.label_ExtraSetting1->setText(format_jpeg_options[UI::FileOption::FormatJpeg::label_ExtraSetting1].name);
-        ui.label_ExtraSetting1->setStatusTip(format_jpeg_options[UI::FileOption::FormatJpeg::label_ExtraSetting1].desc);
-        ui.label_ExtraSetting1->setToolTip(format_jpeg_options[UI::FileOption::FormatJpeg::label_ExtraSetting1].desc);
-        ui.label_ExtraSetting2->setText(format_jpeg_options[UI::FileOption::FormatJpeg::label_ExtraSetting2].name);
-        ui.label_ExtraSetting2->setStatusTip(format_jpeg_options[UI::FileOption::FormatJpeg::label_ExtraSetting2].desc);
-        ui.label_ExtraSetting2->setToolTip(format_jpeg_options[UI::FileOption::FormatJpeg::label_ExtraSetting2].desc);
+        ui.label_FormatFlags->setText(format_jpeg_options[BUI::FileOption::FormatJpeg::label_FormatFlags].name);
+        ui.label_FormatFlags->setStatusTip(format_jpeg_options[BUI::FileOption::FormatJpeg::label_FormatFlags].desc);
+        ui.label_FormatFlags->setToolTip(format_jpeg_options[BUI::FileOption::FormatJpeg::label_FormatFlags].desc);
+        ui.label_Quality->setText(format_jpeg_options[BUI::FileOption::FormatJpeg::label_Quality].name);
+        ui.label_Quality->setStatusTip(format_jpeg_options[BUI::FileOption::FormatJpeg::label_Quality].desc);
+        ui.label_Quality->setToolTip(format_jpeg_options[BUI::FileOption::FormatJpeg::label_Quality].desc);
+        ui.checkBox_Optimize->setText(format_jpeg_options[BUI::FileOption::FormatJpeg::checkBox_Optimize].name);
+        ui.checkBox_Optimize->setStatusTip(format_jpeg_options[BUI::FileOption::FormatJpeg::checkBox_Optimize].desc);
+        ui.checkBox_Optimize->setToolTip(format_jpeg_options[BUI::FileOption::FormatJpeg::checkBox_Optimize].desc);
+        ui.checkBox_Progressive->setText(format_jpeg_options[BUI::FileOption::FormatJpeg::checkBox_Progressive].name);
+        ui.checkBox_Progressive->setStatusTip(format_jpeg_options[BUI::FileOption::FormatJpeg::checkBox_Progressive].desc);
+        ui.checkBox_Progressive->setToolTip(format_jpeg_options[BUI::FileOption::FormatJpeg::checkBox_Progressive].desc);
+        ui.label_Compression->setText(format_jpeg_options[BUI::FileOption::FormatJpeg::label_Compression].name);
+        ui.label_Compression->setStatusTip(format_jpeg_options[BUI::FileOption::FormatJpeg::label_Compression].desc);
+        ui.label_Compression->setToolTip(format_jpeg_options[BUI::FileOption::FormatJpeg::label_Compression].desc);
+        ui.label_ExtraSetting1->setText(format_jpeg_options[BUI::FileOption::FormatJpeg::label_ExtraSetting1].name);
+        ui.label_ExtraSetting1->setStatusTip(format_jpeg_options[BUI::FileOption::FormatJpeg::label_ExtraSetting1].desc);
+        ui.label_ExtraSetting1->setToolTip(format_jpeg_options[BUI::FileOption::FormatJpeg::label_ExtraSetting1].desc);
+        ui.label_ExtraSetting2->setText(format_jpeg_options[BUI::FileOption::FormatJpeg::label_ExtraSetting2].name);
+        ui.label_ExtraSetting2->setStatusTip(format_jpeg_options[BUI::FileOption::FormatJpeg::label_ExtraSetting2].desc);
+        ui.label_ExtraSetting2->setToolTip(format_jpeg_options[BUI::FileOption::FormatJpeg::label_ExtraSetting2].desc);
 
         if (loading_preset)
             //PopulateComboBox(ui.comboBox_FormatFlags, format_jpeg_subsamplings, sizeof(format_jpeg_subsamplings) / sizeof(UIData));
             PopulateComboBox(ui.comboBox_FormatFlags, format_jpeg_subsamplings);
         
-        int default_quality_value = format_jpeg_options[UI::FileOption::FormatJpeg::label_Quality].data;
+        int default_quality_value = format_jpeg_options[BUI::FileOption::FormatJpeg::label_Quality].data;
         ui.horizontalSlider_Quality->setRange(0, 100);
         ui.horizontalSlider_Quality->addTextTip(default_quality_value, default_quality_value, " : Default", true);
         ui.spinBox_Compression->setRange(0, 65535);
@@ -2555,61 +2582,61 @@ void BatchItImage::EnableSpecificFormatOptions(bool loading_preset)
 
         if (not loading_preset and last_selected_format != ".jpeg" and last_selected_format != ".jpg" and last_selected_format != ".jpe") {
             PopulateComboBox(ui.comboBox_FormatFlags, format_jpeg_subsamplings);
-            ui.comboBox_FormatFlags->setCurrentIndex(format_jpeg_options[UI::FileOption::FormatJpeg::label_FormatFlags].data);
+            ui.comboBox_FormatFlags->setCurrentIndex(format_jpeg_options[BUI::FileOption::FormatJpeg::label_FormatFlags].data);
             ui.horizontalSlider_Quality->setValue(default_quality_value);
-            ui.checkBox_Optimize->setChecked(format_jpeg_options[UI::FileOption::FormatJpeg::checkBox_Optimize].data);
-            ui.checkBox_Progressive->setChecked(format_jpeg_options[UI::FileOption::FormatJpeg::checkBox_Progressive].data);
-            ui.spinBox_Compression->setValue(format_jpeg_options[UI::FileOption::FormatJpeg::label_Compression].data);
-            ui.spinBox_ExtraSetting1->setValue(format_jpeg_options[UI::FileOption::FormatJpeg::label_ExtraSetting1].data);
-            ui.spinBox_ExtraSetting2->setValue(format_jpeg_options[UI::FileOption::FormatJpeg::label_ExtraSetting2].data);
+            ui.checkBox_Optimize->setChecked(format_jpeg_options[BUI::FileOption::FormatJpeg::checkBox_Optimize].data);
+            ui.checkBox_Progressive->setChecked(format_jpeg_options[BUI::FileOption::FormatJpeg::checkBox_Progressive].data);
+            ui.spinBox_Compression->setValue(format_jpeg_options[BUI::FileOption::FormatJpeg::label_Compression].data);
+            ui.spinBox_ExtraSetting1->setValue(format_jpeg_options[BUI::FileOption::FormatJpeg::label_ExtraSetting1].data);
+            ui.spinBox_ExtraSetting2->setValue(format_jpeg_options[BUI::FileOption::FormatJpeg::label_ExtraSetting2].data);
         }
     }
     else if (format == ".jp2") {
         
         enableOptions(COMPRESSION);
 
-        ui.label_Compression->setText(format_jp2_options[UI::FileOption::FormatJp2::label_Compression].name);
-        ui.label_Compression->setStatusTip(format_jp2_options[UI::FileOption::FormatJp2::label_Compression].desc);
-        ui.label_Compression->setToolTip(format_jp2_options[UI::FileOption::FormatJp2::label_Compression].desc);
+        ui.label_Compression->setText(format_jp2_options[BUI::FileOption::FormatJp2::label_Compression].name);
+        ui.label_Compression->setStatusTip(format_jp2_options[BUI::FileOption::FormatJp2::label_Compression].desc);
+        ui.label_Compression->setToolTip(format_jp2_options[BUI::FileOption::FormatJp2::label_Compression].desc);
 
         ui.spinBox_Compression->setRange(0, 1000);
 
         if (not loading_preset and last_selected_format != ".jp2") {
-            ui.spinBox_Compression->setValue(format_jp2_options[UI::FileOption::FormatJp2::label_Compression].data);
+            ui.spinBox_Compression->setValue(format_jp2_options[BUI::FileOption::FormatJp2::label_Compression].data);
         }
     }
     else if (format == ".png") {
         
         enableOptions(FORMATFLAGS + OPTIMIZE + COMPRESSION);
 
-        ui.label_FormatFlags->setText(format_png_options[UI::FileOption::FormatPng::label_FormatFlags].name);
-        ui.label_FormatFlags->setStatusTip(format_png_options[UI::FileOption::FormatPng::label_FormatFlags].desc);
-        ui.label_FormatFlags->setToolTip(format_png_options[UI::FileOption::FormatPng::label_FormatFlags].desc);
-        ui.checkBox_Optimize->setText(format_png_options[UI::FileOption::FormatPng::checkBox_Optimize].name);
-        ui.checkBox_Optimize->setStatusTip(format_png_options[UI::FileOption::FormatPng::checkBox_Optimize].desc);
-        ui.checkBox_Optimize->setToolTip(format_png_options[UI::FileOption::FormatPng::checkBox_Optimize].desc);
-        ui.label_Compression->setText(format_png_options[UI::FileOption::FormatPng::label_Compression].name);
-        ui.label_Compression->setStatusTip(format_png_options[UI::FileOption::FormatPng::label_Compression].desc);
-        ui.label_Compression->setToolTip(format_png_options[UI::FileOption::FormatPng::label_Compression].desc);
+        ui.label_FormatFlags->setText(format_png_options[BUI::FileOption::FormatPng::label_FormatFlags].name);
+        ui.label_FormatFlags->setStatusTip(format_png_options[BUI::FileOption::FormatPng::label_FormatFlags].desc);
+        ui.label_FormatFlags->setToolTip(format_png_options[BUI::FileOption::FormatPng::label_FormatFlags].desc);
+        ui.checkBox_Optimize->setText(format_png_options[BUI::FileOption::FormatPng::checkBox_Optimize].name);
+        ui.checkBox_Optimize->setStatusTip(format_png_options[BUI::FileOption::FormatPng::checkBox_Optimize].desc);
+        ui.checkBox_Optimize->setToolTip(format_png_options[BUI::FileOption::FormatPng::checkBox_Optimize].desc);
+        ui.label_Compression->setText(format_png_options[BUI::FileOption::FormatPng::label_Compression].name);
+        ui.label_Compression->setStatusTip(format_png_options[BUI::FileOption::FormatPng::label_Compression].desc);
+        ui.label_Compression->setToolTip(format_png_options[BUI::FileOption::FormatPng::label_Compression].desc);
 
         PopulateComboBox(ui.comboBox_FormatFlags, format_png_compression);
         ui.spinBox_Compression->setRange(0, 9);
 
         if (not loading_preset and last_selected_format != ".png") {
-            ui.comboBox_FormatFlags->setCurrentIndex(format_png_options[UI::FileOption::FormatPng::label_FormatFlags].data);
-            ui.checkBox_Optimize->setChecked(format_png_options[UI::FileOption::FormatPng::checkBox_Optimize].data);
-            ui.spinBox_Compression->setValue(format_png_options[UI::FileOption::FormatPng::label_Compression].data);
+            ui.comboBox_FormatFlags->setCurrentIndex(format_png_options[BUI::FileOption::FormatPng::label_FormatFlags].data);
+            ui.checkBox_Optimize->setChecked(format_png_options[BUI::FileOption::FormatPng::checkBox_Optimize].data);
+            ui.spinBox_Compression->setValue(format_png_options[BUI::FileOption::FormatPng::label_Compression].data);
         }
     }
     else if (format == ".webp") { 
 
         enableOptions(QUALITY);
 
-        ui.label_Quality->setText(format_webp_options[UI::FileOption::FormatWebp::label_Quality].name);
-        ui.label_Quality->setStatusTip(format_webp_options[UI::FileOption::FormatWebp::label_Quality].desc);
-        ui.label_Quality->setToolTip(format_webp_options[UI::FileOption::FormatWebp::label_Quality].desc);
+        ui.label_Quality->setText(format_webp_options[BUI::FileOption::FormatWebp::label_Quality].name);
+        ui.label_Quality->setStatusTip(format_webp_options[BUI::FileOption::FormatWebp::label_Quality].desc);
+        ui.label_Quality->setToolTip(format_webp_options[BUI::FileOption::FormatWebp::label_Quality].desc);
 
-        int default_quality_value = format_webp_options[UI::FileOption::FormatWebp::label_Quality].data;
+        int default_quality_value = format_webp_options[BUI::FileOption::FormatWebp::label_Quality].data;
         ui.horizontalSlider_Quality->setRange(1, 100);
         ui.horizontalSlider_Quality->addTextTip(default_quality_value, default_quality_value, " : Default", true);
 
@@ -2622,17 +2649,17 @@ void BatchItImage::EnableSpecificFormatOptions(bool loading_preset)
         enableOptions(QUALITY + COMPRESSION + EXTRASETTING2);
 
         //ui.label_FormatFlags->setText(":");
-        ui.label_Quality->setText(format_avif_options[UI::FileOption::FormatAvif::label_Quality].name);
-        ui.label_Quality->setStatusTip(format_avif_options[UI::FileOption::FormatAvif::label_Quality].desc);
-        ui.label_Quality->setToolTip(format_avif_options[UI::FileOption::FormatAvif::label_Quality].desc);
-        ui.label_Compression->setText(format_avif_options[UI::FileOption::FormatAvif::label_Compression].name);
-        ui.label_Compression->setStatusTip(format_avif_options[UI::FileOption::FormatAvif::label_Compression].desc);
-        ui.label_Compression->setToolTip(format_avif_options[UI::FileOption::FormatAvif::label_Compression].desc);
-        ui.label_ExtraSetting2->setText(format_avif_options[UI::FileOption::FormatAvif::label_ExtraSetting2].name);
-        ui.label_ExtraSetting2->setStatusTip(format_avif_options[UI::FileOption::FormatAvif::label_ExtraSetting2].desc);
-        ui.label_ExtraSetting2->setToolTip(format_avif_options[UI::FileOption::FormatAvif::label_ExtraSetting2].desc);
+        ui.label_Quality->setText(format_avif_options[BUI::FileOption::FormatAvif::label_Quality].name);
+        ui.label_Quality->setStatusTip(format_avif_options[BUI::FileOption::FormatAvif::label_Quality].desc);
+        ui.label_Quality->setToolTip(format_avif_options[BUI::FileOption::FormatAvif::label_Quality].desc);
+        ui.label_Compression->setText(format_avif_options[BUI::FileOption::FormatAvif::label_Compression].name);
+        ui.label_Compression->setStatusTip(format_avif_options[BUI::FileOption::FormatAvif::label_Compression].desc);
+        ui.label_Compression->setToolTip(format_avif_options[BUI::FileOption::FormatAvif::label_Compression].desc);
+        ui.label_ExtraSetting2->setText(format_avif_options[BUI::FileOption::FormatAvif::label_ExtraSetting2].name);
+        ui.label_ExtraSetting2->setStatusTip(format_avif_options[BUI::FileOption::FormatAvif::label_ExtraSetting2].desc);
+        ui.label_ExtraSetting2->setToolTip(format_avif_options[BUI::FileOption::FormatAvif::label_ExtraSetting2].desc);
 
-        int default_quality_value = format_avif_options[UI::FileOption::FormatAvif::label_Quality].data;
+        int default_quality_value = format_avif_options[BUI::FileOption::FormatAvif::label_Quality].data;
         ui.horizontalSlider_Quality->setRange(0, 100);
         ui.horizontalSlider_Quality->addTextTip(default_quality_value, default_quality_value, " : Default", true);
         ui.spinBox_Compression->setRange(0, 9);
@@ -2649,52 +2676,52 @@ void BatchItImage::EnableSpecificFormatOptions(bool loading_preset)
         if (not loading_preset and last_selected_format != ".avif") {
             //ui.comboBox_FormatFlags->setCurrentIndex(0);
             ui.horizontalSlider_Quality->setValue(default_quality_value);
-            ui.spinBox_Compression->setValue(format_avif_options[UI::FileOption::FormatAvif::label_Compression].data);
-            ui.spinBox_ExtraSetting2->setValue(format_avif_options[UI::FileOption::FormatAvif::label_ExtraSetting2].data);
+            ui.spinBox_Compression->setValue(format_avif_options[BUI::FileOption::FormatAvif::label_Compression].data);
+            ui.spinBox_ExtraSetting2->setValue(format_avif_options[BUI::FileOption::FormatAvif::label_ExtraSetting2].data);
         }
     }
     else if (format == ".pbm" or format == ".pgm" or format == ".ppm") {
 
         enableOptions(OPTIMIZE);
 
-        ui.checkBox_Optimize->setText(format_pbm_options[UI::FileOption::FormatPbm::checkBox_Optimize].name);
-        ui.checkBox_Optimize->setStatusTip(format_pbm_options[UI::FileOption::FormatPbm::checkBox_Optimize].desc);
-        ui.checkBox_Optimize->setToolTip(format_pbm_options[UI::FileOption::FormatPbm::checkBox_Optimize].desc);
+        ui.checkBox_Optimize->setText(format_pbm_options[BUI::FileOption::FormatPbm::checkBox_Optimize].name);
+        ui.checkBox_Optimize->setStatusTip(format_pbm_options[BUI::FileOption::FormatPbm::checkBox_Optimize].desc);
+        ui.checkBox_Optimize->setToolTip(format_pbm_options[BUI::FileOption::FormatPbm::checkBox_Optimize].desc);
 
         if (not loading_preset and last_selected_format != ".pbm" and last_selected_format != ".pgm" and last_selected_format != ".ppm") {
-            ui.checkBox_Optimize->setChecked(format_pbm_options[UI::FileOption::FormatPbm::checkBox_Optimize].data);
+            ui.checkBox_Optimize->setChecked(format_pbm_options[BUI::FileOption::FormatPbm::checkBox_Optimize].data);
         }
     }
     else if (format == ".pam") {
 
         enableOptions(FORMATFLAGS);
 
-        ui.label_FormatFlags->setText(format_pam_options[UI::FileOption::FormatPam::label_FormatFlags].name);
-        ui.label_FormatFlags->setStatusTip(format_pam_options[UI::FileOption::FormatPam::label_FormatFlags].desc);
-        ui.label_FormatFlags->setToolTip(format_pam_options[UI::FileOption::FormatPam::label_FormatFlags].desc);
+        ui.label_FormatFlags->setText(format_pam_options[BUI::FileOption::FormatPam::label_FormatFlags].name);
+        ui.label_FormatFlags->setStatusTip(format_pam_options[BUI::FileOption::FormatPam::label_FormatFlags].desc);
+        ui.label_FormatFlags->setToolTip(format_pam_options[BUI::FileOption::FormatPam::label_FormatFlags].desc);
 
         PopulateComboBox(ui.comboBox_FormatFlags, format_pam_tupletype);
 
         if (not loading_preset and last_selected_format != ".pam") {
-            ui.comboBox_FormatFlags->setCurrentIndex(format_pam_options[UI::FileOption::FormatPam::label_FormatFlags].data);
+            ui.comboBox_FormatFlags->setCurrentIndex(format_pam_options[BUI::FileOption::FormatPam::label_FormatFlags].data);
         }
     }
     else if (format == ".tiff" or format == ".tif") {
 
         enableOptions(FORMATFLAGS + QUALITY + EXTRASETTING1 + EXTRASETTING2);
 
-        ui.label_FormatFlags->setText(format_tiff_options[UI::FileOption::FormatTiff::label_FormatFlags].name);
-        ui.label_FormatFlags->setStatusTip(format_tiff_options[UI::FileOption::FormatTiff::label_FormatFlags].desc);
-        ui.label_FormatFlags->setToolTip(format_tiff_options[UI::FileOption::FormatTiff::label_FormatFlags].desc);
-        ui.label_Quality->setText(format_tiff_options[UI::FileOption::FormatTiff::label_Quality].name);
-        ui.label_Quality->setStatusTip(format_tiff_options[UI::FileOption::FormatTiff::label_Quality].desc);
-        ui.label_Quality->setToolTip(format_tiff_options[UI::FileOption::FormatTiff::label_Quality].desc);
-        ui.label_ExtraSetting1->setText(format_tiff_options[UI::FileOption::FormatTiff::label_ExtraSetting1].name);
-        ui.label_ExtraSetting1->setStatusTip(format_tiff_options[UI::FileOption::FormatTiff::label_ExtraSetting1].desc);
-        ui.label_ExtraSetting1->setToolTip(format_tiff_options[UI::FileOption::FormatTiff::label_ExtraSetting1].desc);
-        ui.label_ExtraSetting2->setText(format_tiff_options[UI::FileOption::FormatTiff::label_ExtraSetting2].name);
-        ui.label_ExtraSetting2->setStatusTip(format_tiff_options[UI::FileOption::FormatTiff::label_ExtraSetting2].desc);
-        ui.label_ExtraSetting2->setToolTip(format_tiff_options[UI::FileOption::FormatTiff::label_ExtraSetting2].desc);
+        ui.label_FormatFlags->setText(format_tiff_options[BUI::FileOption::FormatTiff::label_FormatFlags].name);
+        ui.label_FormatFlags->setStatusTip(format_tiff_options[BUI::FileOption::FormatTiff::label_FormatFlags].desc);
+        ui.label_FormatFlags->setToolTip(format_tiff_options[BUI::FileOption::FormatTiff::label_FormatFlags].desc);
+        ui.label_Quality->setText(format_tiff_options[BUI::FileOption::FormatTiff::label_Quality].name);
+        ui.label_Quality->setStatusTip(format_tiff_options[BUI::FileOption::FormatTiff::label_Quality].desc);
+        ui.label_Quality->setToolTip(format_tiff_options[BUI::FileOption::FormatTiff::label_Quality].desc);
+        ui.label_ExtraSetting1->setText(format_tiff_options[BUI::FileOption::FormatTiff::label_ExtraSetting1].name);
+        ui.label_ExtraSetting1->setStatusTip(format_tiff_options[BUI::FileOption::FormatTiff::label_ExtraSetting1].desc);
+        ui.label_ExtraSetting1->setToolTip(format_tiff_options[BUI::FileOption::FormatTiff::label_ExtraSetting1].desc);
+        ui.label_ExtraSetting2->setText(format_tiff_options[BUI::FileOption::FormatTiff::label_ExtraSetting2].name);
+        ui.label_ExtraSetting2->setStatusTip(format_tiff_options[BUI::FileOption::FormatTiff::label_ExtraSetting2].desc);
+        ui.label_ExtraSetting2->setToolTip(format_tiff_options[BUI::FileOption::FormatTiff::label_ExtraSetting2].desc);
 
         if (loading_preset)
             PopulateComboBox(ui.comboBox_FormatFlags, format_tiff_compression);
@@ -2713,38 +2740,38 @@ void BatchItImage::EnableSpecificFormatOptions(bool loading_preset)
 
         if (not loading_preset and last_selected_format != ".tiff" and last_selected_format != ".tif") {
             PopulateComboBox(ui.comboBox_FormatFlags, format_tiff_compression);
-            ui.comboBox_FormatFlags->setCurrentIndex(format_tiff_options[UI::FileOption::FormatTiff::label_FormatFlags].data);
-            ui.horizontalSlider_Quality->setValue(format_tiff_options[UI::FileOption::FormatTiff::label_Quality].data);
-            ui.spinBox_ExtraSetting1->setValue(format_tiff_options[UI::FileOption::FormatTiff::label_ExtraSetting1].data);
-            ui.spinBox_ExtraSetting2->setValue(format_tiff_options[UI::FileOption::FormatTiff::label_ExtraSetting2].data);
+            ui.comboBox_FormatFlags->setCurrentIndex(format_tiff_options[BUI::FileOption::FormatTiff::label_FormatFlags].data);
+            ui.horizontalSlider_Quality->setValue(format_tiff_options[BUI::FileOption::FormatTiff::label_Quality].data);
+            ui.spinBox_ExtraSetting1->setValue(format_tiff_options[BUI::FileOption::FormatTiff::label_ExtraSetting1].data);
+            ui.spinBox_ExtraSetting2->setValue(format_tiff_options[BUI::FileOption::FormatTiff::label_ExtraSetting2].data);
         }
     }
     else if (format == ".exr") {
 
         enableOptions(FORMATFLAGS + OPTIMIZE + PROGRESSIVE + COMPRESSION);
 
-        ui.label_FormatFlags->setText(format_exr_options[UI::FileOption::FormatExr::label_FormatFlags].name);
-        ui.label_FormatFlags->setStatusTip(format_exr_options[UI::FileOption::FormatExr::label_FormatFlags].desc);
-        ui.label_FormatFlags->setToolTip(format_exr_options[UI::FileOption::FormatExr::label_FormatFlags].desc);
-        ui.checkBox_Optimize->setText(format_exr_options[UI::FileOption::FormatExr::checkBox_Optimize].name);
-        ui.checkBox_Optimize->setStatusTip(format_exr_options[UI::FileOption::FormatExr::checkBox_Optimize].desc);
-        ui.checkBox_Optimize->setToolTip(format_exr_options[UI::FileOption::FormatExr::checkBox_Optimize].desc);
-        ui.checkBox_Progressive->setText(format_exr_options[UI::FileOption::FormatExr::checkBox_Progressive].name);
-        ui.checkBox_Progressive->setStatusTip(format_exr_options[UI::FileOption::FormatExr::checkBox_Progressive].desc);
-        ui.checkBox_Progressive->setToolTip(format_exr_options[UI::FileOption::FormatExr::checkBox_Progressive].desc);
-        ui.label_Compression->setText(format_exr_options[UI::FileOption::FormatExr::label_Compression].name);
-        ui.label_Compression->setStatusTip(format_exr_options[UI::FileOption::FormatExr::label_Compression].desc);
-        ui.label_Compression->setToolTip(format_exr_options[UI::FileOption::FormatExr::label_Compression].desc);
+        ui.label_FormatFlags->setText(format_exr_options[BUI::FileOption::FormatExr::label_FormatFlags].name);
+        ui.label_FormatFlags->setStatusTip(format_exr_options[BUI::FileOption::FormatExr::label_FormatFlags].desc);
+        ui.label_FormatFlags->setToolTip(format_exr_options[BUI::FileOption::FormatExr::label_FormatFlags].desc);
+        ui.checkBox_Optimize->setText(format_exr_options[BUI::FileOption::FormatExr::checkBox_Optimize].name);
+        ui.checkBox_Optimize->setStatusTip(format_exr_options[BUI::FileOption::FormatExr::checkBox_Optimize].desc);
+        ui.checkBox_Optimize->setToolTip(format_exr_options[BUI::FileOption::FormatExr::checkBox_Optimize].desc);
+        ui.checkBox_Progressive->setText(format_exr_options[BUI::FileOption::FormatExr::checkBox_Progressive].name);
+        ui.checkBox_Progressive->setStatusTip(format_exr_options[BUI::FileOption::FormatExr::checkBox_Progressive].desc);
+        ui.checkBox_Progressive->setToolTip(format_exr_options[BUI::FileOption::FormatExr::checkBox_Progressive].desc);
+        ui.label_Compression->setText(format_exr_options[BUI::FileOption::FormatExr::label_Compression].name);
+        ui.label_Compression->setStatusTip(format_exr_options[BUI::FileOption::FormatExr::label_Compression].desc);
+        ui.label_Compression->setToolTip(format_exr_options[BUI::FileOption::FormatExr::label_Compression].desc);
 
         PopulateComboBox(ui.comboBox_FormatFlags, format_exr_compression);
         ui.checkBox_Optimize->setAutoExclusive(true);
         ui.checkBox_Progressive->setAutoExclusive(true);
 
         if (not loading_preset and last_selected_format != ".exr") {
-            ui.comboBox_FormatFlags->setCurrentIndex(format_exr_options[UI::FileOption::FormatExr::label_FormatFlags].data);
-            ui.checkBox_Optimize->setChecked(format_exr_options[UI::FileOption::FormatExr::checkBox_Optimize].data);
-            ui.checkBox_Progressive->setChecked(format_exr_options[UI::FileOption::FormatExr::checkBox_Progressive].data);
-            ui.spinBox_Compression->setValue(format_exr_options[UI::FileOption::FormatExr::label_Compression].data);
+            ui.comboBox_FormatFlags->setCurrentIndex(format_exr_options[BUI::FileOption::FormatExr::label_FormatFlags].data);
+            ui.checkBox_Optimize->setChecked(format_exr_options[BUI::FileOption::FormatExr::checkBox_Optimize].data);
+            ui.checkBox_Progressive->setChecked(format_exr_options[BUI::FileOption::FormatExr::checkBox_Progressive].data);
+            ui.spinBox_Compression->setValue(format_exr_options[BUI::FileOption::FormatExr::label_Compression].data);
         }
 
     }
@@ -2752,16 +2779,16 @@ void BatchItImage::EnableSpecificFormatOptions(bool loading_preset)
 
         enableOptions(FORMATFLAGS);
 
-        ui.label_FormatFlags->setText(format_hdr_options[UI::FileOption::FormatHdr::label_FormatFlags].name);
-        ui.label_FormatFlags->setStatusTip(format_hdr_options[UI::FileOption::FormatHdr::label_FormatFlags].desc);
-        ui.label_FormatFlags->setToolTip(format_hdr_options[UI::FileOption::FormatHdr::label_FormatFlags].desc);
+        ui.label_FormatFlags->setText(format_hdr_options[BUI::FileOption::FormatHdr::label_FormatFlags].name);
+        ui.label_FormatFlags->setStatusTip(format_hdr_options[BUI::FileOption::FormatHdr::label_FormatFlags].desc);
+        ui.label_FormatFlags->setToolTip(format_hdr_options[BUI::FileOption::FormatHdr::label_FormatFlags].desc);
 
         if (loading_preset)
             PopulateComboBox(ui.comboBox_FormatFlags, format_hdr_compression);
 
         if (not loading_preset and last_selected_format != ".hdr" and last_selected_format != ".pic") {
             PopulateComboBox(ui.comboBox_FormatFlags, format_hdr_compression);
-            ui.comboBox_FormatFlags->setCurrentIndex(format_hdr_options[UI::FileOption::FormatHdr::label_FormatFlags].data);
+            ui.comboBox_FormatFlags->setCurrentIndex(format_hdr_options[BUI::FileOption::FormatHdr::label_FormatFlags].data);
         }
     }
     else {
@@ -3008,7 +3035,11 @@ void BatchItImage::ChangePreset(int index)
     ui.comboBox_Preset_2->blockSignals(true);
     ui.comboBox_Preset_3->blockSignals(true);
 
-    current_selected_preset = index;
+    if (preset_list.size() < index)
+        current_selected_preset = 0;
+    else
+        current_selected_preset = index;
+
     ui.comboBox_Preset_1->setCurrentIndex(current_selected_preset);
     ui.comboBox_Preset_2->setCurrentIndex(current_selected_preset);
     ui.comboBox_Preset_3->setCurrentIndex(current_selected_preset);
@@ -3093,8 +3124,8 @@ void BatchItImage::SavePreset(bool save_all)
             SavePresetToSettingsFile(i);
         }
         ui.statusbar->showMessage(
-            status_bar_messages.at(UI::StatusBar::SavePreset).name,
-            status_bar_messages.at(UI::StatusBar::SavePreset).data
+            status_bar_messages.at(BUI::StatusBar::SavePreset).name,
+            status_bar_messages.at(BUI::StatusBar::SavePreset).data
         );
     }
     else {
