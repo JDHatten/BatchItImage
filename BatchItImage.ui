@@ -20,7 +20,7 @@
    <bool>true</bool>
   </property>
   <property name="windowTitle">
-   <string>Batch-It Image Editor</string>
+   <string>BatchIt Image Editor</string>
   </property>
   <widget class="QWidget" name="centralwidget">
    <property name="acceptDrops">
@@ -673,6 +673,9 @@ Boundaries</string>
           <property name="checkable">
            <bool>true</bool>
           </property>
+          <property name="checked">
+           <bool>false</bool>
+          </property>
           <layout class="QGridLayout" name="gridLayout_3" columnstretch="8,10,13,10,8,10,8,8">
            <item row="1" column="3">
             <widget class="QLabel" name="label_WatermarkTransparency">
@@ -943,11 +946,6 @@ Boundaries</string>
             <layout class="QHBoxLayout" name="horizontalLayout_9">
              <item>
               <widget class="QPushButton" name="pushButton_AddBackOneDir">
-               <property name="font">
-                <font>
-                 <bold>true</bold>
-                </font>
-               </property>
                <property name="text">
                 <string>Add &quot;Back One Directory&quot; For Relative Paths</string>
                </property>
@@ -955,11 +953,6 @@ Boundaries</string>
              </item>
              <item>
               <widget class="QPushButton" name="pushButton_FindAbsolutePath">
-               <property name="font">
-                <font>
-                 <bold>true</bold>
-                </font>
-               </property>
                <property name="text">
                 <string>Search For An Absolute Path</string>
                </property>
@@ -1179,46 +1172,6 @@ Boundaries</string>
          </spacer>
         </item>
         <item>
-         <layout class="QHBoxLayout" name="horizontalLayout_4">
-          <item>
-           <spacer name="horizontalSpacer">
-            <property name="orientation">
-             <enum>Qt::Horizontal</enum>
-            </property>
-            <property name="sizeHint" stdset="0">
-             <size>
-              <width>40</width>
-              <height>20</height>
-             </size>
-            </property>
-           </spacer>
-          </item>
-          <item>
-           <widget class="QCheckBox" name="checkBox_Overwrite">
-            <property name="text">
-             <string>Ask Before Overwriting Any and All Files</string>
-            </property>
-            <property name="tristate">
-             <bool>true</bool>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <spacer name="horizontalSpacer_2">
-            <property name="orientation">
-             <enum>Qt::Horizontal</enum>
-            </property>
-            <property name="sizeHint" stdset="0">
-             <size>
-              <width>40</width>
-              <height>20</height>
-             </size>
-            </property>
-           </spacer>
-          </item>
-         </layout>
-        </item>
-        <item>
          <layout class="QHBoxLayout" name="horizontalLayout_3">
           <item>
            <widget class="QLabel" name="label_EditSave">
@@ -1325,27 +1278,34 @@ Boundaries</string>
      <height>22</height>
     </rect>
    </property>
-   <widget class="QMenu" name="menuFile">
+   <widget class="QMenu" name="menu_File">
     <property name="title">
      <string>File</string>
     </property>
+    <widget class="QMenu" name="menu_RecentImageFiles">
+     <property name="title">
+      <string>Recent Image Files</string>
+     </property>
+    </widget>
     <addaction name="action_AddImages"/>
-    <addaction name="action_SaveLogAs"/>
+    <addaction name="action_AddImageDirectory"/>
+    <addaction name="menu_RecentImageFiles"/>
+    <addaction name="action_OpenLogDirectory"/>
     <addaction name="separator"/>
     <addaction name="action_Close"/>
    </widget>
-   <widget class="QMenu" name="menuEdit">
+   <widget class="QMenu" name="menu_Edit">
     <property name="title">
      <string>Edit</string>
     </property>
     <addaction name="action_AddNewPreset"/>
     <addaction name="action_RemovePreset"/>
     <addaction name="action_SavePresets"/>
-    <addaction name="separator"/>
     <addaction name="action_ChangePresetDesc"/>
+    <addaction name="separator"/>
     <addaction name="action_ShowFormatFilter"/>
    </widget>
-   <widget class="QMenu" name="menuHelp">
+   <widget class="QMenu" name="menu_Help">
     <property name="title">
      <string>Help</string>
     </property>
@@ -1354,9 +1314,9 @@ Boundaries</string>
     <addaction name="separator"/>
     <addaction name="action_Help"/>
    </widget>
-   <addaction name="menuFile"/>
-   <addaction name="menuEdit"/>
-   <addaction name="menuHelp"/>
+   <addaction name="menu_File"/>
+   <addaction name="menu_Edit"/>
+   <addaction name="menu_Help"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
   <action name="action_AddImages">
@@ -1374,9 +1334,9 @@ Boundaries</string>
     <string>About</string>
    </property>
   </action>
-  <action name="action_SaveLogAs">
+  <action name="action_OpenLogDirectory">
    <property name="text">
-    <string>Save Log As...</string>
+    <string>Open Log File Directory</string>
    </property>
   </action>
   <action name="action_Close">
@@ -1416,7 +1376,17 @@ Boundaries</string>
   </action>
   <action name="action_ShowFormatFilter">
    <property name="text">
-    <string>Show Extension Filter</string>
+    <string>Show Format Filter</string>
+   </property>
+  </action>
+  <action name="actionLoad_All">
+   <property name="text">
+    <string>Load All</string>
+   </property>
+  </action>
+  <action name="action_AddImageDirectory">
+   <property name="text">
+    <string>Add Image Files From Directory...</string>
    </property>
   </action>
  </widget>
@@ -1482,107 +1452,10 @@ Boundaries</string>
   <tabstop>horizontalSlider_Quality</tabstop>
   <tabstop>spinBox_ExtraSetting2</tabstop>
   <tabstop>spinBox_Compression</tabstop>
-  <tabstop>checkBox_Overwrite</tabstop>
   <tabstop>pushButton_EditSaveAll</tabstop>
  </tabstops>
  <resources/>
  <connections>
-  <connection>
-   <sender>comboBox_Preset_1</sender>
-   <signal>currentIndexChanged(int)</signal>
-   <receiver>comboBox_Preset_2</receiver>
-   <slot>setCurrentIndex(int)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>309</x>
-     <y>526</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>298</x>
-     <y>73</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>comboBox_Preset_1</sender>
-   <signal>currentIndexChanged(int)</signal>
-   <receiver>comboBox_Preset_3</receiver>
-   <slot>setCurrentIndex(int)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>309</x>
-     <y>526</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>298</x>
-     <y>73</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>comboBox_Preset_2</sender>
-   <signal>currentIndexChanged(int)</signal>
-   <receiver>comboBox_Preset_1</receiver>
-   <slot>setCurrentIndex(int)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>298</x>
-     <y>73</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>309</x>
-     <y>526</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>comboBox_Preset_2</sender>
-   <signal>currentIndexChanged(int)</signal>
-   <receiver>comboBox_Preset_3</receiver>
-   <slot>setCurrentIndex(int)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>298</x>
-     <y>73</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>298</x>
-     <y>73</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>comboBox_Preset_3</sender>
-   <signal>currentIndexChanged(int)</signal>
-   <receiver>comboBox_Preset_1</receiver>
-   <slot>setCurrentIndex(int)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>298</x>
-     <y>73</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>309</x>
-     <y>526</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>comboBox_Preset_3</sender>
-   <signal>currentIndexChanged(int)</signal>
-   <receiver>comboBox_Preset_2</receiver>
-   <slot>setCurrentIndex(int)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>298</x>
-     <y>73</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>298</x>
-     <y>73</y>
-    </hint>
-   </hints>
-  </connection>
   <connection>
    <sender>radioButton_RelativePath</sender>
    <signal>toggled(bool)</signal>
