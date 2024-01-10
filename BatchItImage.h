@@ -183,8 +183,8 @@ public:
     };
     DialogMessage(QString title, QString message,
         const QFlags<QDialogButtonBox::StandardButton> buttons = QDialogButtonBox::StandardButton::NoButton,
-        const DialogMessage::CustomButtons custom_buttons = CustomButton::NoCustomButton,
-        QWidget* parent = nullptr, bool bold_message_text = false);
+        const DialogMessage::CustomButtons custom_buttons = CustomButton::NoCustomButton, QWidget* parent = nullptr,
+        std::array<QString, Dialog::Buttons::COUNT> button_text = {}, bool bold_message_text = false);
     ~DialogMessage();
     Ui::Dialog_Message ui;
 signals:
@@ -348,7 +348,8 @@ public slots:
     /// Change the currently selected preset.
     /// </summary>
     /// <param name="index">--The index of the preset.</param>
-    void ChangePreset(int index);
+    /// <param name="initial_load">--If change comes from loading settings.</param>
+    void ChangePreset(int index, bool initial_load = false);
     /// <summary>
     /// Save current (or all) preset(s) to the preset list and to the user settings file.
     /// </summary>
