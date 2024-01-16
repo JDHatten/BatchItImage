@@ -1686,12 +1686,6 @@ void BatchItImage::UiConnections()
             if (background_color == preset_list.at(CurrentSelectedPreset()).backgroundColor()) {
                 changed = false;
             }
-            /*if (background_color.blue() == preset_list.at(CurrentSelectedPreset()).background_color_blue and
-                background_color.green() == preset_list.at(CurrentSelectedPreset()).background_color_green and
-                background_color.red() == preset_list.at(CurrentSelectedPreset()).background_color_red and
-                background_color.alpha() == preset_list.at(CurrentSelectedPreset()).background_color_alpha) {
-                changed = false;
-            }*/
             edit_options_change_tracker = TrackOptionChanges(
                 edit_options_change_tracker, Option.pushButton_ColorDialog, 0, changed
             );
@@ -2998,8 +2992,13 @@ void BatchItImage::ToggleFileTreeContextMenuItems(bool enable)
     action_select_all->setEnabled(enable);
     action_select_none->setEnabled(enable);
     action_submenu_filter->setEnabled(enable);
-    action_view->setEnabled(enable);
-    action_preview->setEnabled(enable);
+
+    // TODO: Create the image viewing feature before reenabling these actions.
+    action_view->setEnabled(false);
+    action_preview->setEnabled(false);
+    action_view->setFont(*font_default_light);
+    action_preview->setFont(*font_default_light);
+
     if (enable) {
         action_delete->setFont(*font_default);
         action_clear->setFont(*font_default);
@@ -3007,8 +3006,8 @@ void BatchItImage::ToggleFileTreeContextMenuItems(bool enable)
         action_select_all->setFont(*font_default);
         action_select_none->setFont(*font_default);
         action_submenu_filter->setFont(*font_default);
-        action_view->setFont(*font_default);
-        action_preview->setFont(*font_default);
+        //action_view->setFont(*font_default);
+        //action_preview->setFont(*font_default);
     }
     else {
         action_delete->setFont(*font_default_light);
@@ -3017,8 +3016,8 @@ void BatchItImage::ToggleFileTreeContextMenuItems(bool enable)
         action_select_all->setFont(*font_default_light);
         action_select_none->setFont(*font_default_light);
         action_submenu_filter->setFont(*font_default_light);
-        action_view->setFont(*font_default_light);
-        action_preview->setFont(*font_default_light);
+        //action_view->setFont(*font_default_light);
+        //action_preview->setFont(*font_default_light);
     }
 }
 
@@ -3048,7 +3047,7 @@ void BatchItImage::SetColorPreviewStyleSheet()
 
 void BatchItImage::ChangePreset(int index, bool initial_load)
 {
-    qDebug() << "ChangePreset:" << index;
+    qDebug() << "ChangePreset To" << index;
     SavePresetDialog();
     
     ui.comboBox_Preset_1->blockSignals(true);
@@ -3056,7 +3055,7 @@ void BatchItImage::ChangePreset(int index, bool initial_load)
     ui.comboBox_Preset_3->blockSignals(true);
 
     if (index != current_selected_preset) {
-        if (preset_list.size() < index)
+        if (index >= preset_list.size())
             current_selected_preset = 0;
         else
             current_selected_preset = index;
@@ -3068,17 +3067,21 @@ void BatchItImage::ChangePreset(int index, bool initial_load)
             settings.endGroup();
         }
     }
-
+    
     ui.comboBox_Preset_1->setCurrentIndex(current_selected_preset);
     ui.comboBox_Preset_2->setCurrentIndex(current_selected_preset);
     ui.comboBox_Preset_3->setCurrentIndex(current_selected_preset);
-    LoadPreset(preset_list.at(current_selected_preset));
-
+    
+    if (not initial_load)
+        LoadPreset(preset_list.at(current_selected_preset));
+    
     ui.comboBox_Preset_1->blockSignals(false);
     ui.comboBox_Preset_2->blockSignals(false);
     ui.comboBox_Preset_3->blockSignals(false);
 
     RemoveOptionsChanged();
+
+    qDebug() << "ChangePreset:" << current_selected_preset;
 }
 
 void BatchItImage::SavePreset(bool save_all)
@@ -3173,14 +3176,14 @@ void BatchItImage::SavePresetToSettingsFile(int index)
     settings.setValue("widthModifierIndex", preset_list.at(index).widthModifierIndex());
     settings.setValue("widthNumber", preset_list.at(index).widthNumber());
     settings.setValue("heightModifierIndex", preset_list.at(index).heightModifierIndex());
-    settings.setValue("heightModifierIndex", preset_list.at(index).heightModifierIndex());
+    settings.setValue("heightNumber", preset_list.at(index).heightNumber());
     settings.setValue("keepAspectRatio", preset_list.at(index).keepAspectRatio());
     settings.setValue("resamplingFilterIndex", preset_list.at(index).resamplingFilterIndex());
     settings.setValue("borderTypeIndex", preset_list.at(index).borderTypeIndex());
-    settings.setValue("background_color_blue", preset_list.at(index).backgroundColor().blue());
-    settings.setValue("background_color_green", preset_list.at(index).backgroundColor().green());
-    settings.setValue("background_color_red", preset_list.at(index).backgroundColor().red());
-    settings.setValue("background_color_alpha", preset_list.at(index).backgroundColor().alpha());
+    settings.setValue("backgroundColorBlue", preset_list.at(index).backgroundColor().blue());
+    settings.setValue("backgroundColorGreen", preset_list.at(index).backgroundColor().green());
+    settings.setValue("backgroundColorRed", preset_list.at(index).backgroundColor().red());
+    settings.setValue("backgroundColorAlpha", preset_list.at(index).backgroundColor().alpha());
     settings.setValue("blurFilterIndex", preset_list.at(index).blurFilterIndex());
     settings.setValue("blurNormalize", preset_list.at(index).blurNormalize());
     settings.setValue("blurX", preset_list.at(index).blurX());
@@ -3265,6 +3268,7 @@ void BatchItImage::BuildRecentFilesMenu()
 
 void BatchItImage::LoadPreset(Preset preset)
 {
+    qDebug() << "LoadPreset";
     ui.comboBox_WidthMod->setCurrentIndex(preset.widthModifierIndex());
     ui.spinBox_WidthNumber->setValue(preset.widthNumber());
     ui.comboBox_HeightMod->setCurrentIndex(preset.heightModifierIndex());
@@ -3332,6 +3336,11 @@ void BatchItImage::LoadPresets()
     QSettings settings(preset_settings_file, QSettings::IniFormat);
     preset_list.clear();
     int cspi = 0;
+    settings.beginGroup("Settings");
+    if (settings.contains("current_selected_preset"))
+        cspi = settings.value("current_selected_preset").toInt();
+    settings.endGroup();
+    qDebug() << "LoadPresets: Selected =" << cspi;
 
     // Default Presets (will be loaded when none are found in the settings file.)
     Preset preset1;
@@ -3362,19 +3371,19 @@ void BatchItImage::LoadPresets()
             settings.beginGroup("Preset" + std::to_string(i));
             Preset preset;
             preset.setPresetIndex(i);
-            preset.setPresetDescription(settings.value("description").toString());
-            preset.setWidthModifierIndex(settings.value("width_modifier").toInt());
-            preset.setWidthNumber(settings.value("width_number").toInt());
-            preset.setHeightModifierIndex(settings.value("height_modifier").toInt());
-            preset.setHeightNumber(settings.value("height_number").toInt());
+            preset.setPresetDescription(settings.value("presetDescription").toString());
+            preset.setWidthModifierIndex(settings.value("widthModifierIndex").toInt());
+            preset.setWidthNumber(settings.value("widthNumber").toInt());
+            preset.setHeightModifierIndex(settings.value("heightModifierIndex").toInt());
+            preset.setHeightNumber(settings.value("heightNumber").toInt());
             preset.setResamplingFilterIndex(settings.value("resamplingFilter").toInt());
             preset.setKeepAspectRatio(settings.value("keepAspectRatio").toBool());
             preset.setBorderTypeIndex(settings.value("borderTypeIndex").toInt());
             preset.setBackgroundColor(
-                settings.value("background_color_red").toInt(),
-                settings.value("background_color_green").toInt(),
-                settings.value("background_color_blue").toInt(),
-                settings.value("background_color_alpha").toInt());
+                settings.value("backgroundColorRed").toInt(),
+                settings.value("backgroundColorGreen").toInt(),
+                settings.value("backgroundColorBlue").toInt(),
+                settings.value("backgroundColorAlpha").toInt());
             preset.setBlurFilterIndex(settings.value("blurFilterIndex").toInt());
             preset.setBlurNormalize(settings.value("blurNormalize").toBool());
             preset.setBlurX(settings.value("blurX").toInt());
@@ -3404,20 +3413,16 @@ void BatchItImage::LoadPresets()
             preset.setSaveFileNameChange(settings.value("saveFileNameChange").toString().toStdString());
             preset.setSavePathRelative(settings.value("savePathRelative").toBool());
             preset.setSaveFilePathChange(settings.value("saveFilePathChange").toString());
-            //preset_list.push_back({ preset });
+            preset_list.push_back({ preset });
             settings.endGroup();
-
-        } while (settings.childGroups().indexOf("Preset" + i) > -1);
-
-        settings.beginGroup("Settings");
-        cspi = settings.value("current_selected_preset").toInt();
-        settings.endGroup();
+            i++;
+        } while (settings.childGroups().indexOf("Preset" + QVariant::fromValue(i).toString()) > -1);
 
         //qDebug() << settings.allKeys();
 
         // TEMP: load only defaults, keep presets as defaults between sessions.
-        preset_list.push_back({ preset1 });
-        preset_list.push_back({ preset2 });
+        //preset_list.push_back({ preset1 });
+        //preset_list.push_back({ preset2 });
     }
     else {
         qDebug() << "Loading Default Presets";
@@ -3430,9 +3435,16 @@ void BatchItImage::LoadPresets()
     AddPresetsToComboBox(&preset_list, std::vector<QComboBox*>{
         ui.comboBox_Preset_1, ui.comboBox_Preset_2, ui.comboBox_Preset_3 });
     ChangePreset(cspi, true);
-
+    
     // Load selected preset data into ui.
+    qDebug() << "Pre LoadPreset:" << current_selected_preset << "-" << preset_list.size();
+    qDebug().noquote() << "Pre LoadPreset:" << preset_list.at(current_selected_preset).to_string();
     LoadPreset(preset_list.at(current_selected_preset));
+
+    // Save all (default) presets now if none saved.
+    if (settings.childGroups().indexOf("Preset0") == -1) {
+        SavePreset(true);
+    }
 }
 
 void BatchItImage::CreateNewPreset()
