@@ -1,0 +1,6 @@
+<RCC>
+    <qresource prefix="/BatchItImage">
+        <file>res/x-24850.svg</file>
+        <file>res/logo.ico</file>
+    </qresource>
+</RCC>
