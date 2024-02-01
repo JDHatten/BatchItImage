@@ -65,7 +65,7 @@ public:
     /// <param name="range_end">--Ending range value.</param>
     /// <param name="display_text">--A string that will show in-place of a range of values.</param>
     /// <param name="include_value">--If true the value will be include with the text string.</param>
-    /// <param name="text_tip_placement">--Place value TextTipPlacement::ToTheLeft or TextTipPlacement::ToTheRight of text tip.</param>
+    /// <param name="text_tip_placement">--Place text tip TextTipPlacement::ToTheLeft or TextTipPlacement::ToTheRight of value.</param>
     void addTextTip(int range_start, int range_end, QString display_text, bool include_value, bool text_tip_placement = ToTheLeft);
     /// <summary>
     /// Add text to the status and tool tip, in-place of a range of values.
@@ -74,7 +74,7 @@ public:
     /// <param name="range_end">--Ending range (double) value.</param>
     /// <param name="display_text">--A string that will show in-place of a range of values.</param>
     /// <param name="include_value">--If true the value will be include with the text string.</param>
-    /// <param name="text_tip_placement">--Place value TextTipPlacement::ToTheLeft or TextTipPlacement::ToTheRight of text tip.</param>
+    /// <param name="text_tip_placement">--Place text tip TextTipPlacement::ToTheLeft or TextTipPlacement::ToTheRight of value.</param>
     void addTextTip(double range_start, double range_end, QString display_text, bool include_value, bool text_tip_placement = ToTheLeft);
     /// <summary>
     /// Clear all text tips and go back to showing only the current value in the status and tool tip.

@@ -22,7 +22,7 @@ void EnhancedSlider::setEnabled(bool enable, bool reset_defaults)
         minimum_double = QSlider::minimum();
         maximum_double = QSlider::maximum();
         single_step_double = QSlider::singleStep();
-        Q_ASSERT(connect(this, SIGNAL(valueChanged(int)), this, SLOT(notifyValueChanged(int))));
+        connect(this, SIGNAL(valueChanged(int)), this, SLOT(notifyValueChanged(int)));
         if (enable) {
             setToolTip(QString::number(value()));
             setStatusTip(QString::number(value()));
