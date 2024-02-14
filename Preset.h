@@ -82,7 +82,7 @@ public:
         watermark_offset_x(0),
         watermark_offset_y(0),
         format_changed(false),
-        format_extension(ImageSaver::SupportedImageFormats::jpeg), // Below format defaults specific to Jpeg
+        format_extension(ImageSaver::ImageExtension::jpeg), // Below format defaults are JPEG specific.
         format_format_flag(1),
         format_optimize(false),
         format_progressive(false),
