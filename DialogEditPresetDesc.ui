@@ -72,6 +72,10 @@
    </item>
   </layout>
  </widget>
+ <tabstops>
+  <tabstop>lineEdit_PresetDesc</tabstop>
+  <tabstop>comboBox_Preset_4</tabstop>
+ </tabstops>
  <resources/>
  <connections>
   <connection>
