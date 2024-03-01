@@ -23,7 +23,8 @@ class DialogAbout : public QDialog
 
 public:
     DialogAbout(QString dialog_title, QString app_title, QString app_version, QString app_creator, QString app_description,
-        QString updating_message, QString update_available, QString update_not_available, std::string readme, QWidget* parent = nullptr);
+        QString updating_message, QString update_available, QString update_not_available, std::string readme,
+        int build_version, QWidget* parent = nullptr);
     ~DialogAbout();
 
 signals:
@@ -34,7 +35,7 @@ private slots:
 
 private:
     static size_t WriteCallback(void* contents, size_t size, size_t nmemb, void* userp);
-    bool isUpdateAvailable();
+    bool isUpdateAvailable(int build_version);
     Ui::Dialog_About ui;
     QString update_available;
     QString update_not_available;
