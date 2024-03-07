@@ -1,13 +1,14 @@
 #include "About.h"
 
 DialogAbout::DialogAbout(QString dialog_title, QString app_title, QString app_version, QString app_creator, QString app_description,
-    QString updating_message, QString update_available, QString update_not_available, std::string readme, QWidget* parent)
+    QString updating_message, QString update_available, QString update_not_available, std::string readme, int build_version, QWidget* parent)
 {
     ui.setupUi(this);
+    setWindowIcon(QIcon(":/BatchItImage/res/logo.ico"));
+    setWindowTitle(dialog_title);
+
     ui.commandLinkButton_Download->setVisible(false);
     ui.commandLinkButton_Download->setFlat(true);
-
-    setWindowTitle(dialog_title);
     ui.label_AppTitle->setText(app_title);
     ui.label_AppVersion->setText(app_version);
     ui.label_AppCreator->setText(app_creator);
@@ -17,18 +18,18 @@ DialogAbout::DialogAbout(QString dialog_title, QString app_title, QString app_ve
     DialogAbout::update_available = update_available;
     DialogAbout::update_not_available = update_not_available;
 
-    auto worker_thread = std::thread(&DialogAbout::isUpdateAvailable, this);
+    auto worker_thread = std::thread(&DialogAbout::isUpdateAvailable, this, build_version);
 
-    Q_ASSERT(connect(ui.pushButton_OK, &QPushButton::clicked, this, [this] { accept(); }));
-    Q_ASSERT(connect(ui.pushButton_ReadMe, &QPushButton::clicked, this, 
+    connect(ui.pushButton_OK, &QPushButton::clicked, this, [this] { accept(); });
+    connect(ui.pushButton_ReadMe, &QPushButton::clicked, this,
         [=] {
             ShellExecute(0, 0, std::wstring(readme.begin(), readme.end()).c_str(), 0, 0, SW_SHOW);
-        }));
-    Q_ASSERT(connect(ui.pushButton_GitHub, &QPushButton::clicked, this, 
+        });
+    connect(ui.pushButton_GitHub, &QPushButton::clicked, this,
         [this] {
             ShellExecute(0, 0, L"https://github.com/JDHatten/BatchItImage", 0, 0, SW_SHOW);
-        }));
-    Q_ASSERT(connect(this, SIGNAL(updateFound(bool)), this, SLOT(showDownloadButton(bool))));
+        });
+    connect(this, SIGNAL(updateFound(bool)), this, SLOT(showDownloadButton(bool)));
 
     worker_thread.detach();
 }
@@ -47,24 +48,21 @@ void DialogAbout::showDownloadButton(bool show)
     ui.commandLinkButton_Download->setVisible(show);
     if (show) {
         ui.label_Version->setText(update_available);
-        Q_ASSERT(connect(ui.commandLinkButton_Download, &QPushButton::clicked, this,
+        connect(ui.commandLinkButton_Download, &QPushButton::clicked, this,
             [this] {
                 ShellExecute(0, 0, L"https://github.com/JDHatten/BatchItImage/releases/latest", 0, 0, SW_SHOW);
-            }));
+            });
     }
     else {
         ui.label_Version->setText(update_not_available);
     }
 }
 
-bool DialogAbout::isUpdateAvailable()
+bool DialogAbout::isUpdateAvailable(int build_version)
 {
     CURL* curl;
     CURLcode curl_res;
     std::string read_buffer;
-    int major_version = 1;
-    int minor_version = 0;
-    int build_version = 0;
     bool is_update_available = false;
     
     curl = curl_easy_init();
