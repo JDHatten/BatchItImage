@@ -237,7 +237,7 @@ public:
     ~FileMetadataWorker();
 private:
     std::string file_path;
-    std::vector<struct FileMetadata>* current_file_metadata_list;
+    //std::vector<struct FileMetadata>* current_file_metadata_list;
     FileMetadata* file_metadata = new FileMetadata{ 0, "", 0, 0, 0, 0, 0, false };
     int load_order = 0;
 private slots:

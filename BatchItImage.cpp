@@ -3409,7 +3409,7 @@ void BatchItImage::LoadPresets()
             preset.setFormatCompression(settings.value("formatCompression").toInt());
             preset.setFormatExtra1(settings.value("formatExtra1").toInt());
             preset.setFormatExtra2(settings.value("formatExtra2").toInt());
-            preset.setSaveFileProcedureIndex(settings.value("saveFileProcedure").toInt());
+            preset.setSaveFileProcedureIndex(settings.value("saveFileProcedureIndex").toInt());
             preset.setSaveFileNameChange(settings.value("saveFileNameChange").toString().toStdString());
             preset.setSavePathRelative(settings.value("savePathRelative").toBool());
             preset.setSaveFilePathChange(settings.value("saveFilePathChange").toString());
@@ -3454,7 +3454,9 @@ void BatchItImage::CreateNewPreset()
     int new_preset_index = preset_list.size();
     qDebug() << "CreateNewPreset:" << new_preset_index;
     
-    Preset new_preset;
+    // TODO: An application setting to use current image edit settings or default "no edits" settings when creating a new preset.
+    //Preset new_preset; // Use default "no edits" settings in new preset
+    Preset new_preset = preset_list.at(CurrentSelectedPreset()); // Use current image edit settings in new preset
     new_preset.setPresetIndex(new_preset_index);
     new_preset.setPresetDescription("New Preset");
     preset_list.push_back({ new_preset });
