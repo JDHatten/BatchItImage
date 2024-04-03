@@ -17,7 +17,7 @@
 namespace AppVersion {
     const int Major = 1;
     const int Minor = 0;
-    const int Build = 0;
+    const int Build = 1;
 
     inline const QString toQString() {
         QString app_version = "v";

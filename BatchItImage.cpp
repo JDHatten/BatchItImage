@@ -1625,6 +1625,10 @@ void BatchItImage::UiConnections()
                 edit_options_change_tracker, Option.comboBox_WidthMod,
                 preset_list.at(CurrentSelectedPreset()).widthModifierIndex(), index
             );
+            if (index == ImageEditor::SizeModifier::NO_CHANGE)
+                ui.spinBox_WidthNumber->setEnabled(false);
+            else
+                ui.spinBox_WidthNumber->setEnabled(true);
             UpdateComboBoxTextTips();
         });
     connect(ui.spinBox_WidthNumber, &QSpinBox::valueChanged, this,
@@ -3270,8 +3274,12 @@ void BatchItImage::LoadPreset(Preset preset)
 {
     qDebug() << "LoadPreset";
     ui.comboBox_WidthMod->setCurrentIndex(preset.widthModifierIndex());
+    if (ui.comboBox_WidthMod->currentIndex() == ImageEditor::SizeModifier::NO_CHANGE)
+        ui.spinBox_WidthNumber->setEnabled(false);
     ui.spinBox_WidthNumber->setValue(preset.widthNumber());
     ui.comboBox_HeightMod->setCurrentIndex(preset.heightModifierIndex());
+    if (ui.comboBox_HeightMod->currentIndex() == ImageEditor::SizeModifier::NO_CHANGE)
+        ui.spinBox_HeightNumber->setEnabled(false);
     ui.spinBox_HeightNumber->setValue(preset.heightNumber());
     ui.comboBox_Resample->setCurrentIndex(preset.resamplingFilterIndex());
     ui.checkBox_KeepAspectRatio->setChecked(preset.keepAspectRatio());
